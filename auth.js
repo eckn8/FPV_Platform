@@ -15,6 +15,12 @@
 // Cache synchrone : { id, email, username } une fois connu, sinon null.
 let currentUser = null;
 
+// Jeton d'accès Supabase courant — nécessaire pour prouver son
+// identité auprès de worker.js (POST /api/upload), en plus de
+// currentUser qui ne sert qu'à l'affichage/aux vérifications côté
+// client. Voir storage.js.
+let currentAccessToken = null;
+
 let _authReadyResolve;
 
 // Résolu une première fois dès que l'état de connexion initial est
@@ -44,6 +50,7 @@ async function _loadProfile(userId) {
 async function _refreshCurrentUser(session) {
   if (!session || !session.user) {
     currentUser = null;
+    currentAccessToken = null;
     return;
   }
 
@@ -54,6 +61,8 @@ async function _refreshCurrentUser(session) {
     email: session.user.email,
     username: (profile && profile.username) || session.user.email
   };
+
+  currentAccessToken = session.access_token;
 }
 
 async function initAuth() {
@@ -80,6 +89,10 @@ supabaseClient.auth.onAuthStateChange(async (_event, session) => {
 
 function getCurrentUser() {
   return currentUser;
+}
+
+function getAccessToken() {
+  return currentAccessToken;
 }
 
 // =======================

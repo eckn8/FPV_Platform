@@ -443,7 +443,7 @@ function renderModelPage(model) {
 
   document
     .getElementById("submitVersionButton")
-    .addEventListener("click", () => {
+    .addEventListener("click", async () => {
 
       if (!isCreator()) {
         alert("Seul le créateur peut ajouter une version.");
@@ -490,10 +490,39 @@ function renderModelPage(model) {
         return;
       }
 
+      const MAX_STL_BYTES = 50 * 1024 * 1024;
+
+      const oversizedFile = files.find(file => file.size > MAX_STL_BYTES);
+
+      if (oversizedFile) {
+        newVersionMessage.textContent =
+          `"${oversizedFile.name}" dépasse 50 Mo — fichier trop lourd.`;
+        return;
+      }
+
+      // Envoi réel vers R2 — si ça échoue, on ne crée pas de
+      // version à moitié publiée.
+      newVersionMessage.textContent = "Envoi des fichiers...";
+
+      let uploadedFiles;
+
+      try {
+        uploadedFiles = await Promise.all(
+          files.map(async file => ({
+            name: file.name,
+            url: await uploadFileToStorage(file, "stl")
+          }))
+        );
+      } catch (error) {
+        newVersionMessage.textContent =
+          error.message || "Échec de l'envoi des fichiers. Réessaie.";
+        return;
+      }
+
       addModelVersion(model.id, {
         version,
         changelog,
-        files: files.map(file => ({ name: file.name }))
+        files: uploadedFiles
       });
 
       newVersionMessage.textContent = "Version publiée ✅";

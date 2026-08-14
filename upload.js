@@ -406,7 +406,7 @@ uploadFile.addEventListener(
 
 uploadButton.addEventListener(
   "click",
-  () => {
+  async () => {
 
     // Anti double-clic : un clic pendant que la publication est
     // déjà en cours de traitement ne doit pas créer un doublon.
@@ -503,6 +503,18 @@ uploadButton.addEventListener(
         return;
       }
 
+      const MAX_STL_BYTES = 50 * 1024 * 1024;
+
+      const oversizedFile = files.find(
+        file => file.size > MAX_STL_BYTES
+      );
+
+      if (oversizedFile) {
+        uploadMessage.textContent =
+        `"${oversizedFile.name}" dépasse 50 Mo — fichier trop lourd.`;
+        return;
+      }
+
      if (compressedImages.length === 0) {
        uploadMessage.textContent =
        "Il manque au moins une image du modèle.";
@@ -518,6 +530,40 @@ uploadButton.addEventListener(
     uploadButton.disabled = true;
 
     // =======================
+    // ☁️ ENVOI DES FICHIERS VERS R2
+    // Les images sont déjà compressées (voir compressImage()) mais
+    // toujours en base64 local à ce stade — on les convertit en
+    // vrais fichiers pour les envoyer. Si un envoi échoue (panne
+    // réseau, fichier refusé côté serveur...), on n'enregistre PAS
+    // le modèle : pas de publication à moitié faite.
+    // =======================
+
+    uploadMessage.textContent = "Envoi des fichiers...";
+
+    let uploadedImageUrls;
+    let uploadedFiles;
+
+    try {
+      uploadedImageUrls = await Promise.all(
+        compressedImages.map(dataUrl =>
+          uploadFileToStorage(dataUrlToBlob(dataUrl), "image")
+        )
+      );
+
+      uploadedFiles = await Promise.all(
+        files.map(async file => ({
+          name: file.name,
+          url: await uploadFileToStorage(file, "stl")
+        }))
+      );
+    } catch (error) {
+      uploadMessage.textContent =
+        error.message || "Échec de l'envoi des fichiers. Réessaie.";
+      uploadButton.disabled = false;
+      return;
+    }
+
+    // =======================
     // 💾 MODÈLES EXISTANTS
     // =======================
 
@@ -529,6 +575,10 @@ uploadButton.addEventListener(
     // dans `tags` (pas de tag "Upload utilisateur"/"STL" ajouté
     // automatiquement — ça polluait l'affichage et le scoring
     // de recherche pour rien, tous les modèles matchant).
+    //
+    // images/files contiennent maintenant de vraies URLs R2,
+    // visibles par tout le monde — plus du base64 local à celui
+    // qui publie.
     // =======================
 
     const newModel = {
@@ -543,14 +593,12 @@ uploadButton.addEventListener(
 
       tags: customTags,
 
-      images: compressedImages,
-      image: compressedImages[0],
+      images: uploadedImageUrls,
+      image: uploadedImageUrls[0],
 
-      files: files.map(file => ({
-        name: file.name
-      })),
+      files: uploadedFiles,
 
-      fileName: files[0].name,
+      fileName: uploadedFiles[0].name,
 
       tested,
 
