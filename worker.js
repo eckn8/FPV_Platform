@@ -123,11 +123,27 @@ async function handleUpload(request, env) {
   }
 
   // ---- Écriture dans R2 ---------------------------------------
-  const key = `${kind}/${user.id}/${crypto.randomUUID()}-${sanitizeFileName(file.name)}`;
+  // Le préfixe uuid dans `key` n'existe que pour éviter les
+  // collisions de noms dans le bucket (deux personnes qui
+  // uploadent "support.stl" ne doivent pas s'écraser) — ça ne doit
+  // pas se voir au téléchargement. Content-Disposition force le
+  // navigateur à proposer le nom d'origine, indépendamment du
+  // chemin de stockage réel.
+  const cleanName = sanitizeFileName(file.name);
+  const key = `${kind}/${user.id}/${crypto.randomUUID()}-${cleanName}`;
 
-  await env.BUCKET.put(key, file, {
-    httpMetadata: { contentType: file.type || "application/octet-stream" }
-  });
+  const httpMetadata = {
+    contentType: file.type || "application/octet-stream"
+  };
+
+  // Uniquement pour les STL : "attachment" force le téléchargement.
+  // Les images doivent rester affichables en <img> (mode "inline"
+  // implicite), sinon elles casseraient sur la page modèle.
+  if (kind === "stl") {
+    httpMetadata.contentDisposition = `attachment; filename="${cleanName}"`;
+  }
+
+  await env.BUCKET.put(key, file, { httpMetadata });
 
   const url = `${env.R2_PUBLIC_URL.replace(/\/$/, "")}/${key}`;
 
