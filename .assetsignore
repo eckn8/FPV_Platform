@@ -1,0 +1,8 @@
+# Fichiers internes à ne jamais servir publiquement comme asset du
+# site (même s'ils ne contiennent aucun secret, ce ne sont pas des
+# fichiers destinés aux visiteurs).
+worker.js
+wrangler.toml
+supabase_setup.sql
+.gitignore
+.git

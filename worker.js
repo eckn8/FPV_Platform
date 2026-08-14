@@ -1,27 +1,32 @@
 // =======================================================
-// 📤 functions/api/upload.js — Endpoint d'upload de fichiers
-// Route Cloudflare Pages Function : POST /api/upload
+// 🌐 worker.js — Point d'entrée du site (Cloudflare Workers)
 //
-// R2 ne peut pas être appelé directement depuis le navigateur —
-// ses identifiants sont de vrais secrets, contrairement à la clé
-// "publishable" de Supabase ou à la site key Turnstile. Ce fichier
-// tourne donc côté serveur (runtime Workers), et accède à R2 via
-// un "binding" configuré dans le dashboard — jamais via une clé
-// d'accès écrite en dur quelque part.
-//
-// Variables d'environnement requises (Pages → Settings →
-// Environment variables) :
-//   SUPABASE_URL     - même valeur que dans supabaseClient.js
-//   SUPABASE_ANON_KEY - même valeur (clé publishable/anon)
-//   R2_PUBLIC_URL     - l'URL publique r2.dev du bucket
-//                       (bucket R2 → Settings → Public Development URL)
-//
-// Binding requis (Pages → Settings → Bindings → Add → R2 bucket) :
-//   Nom de la variable : BUCKET
+// Ce projet est déployé comme un vrai Worker (pas la "Pages"
+// classique) — la convention functions/api/*.js ne s'applique pas
+// ici, d'où ce fichier unique. Par défaut (voir [assets] dans
+// wrangler.toml), Cloudflare sert directement les fichiers
+// statiques (HTML/CSS/JS) quand ils correspondent à la requête et
+// n'invoque ce script QUE pour ce qui ne correspond à aucun
+// fichier — donc uniquement /api/upload en pratique.
 // =======================================================
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;   // 8 Mo
 const MAX_STL_BYTES = 50 * 1024 * 1024;    // 50 Mo
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/api/upload" && request.method === "POST") {
+      return handleUpload(request, env);
+    }
+
+    // Tout le reste : fichiers statiques (filet de sécurité — en
+    // pratique Cloudflare les sert déjà avant même d'appeler ce
+    // script quand un fichier correspond).
+    return env.ASSETS.fetch(request);
+  }
+};
 
 function jsonResponse(body, status) {
   return new Response(JSON.stringify(body), {
@@ -68,9 +73,7 @@ function sanitizeFileName(name) {
     .slice(-100);
 }
 
-export async function onRequestPost(context) {
-  const { request, env } = context;
-
+async function handleUpload(request, env) {
   // ---- Authentification -----------------------------------
   // Publier nécessite un compte (voir auth.js/requireAuth côté
   // client) — mais la vraie vérification doit se faire ICI, côté
