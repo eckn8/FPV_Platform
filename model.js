@@ -524,17 +524,21 @@ function renderModelPage(model) {
       }
 
       // Envoi réel vers R2 — si ça échoue, on ne crée pas de
-      // version à moitié publiée.
+      // version à moitié publiée. Un seul fichier : son nom reprend
+      // le titre du modèle (même logique qu'à la publication
+      // initiale, voir upload.js) ; plusieurs fichiers : on garde
+      // leurs noms d'origine pour rester distinguables.
       newVersionMessage.textContent = "Envoi des fichiers...";
+
+      const stlFilenameOverride = files.length === 1 ? model.title : undefined;
 
       let uploadedFiles;
 
       try {
         uploadedFiles = await Promise.all(
-          files.map(async file => ({
-            name: file.name,
-            url: await uploadFileToStorage(file, "stl")
-          }))
+          files.map(file =>
+            uploadFileToStorage(file, "stl", stlFilenameOverride)
+          )
         );
       } catch (error) {
         newVersionMessage.textContent =

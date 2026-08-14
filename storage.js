@@ -9,11 +9,15 @@
 // pas juste par la personne qui a publié.
 // =======================================================
 
-// Envoie un fichier vers /api/upload et renvoie son URL publique.
-// kind : "image" | "stl". Lance une erreur au message lisible en
-// cas d'échec (auth manquante, fichier refusé, panne réseau...) —
-// à catcher côté appelant pour l'afficher à l'utilisateur.
-async function uploadFileToStorage(file, kind) {
+// Envoie un fichier vers /api/upload et renvoie { url, name } (le
+// nom final choisi par le serveur — voir worker.js, il peut
+// différer de file.name si filenameOverride est fourni). kind :
+// "image" | "stl". filenameOverride est optionnel — utile pour
+// qu'un fichier STL unique porte le titre du modèle plutôt que le
+// nom choisi sur l'ordinateur (voir upload.js). Lance une erreur
+// au message lisible en cas d'échec (auth manquante, fichier
+// refusé, panne réseau...) — à catcher côté appelant.
+async function uploadFileToStorage(file, kind, filenameOverride) {
   const token = getAccessToken();
 
   if (!token) {
@@ -23,6 +27,10 @@ async function uploadFileToStorage(file, kind) {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("kind", kind);
+
+  if (filenameOverride) {
+    formData.append("filename", filenameOverride);
+  }
 
   let response;
 
@@ -42,7 +50,7 @@ async function uploadFileToStorage(file, kind) {
     throw new Error(result.error || "Échec de l'envoi du fichier.");
   }
 
-  return result.url;
+  return { url: result.url, name: result.name };
 }
 
 // Convertit un data URL base64 (image déjà compressée côté

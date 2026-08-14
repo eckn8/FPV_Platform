@@ -543,18 +543,26 @@ uploadButton.addEventListener(
     let uploadedImageUrls;
     let uploadedFiles;
 
+    // Un seul fichier STL : son nom (à l'upload et au téléchargement)
+    // reprend le titre du modèle plutôt que le nom choisi sur
+    // l'ordinateur — plus lisible pour qui télécharge. Avec
+    // plusieurs fichiers, on garde leurs noms d'origine : ils
+    // décrivent chacun une pièce différente ("Support_camera.stl",
+    // "Support_GPS.stl"...), les remplacer tous par le même titre
+    // les rendrait indiscernables.
+    const stlFilenameOverride = files.length === 1 ? title : undefined;
+
     try {
-      uploadedImageUrls = await Promise.all(
+      uploadedImageUrls = (await Promise.all(
         compressedImages.map(dataUrl =>
           uploadFileToStorage(dataUrlToBlob(dataUrl), "image")
         )
-      );
+      )).map(result => result.url);
 
       uploadedFiles = await Promise.all(
-        files.map(async file => ({
-          name: file.name,
-          url: await uploadFileToStorage(file, "stl")
-        }))
+        files.map(file =>
+          uploadFileToStorage(file, "stl", stlFilenameOverride)
+        )
       );
     } catch (error) {
       uploadMessage.textContent =

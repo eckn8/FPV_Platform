@@ -96,6 +96,7 @@ async function handleUpload(request, env) {
 
   const file = formData.get("file");
   const kind = formData.get("kind"); // "image" | "stl"
+  const filenameOverride = formData.get("filename"); // optionnel
 
   if (!(file instanceof File)) {
     return jsonResponse({ error: "Aucun fichier reçu." }, 400);
@@ -123,13 +124,24 @@ async function handleUpload(request, env) {
   }
 
   // ---- Écriture dans R2 ---------------------------------------
+  // `filenameOverride` permet à l'appelant (voir upload.js) de
+  // faire porter le titre du modèle plutôt que le nom du fichier
+  // choisi sur l'ordinateur — seulement pertinent quand il n'y a
+  // qu'un seul fichier ; avec plusieurs fichiers, c'est l'appelant
+  // qui décide de ne PAS l'envoyer, pour garder des noms distincts
+  // (ex : "Support_camera.stl" / "Support_GPS.stl").
+  let cleanName = sanitizeFileName(filenameOverride || file.name);
+
+  if (kind === "stl" && !cleanName.toLowerCase().endsWith(".stl")) {
+    cleanName += ".stl";
+  }
+
   // Le préfixe uuid dans `key` n'existe que pour éviter les
   // collisions de noms dans le bucket (deux personnes qui
   // uploadent "support.stl" ne doivent pas s'écraser) — ça ne doit
   // pas se voir au téléchargement. Content-Disposition force le
-  // navigateur à proposer le nom d'origine, indépendamment du
-  // chemin de stockage réel.
-  const cleanName = sanitizeFileName(file.name);
+  // navigateur à proposer `cleanName`, indépendamment du chemin de
+  // stockage réel.
   const key = `${kind}/${user.id}/${crypto.randomUUID()}-${cleanName}`;
 
   const httpMetadata = {
@@ -147,5 +159,5 @@ async function handleUpload(request, env) {
 
   const url = `${env.R2_PUBLIC_URL.replace(/\/$/, "")}/${key}`;
 
-  return jsonResponse({ url, key }, 200);
+  return jsonResponse({ url, key, name: cleanName }, 200);
 }
