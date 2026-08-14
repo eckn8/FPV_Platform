@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Détail modèle - FPV Print Hub</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+
+    <div
+      class="logo"
+      onclick="window.location.href='index.html'"
+    >
+      FPV Print Hub
+    </div>
+
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="explore.html">Explorer</a>
+      <a href="requests.html">Demandes</a>
+      <a href="upload.html">Publier</a>
+      <a href="favorites.html">Mes favoris</a>
+      <span id="authStatus" class="auth-status"></span>
+    </nav>
+
+  </header>
+
+  <!-- CONTENU -->
+  <main class="model-page">
+
+    <!-- IMAGE -->
+    <section class="model-detail-image-wrapper">
+      <div id="modelImageContainer"></div>
+    </section>
+
+    <!-- INFOS PRINCIPALES -->
+    <section class="model-detail-content">
+
+      <p
+        id="modelPath"
+        class="folder-path"
+      ></p>
+
+      <h1 id="title"></h1>
+
+      <p id="description"></p>
+
+      <p>
+        <strong>Créateur :</strong>
+        <a
+          id="creator"
+          href="#"
+          style="color:#00e0ff;"
+        ></a>
+      </p>
+
+      <div
+        id="tags"
+        class="tags"
+      ></div>
+
+      <div class="model-actions">
+        <button id="likeButton">
+          👍 Like
+        </button>
+
+        <span id="likeCount"></span>
+
+        <button id="saveButton">
+          ❤️ Sauvegarder
+        </button>
+
+        <button id="reportModelButton" class="report-btn" title="Signaler ce modèle">
+          🚩 Signaler
+        </button>
+      </div>
+
+      <div
+  id="creatorActions"
+  class="creator-actions"
+  style="display:none;"
+>
+  <h3>Gestion créateur</h3>
+
+  <button id="addVersionButton">
+    🆕 Ajouter une nouvelle version
+  </button>
+
+  <!-- Formulaire caché par défaut, ouvert au clic sur le bouton
+       ci-dessus. Publier une nouvelle version = nouveaux fichiers
+       STL + changelog, contrairement à une simple modification des
+       infos (titre/description/tags), qui n'a pas besoin de créer
+       de version. -->
+  <div id="newVersionForm" class="new-version-form" style="display:none;">
+
+    <label for="newVersionNumber"><strong>Numéro de version</strong></label>
+    <input type="text" id="newVersionNumber" placeholder="1.1">
+
+    <label for="newVersionChangelog"><strong>Changelog</strong></label>
+    <textarea
+      id="newVersionChangelog"
+      placeholder="Ex : Fixation renforcée, compatibilité Hero 13..."
+    ></textarea>
+
+    <label for="newVersionFiles"><strong>Nouveaux fichiers STL</strong></label>
+    <input type="file" id="newVersionFiles" accept=".stl" multiple>
+
+    <div id="newVersionFilesPreview" class="files-preview"></div>
+
+    <div class="form-actions">
+      <button type="button" id="submitVersionButton">
+        Publier la version
+      </button>
+
+      <button type="button" id="cancelVersionButton">
+        Annuler
+      </button>
+    </div>
+
+    <p id="newVersionMessage" class="folder-path"></p>
+
+  </div>
+
+  <button id="archiveButton">
+    📦 Archiver ce modèle
+  </button>
+</div>
+
+<div
+  id="archivedWarning"
+  class="archived-warning"
+  style="display:none;"
+>
+  ⚠️ Ce modèle est archivé. Il n’est peut-être plus maintenu.
+</div>
+
+      <button class="download-btn">
+        Télécharger STL
+      </button>
+
+    </section>
+
+    <!-- INFOS TECHNIQUES -->
+    <section class="model-info-panel">
+
+      <h2>Informations techniques</h2>
+
+      <p>
+        <strong>Testé en vol :</strong>
+        <span id="tested"></span>
+      </p>
+
+      <p>
+        <strong>Notes d’impression :</strong>
+      </p>
+
+      <p id="printNotes"></p>
+
+      <p>
+        <strong>Fichier :</strong>
+        <span id="fileName"></span>
+      </p>
+
+    </section>
+
+    <!-- VERSIONS -->
+    <section class="model-info-panel">
+
+      <h2>Versions</h2>
+
+      <p class="current-version-badge">
+        <strong>Version actuelle :</strong>
+        <span id="currentVersionLabel"></span>
+      </p>
+
+      <div id="versionHistory" class="version-history"></div>
+
+    </section>
+
+    <!-- COMMENTAIRES -->
+    <section class="comments-section">
+
+      <h2>Commentaires</h2>
+
+      <div id="comments"></div>
+
+      <textarea
+        id="commentInput"
+        placeholder="Ajouter un retour d’expérience..."
+      ></textarea>
+
+      <button
+        onclick="addComment()"
+        class="download-btn"
+      >
+        Publier le commentaire
+      </button>
+
+    </section>
+
+  </main>
+
+  <!-- MODALE SIGNALEMENT
+       Une seule instance, réutilisée pour signaler le modèle ou
+       n'importe lequel de ses commentaires — voir model.js. -->
+  <div id="reportModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+
+      <h3 id="reportModalTitle">Signaler</h3>
+
+      <p class="upload-hint">
+        Sélectionne une ou plusieurs raisons :
+      </p>
+
+      <div id="reportReasonsList" class="report-reasons-list">
+        <label>
+          <input type="checkbox" value="Hors-sujet (pas lié au FPV)">
+          Hors-sujet (pas lié au FPV)
+        </label>
+        <label>
+          <input type="checkbox" value="Contenu inapproprié ou choquant">
+          Contenu inapproprié ou choquant
+        </label>
+        <label>
+          <input type="checkbox" value="Spam ou publicité">
+          Spam ou publicité
+        </label>
+        <label>
+          <input type="checkbox" value="Insultes ou harcèlement">
+          Insultes ou harcèlement
+        </label>
+        <label>
+          <input type="checkbox" value="Atteinte aux droits d'auteur">
+          Atteinte aux droits d'auteur
+        </label>
+        <label>
+          <input type="checkbox" value="Autre">
+          Autre
+        </label>
+      </div>
+
+      <label for="reportDetails"><strong>Précisions (optionnel)</strong></label>
+      <textarea
+        id="reportDetails"
+        placeholder="Ajoute des détails si besoin..."
+      ></textarea>
+
+      <p id="reportModalMessage" class="folder-path"></p>
+
+      <div class="form-actions">
+        <button type="button" id="submitReportButton">
+          Envoyer le signalement
+        </button>
+        <button type="button" id="cancelReportButton">
+          Annuler
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="auth.js"></script>
+  <script src="data.js"></script>
+  <script src="model.js"></script>
+
+</body>
+</html>

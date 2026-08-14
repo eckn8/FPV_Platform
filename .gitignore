@@ -1,0 +1,6 @@
+# Config locale d'outils (pas partie du site)
+.claude/
+
+# Fichiers système
+.DS_Store
+Thumbs.db

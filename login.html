@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Connexion - FPV Print Hub</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo" onclick="window.location.href='index.html'">
+      FPV Print Hub
+    </div>
+
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="explore.html">Explorer</a>
+      <a href="requests.html">Demandes</a>
+      <a href="upload.html">Publier</a>
+      <a href="favorites.html">Mes favoris</a>
+      <span id="authStatus" class="auth-status"></span>
+    </nav>
+  </header>
+
+  <!-- CONTENU -->
+  <main style="padding: 40px 8%;">
+
+    <section class="section-title">
+      <h1>Ton compte FPV Print Hub</h1>
+      <p>
+        Un compte sert à liker, sauvegarder des favoris, commenter,
+        voter pour des demandes et publier tes propres modèles.
+        Parcourir et télécharger restent accessibles sans connexion.
+      </p>
+    </section>
+
+    <!-- Même largeur que .upload-section (700px centré) pour que
+         les onglets, le message et le formulaire s'alignent en un
+         seul bloc cohérent au lieu que les onglets s'étirent sur
+         toute la largeur de l'écran. -->
+    <div class="login-card">
+
+      <!-- ONGLETS -->
+      <div class="auth-tabs">
+        <button type="button" id="tabLoginButton" class="auth-tab active">
+          Se connecter
+        </button>
+        <button type="button" id="tabSignupButton" class="auth-tab">
+          Créer un compte
+        </button>
+      </div>
+
+      <!-- ANTI-ROBOT
+           Un seul widget, partagé entre les deux onglets — le
+           jeton obtenu est transmis à signIn() ou signUp() selon
+           le formulaire réellement soumis. Voir login.js. -->
+      <div
+        class="cf-turnstile"
+        data-sitekey="0x4AAAAAAEQE4H-e_NFD6kSp"
+        data-callback="onTurnstileSuccess"
+        data-expired-callback="onTurnstileExpired"
+        data-error-callback="onTurnstileExpired"
+        style="margin: 14px 0;"
+      ></div>
+
+      <!-- MESSAGE -->
+      <p id="authMessage" class="folder-path"></p>
+
+      <!-- CONNEXION -->
+      <section id="loginForm" class="upload-section">
+
+        <label for="loginEmail"><strong>Email</strong></label>
+        <input type="email" id="loginEmail" placeholder="toi@exemple.com">
+
+        <label for="loginPassword"><strong>Mot de passe</strong></label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+
+        <button id="loginButton" class="download-btn">Se connecter</button>
+
+      </section>
+
+      <!-- INSCRIPTION -->
+      <section id="signupForm" class="upload-section" style="display:none;">
+
+        <label for="signupUsername"><strong>Pseudo</strong></label>
+        <input type="text" id="signupUsername" placeholder="FPVRider">
+
+        <label for="signupEmail"><strong>Email</strong></label>
+        <input type="email" id="signupEmail" placeholder="toi@exemple.com">
+
+        <label for="signupPassword"><strong>Mot de passe</strong></label>
+        <input type="password" id="signupPassword" placeholder="6 caractères minimum">
+
+        <button id="signupButton" class="download-btn">Créer mon compte</button>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- SCRIPTS -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="auth.js"></script>
+  <script src="login.js"></script>
+
+</body>
+</html>

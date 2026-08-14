@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <!-- Réglages de base du site -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Titre affiché dans l’onglet du navigateur -->
+  <title>FPV Print Hub</title>
+
+  <!-- Lien vers le fichier CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- =======================
+       HEADER / MENU
+  ======================== -->
+  <header class="header">
+    <div class="logo" onclick="window.location.href='index.html'">
+      FPV Print Hub
+    </div>
+
+    <nav>
+      <a href="index.html">Modèles</a>
+      <a href="explore.html">Explorer</a>
+      <a href="requests.html">Demandes</a>
+      <a href="upload.html">Publier</a>
+      <a href="favorites.html">Mes favoris</a>
+      <span id="authStatus" class="auth-status"></span>
+    </nav>
+  </header>
+
+
+  
+
+
+  <!-- =======================
+       HERO / INTRODUCTION
+  ======================== -->
+  <section class="hero">
+    <h1>Les meilleurs fichiers STL pour le drone FPV</h1>
+    <p>
+      Trouve, partage et améliore des modèles 3D pensés pour les pilotes FPV.
+    </p>
+
+    <!-- Barre de recherche -->
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Rechercher un support GoPro, antenne, Nazgul, TPU..."
+    />
+  </section>
+
+
+  <!-- =======================
+       STATISTIQUES VISUELLES
+       Pour donner un côté plateforme active
+  ======================== -->
+  <section class="stats-section">
+    <div class="stat-card">
+      <strong>+120</strong>
+      <span>modèles FPV</span>
+    </div>
+
+    <div class="stat-card">
+      <strong>+35</strong>
+      <span>créateurs</span>
+    </div>
+
+    <div class="stat-card">
+      <strong>+4 800</strong>
+      <span>téléchargements</span>
+    </div>
+  </section>
+
+
+  <!-- =======================
+       MODÈLES POPULAIRES
+       Pour l’instant, affichage visuel seulement
+  ======================== -->
+  <section class="section-title">
+    <h2>Modèles populaires</h2>
+    <p>Les fichiers les plus consultés et téléchargés par la communauté.</p>
+  </section>
+
+
+  <!-- =======================
+       FILTRES PAR CATÉGORIE
+       Les boutons sont reliés à script.js
+  ======================== -->
+  <section class="filters">
+    <button data-category="all">Tous</button>
+    <button data-category="camera">Supports caméra</button>
+    <button data-category="antenna">Antennes</button>
+    <button data-category="protection">Protections</button>
+    <button data-category="electronics">Électronique</button>
+  </section>
+
+  <button onclick="sortByLikes()">🔥 Les plus populaires</button>
+  <!-- =======================
+       LISTE DES MODÈLES
+       Cette grille est remplie automatiquement par script.js
+  ======================== -->
+  <main class="models-grid" id="modelsGrid"></main>
+  <section id="requestSuggestion" class="publish-callout" style="display:none;"></section>
+
+
+  <!-- =======================
+       APPEL À LA PUBLICATION
+       Redirection vers upload.html
+  ======================== -->
+  <section class="publish-callout">
+    <h2>Tu as créé une pièce FPV utile ?</h2>
+    <p>
+      Partage ton fichier STL avec la communauté et aide d’autres pilotes à améliorer leurs drones.
+    </p>
+    <button onclick="window.location.href='upload.html'">
+      Publier un modèle
+    </button>
+  </section>
+
+
+  <!-- =======================
+       SCRIPT JAVASCRIPT
+  ======================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="auth.js"></script>
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>

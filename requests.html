@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Demandes - FPV Print Hub</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+
+    <div class="logo" onclick="window.location.href='index.html'">
+      FPV Print Hub
+    </div>
+
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="explore.html">Explorer</a>
+      <a href="requests.html">Demandes</a>
+      <a href="upload.html">Publier</a>
+      <a href="favorites.html">Mes favoris</a>
+      <span id="authStatus" class="auth-status"></span>
+    </nav>
+
+  </header>
+
+  <!-- CONTENU -->
+  <main style="padding: 40px 8%;">
+
+    <!-- TITRE -->
+    <section class="section-title">
+
+      <h1>Demandes de modèles FPV</h1>
+
+      <p>
+        Propose une idée de modèle 3D à la communauté et vote pour les demandes les plus utiles.
+      </p>
+
+    </section>
+
+    <!-- CRÉER UNE DEMANDE -->
+    <section class="upload-section">
+
+      <h2>Créer une demande</h2>
+
+      <!-- TITRE -->
+      <input
+        type="text"
+        id="requestTitle"
+        placeholder="Ex : Support GPS pour Nazgul5"
+      >
+
+      <!-- DESCRIPTION -->
+      <textarea
+        id="requestDescription"
+        placeholder="Décris précisément ce que tu recherches..."
+      ></textarea>
+
+      <!-- DOSSIERS -->
+      <label>
+        <strong>Dossier / rubrique de la demande</strong>
+      </label>
+
+      <p class="upload-hint">
+        Choisis où cette demande doit être rangée, ou crée un nouveau sous-dossier.
+      </p>
+
+      <!-- FIL D’ARIANE -->
+      <div id="requestBreadcrumb" class="breadcrumb"></div>
+
+      <!-- DOSSIERS -->
+      <div id="requestFoldersGrid" class="folders-grid"></div>
+
+      <!-- CRÉATION DOSSIER -->
+      <div class="new-folder-box">
+
+        <input
+          type="text"
+          id="newRequestFolderInput"
+          placeholder="Créer un nouveau sous-dossier..."
+        >
+
+        <button
+          type="button"
+          id="addRequestFolderButton"
+        >
+          Créer le dossier
+        </button>
+
+      </div>
+
+      <!-- DOSSIER ACTUEL -->
+      <p class="folder-path">
+        Dossier sélectionné :
+        <span id="selectedRequestPathText">Aucun</span>
+      </p>
+
+      <!-- BOUTON -->
+      <button id="createRequestButton">
+        Créer la demande
+      </button>
+
+      <!-- MESSAGE -->
+      <p id="requestMessage"></p>
+
+    </section>
+
+    <!-- LISTE DES DEMANDES -->
+    <section
+      class="section-title"
+      style="margin-top: 50px;"
+    >
+
+      <h2>Demandes populaires</h2>
+
+      <p>
+        Les demandes les plus votées apparaissent en premier.
+      </p>
+
+    </section>
+
+    <!-- GRID -->
+    <div
+      id="requestsGrid"
+      class="models-grid"
+    ></div>
+
+  </main>
+
+  <!-- SCRIPT -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="auth.js"></script>
+  <script src="data.js"></script>
+  <script src="requests.js"></script>
+
+</body>
+</html>
