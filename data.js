@@ -689,7 +689,13 @@ async function getModelComments(modelId) {
   }));
 }
 
-async function addComment(modelId, text) {
+// Nommée createComment (et pas addComment) volontairement : la
+// page modèle expose un window.addComment lié au bouton du
+// formulaire — même nom des deux côtés aurait fait que l'appel à
+// "addComment(...)" dans ce handler se rappelle lui-même à l'infini
+// au lieu d'atteindre cette fonction-ci (vécu : "Maximum call stack
+// size exceeded").
+async function createComment(modelId, text) {
   const userId = getCurrentUserId();
   const username = getCurrentUsername();
 

@@ -662,7 +662,7 @@ async function renderModelPage(model) {
     let newComment;
 
     try {
-      newComment = await addComment(model.id, input.value.trim());
+      newComment = await createComment(model.id, input.value.trim());
     } catch (error) {
       alert(error.message || "Échec de l'envoi du commentaire. Réessaie.");
       return;
