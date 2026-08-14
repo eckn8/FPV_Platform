@@ -1,0 +1,28 @@
+# =======================================================
+# ⚙️ wrangler.toml — Config de déploiement Cloudflare Pages
+#
+# Sert uniquement à déclarer le binding R2 et les variables
+# d'environnement dont functions/api/upload.js a besoin — le
+# formulaire "Add binding" du dashboard échouait silencieusement,
+# donc on passe par ce fichier versionné à la place. Ne change
+# rien au déploiement du site statique lui-même (toujours servi
+# depuis la racine, fonctions toujours détectées via functions/).
+# =======================================================
+
+name = "fpv-platform"
+compatibility_date = "2026-08-14"
+pages_build_output_dir = "."
+
+# ---- Stockage des fichiers (images/STL) -------------------
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "fpv-platform-files"
+
+# ---- Variables utilisées par functions/api/upload.js -------
+# Valeurs publiques (mêmes que dans supabaseClient.js / login.html)
+# — aucun secret ici, la vraie protection vient de la vérification
+# du jeton utilisateur dans upload.js, pas du secret de ces valeurs.
+[vars]
+SUPABASE_URL = "https://coyfyedaokkkhtmlcvaq.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_DeZEOG8W7hbVJ6KBu463QA_9w0bn-nR"
+R2_PUBLIC_URL = "https://pub-0157328f7c914e80b8c23264282efe56.r2.dev"
