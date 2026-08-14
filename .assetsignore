@@ -4,5 +4,6 @@
 worker.js
 wrangler.toml
 supabase_setup.sql
+supabase_content_schema.sql
 .gitignore
 .git
