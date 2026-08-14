@@ -77,6 +77,29 @@ function renderModelPage(model) {
     model.fileName || "Fichier inconnu";
 
   // =======================
+  // ⬇️ TÉLÉCHARGEMENT
+  // Pointe vers le premier fichier de la version actuelle (celui
+  // affiché juste au-dessus). Les modèles publiés avant le
+  // stockage réel (R2) n'ont pas d'URL : le bouton l'explique au
+  // clic plutôt que de mener vers une page cassée.
+  // =======================
+
+  const downloadMainButton = document.getElementById("downloadMainButton");
+  const primaryFile = model.files && model.files[0];
+
+  if (primaryFile && primaryFile.url) {
+    downloadMainButton.href = primaryFile.url;
+  } else {
+    downloadMainButton.href = "#";
+    downloadMainButton.addEventListener("click", event => {
+      event.preventDefault();
+      alert(
+        "Ce fichier n'est pas disponible au téléchargement — publié avant la mise en place du stockage réel des fichiers."
+      );
+    });
+  }
+
+  // =======================
   // 🆕 VERSIONS
   // =======================
 
@@ -715,9 +738,21 @@ function renderVersions(model) {
     const entry = document.createElement("div");
     entry.className = "version-entry";
 
-    const fileNames = (version.files || [])
-      .map(file => file.name)
-      .join(", ");
+    // Chaque fichier est son propre lien de téléchargement — une
+    // version peut contenir plusieurs STL, un seul bouton par
+    // version serait ambigu. Les fichiers publiés avant le
+    // stockage réel (R2) n'ont pas d'URL : on les affiche quand
+    // même, mais non cliquables, plutôt que de les faire
+    // disparaître silencieusement.
+    const filesHtml = (version.files || [])
+      .map(file => {
+        if (file.url) {
+          return `<a class="version-file-link" href="${escapeHtml(file.url)}">📦 ${escapeHtml(file.name)}</a>`;
+        }
+
+        return `<span class="version-file-link version-file-unavailable" title="Publié avant le stockage réel des fichiers — indisponible">📦 ${escapeHtml(file.name)}</span>`;
+      })
+      .join("");
 
     entry.innerHTML = `
       <div class="version-entry-header">
@@ -727,32 +762,14 @@ function renderVersions(model) {
             ? new Date(version.createdAt).toLocaleDateString("fr-FR")
             : ""}
         </span>
-        <button
-          class="tiny-download-btn"
-          type="button"
-          title="Télécharger la version ${escapeHtml(version.version)}"
-        >⬇️</button>
       </div>
 
       <p class="version-changelog">${escapeHtml(version.changelog || "")}</p>
 
-      ${fileNames
-        ? `<p class="version-files">📦 ${escapeHtml(fileNames)}</p>`
+      ${filesHtml
+        ? `<p class="version-files">${filesHtml}</p>`
         : ""}
     `;
-
-    // Chaque version a son propre bouton, indépendant des autres —
-    // téléchargements individuels, pas juste la dernière version.
-    entry.querySelector(".tiny-download-btn").addEventListener("click", () => {
-      // Pas encore de vrai téléchargement possible : seuls les NOMS
-      // de fichiers sont enregistrés pour l'instant, jamais les
-      // vrais octets du STL (voir stockage réel des fichiers, pas
-      // encore fait).
-      alert(
-        `Le téléchargement réel de la version ${version.version} arrive avec le stockage des fichiers 🚧\n` +
-        "Pour l'instant, seuls les noms de fichiers sont enregistrés."
-      );
-    });
 
     container.appendChild(entry);
   });

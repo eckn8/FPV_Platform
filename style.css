@@ -156,6 +156,13 @@ nav a:hover {
 }
 
 .download-btn {
+  /* display/text-align/text-decoration : sans effet sur un
+     <button> (déjà son rendu par défaut), nécessaires pour que
+     .download-btn se comporte pareil sur le lien <a> de
+     "Télécharger STL" (model.html). */
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
   width: 100%;
   padding: 11px;
   border: none;
@@ -164,6 +171,7 @@ nav a:hover {
   color: #0f1115;
   font-weight: bold;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .download-btn:hover {
@@ -817,26 +825,6 @@ select option {
   color: #f5f5f5;
 }
 
-.tiny-download-btn {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border-radius: 50%;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: #00e0ff;
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tiny-download-btn:hover {
-  border-color: #00e0ff;
-}
-
 /* =======================
    HISTORIQUE DES VERSIONS
    Visible par tout le monde (pas que le créateur), dans la
@@ -880,7 +868,26 @@ select option {
 .version-entry .version-files {
   margin-top: 4px;
   font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+/* Un lien par fichier — une version peut en contenir plusieurs */
+.version-file-link {
+  color: #00e0ff;
+  text-decoration: none;
+}
+
+.version-file-link:hover {
+  text-decoration: underline;
+}
+
+/* Fichier publié avant le stockage réel : affiché mais pas
+   cliquable, plutôt que de disparaître silencieusement. */
+.version-file-unavailable {
   color: #9aa3b2;
+  cursor: not-allowed;
 }
 
 /* =======================
