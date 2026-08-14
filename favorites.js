@@ -1,16 +1,14 @@
 // =======================================================
 // ❤️ favorites.js — Mes favoris
-// Les modèles et favoris vivent dans data.js, l'identité dans
-// auth.js (chargés avant ce fichier). Voir favoris = il faut un
-// compte, donc tout le rendu attend authReady (contrairement aux
-// pages de navigation, qui ne doivent jamais attendre Supabase).
+// Les modèles et favoris vivent dans data.js, maintenant branché
+// sur Supabase. Voir favoris = il faut un compte, donc tout le
+// rendu attend authReady (contrairement aux pages de navigation,
+// qui ne doivent jamais attendre Supabase).
 // =======================================================
-
-const allModels = getAllModels();
 
 const grid = document.getElementById("favoritesGrid");
 
-function displayFavorites() {
+async function displayFavorites() {
   grid.innerHTML = "";
 
   if (!getCurrentUser()) {
@@ -23,11 +21,20 @@ function displayFavorites() {
     return;
   }
 
+  grid.innerHTML = "<p>Chargement...</p>";
+
+  const [allModels] = await Promise.all([
+    getAllModels(),
+    primeFavorites()
+  ]);
+
   const userSavedIds = getSavedModelIds();
 
   const favoriteModels = allModels.filter(model =>
     userSavedIds.includes(String(model.id))
   );
+
+  grid.innerHTML = "";
 
   if (favoriteModels.length === 0) {
     grid.innerHTML = "<p>Tu n’as encore aucun modèle sauvegardé.</p>";
@@ -49,7 +56,6 @@ function displayFavorites() {
         <p><strong>Créateur :</strong> ${escapeHtml(model.creator || "Utilisateur inconnu")}</p>
 
         <div class="tags">
-          <span class="tag">${escapeHtml(model.subcategory || "Général")}</span>
           ${(model.tags || [])
             .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`)
             .join("")}

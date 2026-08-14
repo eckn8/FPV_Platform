@@ -1,10 +1,11 @@
 // =======================================================
 // 🧭 explore.js — Explorateur de dossiers
 // Les modèles, dossiers et la recherche avancée vivent dans
-// data.js (chargé avant ce fichier).
+// data.js (chargé avant ce fichier), maintenant branché sur
+// Supabase.
 // =======================================================
 
-const models = getAllModels();
+let models = [];
 
 // =======================
 // 📦 ÉLÉMENTS HTML
@@ -28,14 +29,12 @@ let currentPath = [];
 
 // =======================
 // 📁 SOUS-DOSSIERS
-// Inclut désormais les dossiers créés depuis l'upload/les
-// demandes même s'ils ne contiennent encore aucun modèle
-// (avant ce correctif, un dossier vide créé ailleurs était
-// invisible ici).
+// Inclut les dossiers créés depuis l'upload/les demandes même
+// s'ils ne contiennent encore aucun modèle.
 // =======================
 
-function getSubfolders() {
-  return getSubfoldersAt(getAllFolderPaths(), currentPath);
+async function getSubfolders() {
+  return getSubfoldersAt(await getAllFolderPaths(), currentPath);
 }
 
 // =======================
@@ -72,7 +71,7 @@ function getModelsInCurrentFolderAndSubfolders() {
 // 📁 AFFICHAGE DOSSIERS
 // =======================
 
-function renderFolders() {
+async function renderFolders() {
   foldersGrid.innerHTML = "";
 
   const searchValue = normalizeText(
@@ -85,7 +84,7 @@ function renderFolders() {
 
   if (!searchValue) {
 
-    const folders = getSubfolders();
+    const folders = await getSubfolders();
 
     if (folders.length === 0) {
       foldersGrid.innerHTML =
@@ -126,7 +125,7 @@ function renderFolders() {
   // =======================
 
   const matchingFolders =
-    getMatchingFoldersInCurrentPath(searchValue);
+    await getMatchingFoldersInCurrentPath(searchValue);
 
   if (matchingFolders.length === 0) {
     foldersGrid.innerHTML =
@@ -240,7 +239,7 @@ function renderModels() {
 // 🚀 RENDER GLOBAL
 // =======================
 
-function renderExplorer() {
+async function renderExplorer() {
   folderSearchInput.value = "";
 
   renderBreadcrumb(breadcrumb, currentPath, newPath => {
@@ -248,7 +247,7 @@ function renderExplorer() {
     renderExplorer();
   });
 
-  renderFolders();
+  await renderFolders();
 
   renderModels();
 }
@@ -257,8 +256,8 @@ function renderExplorer() {
 // 🔍 RECHERCHE DOSSIER
 // =======================
 
-folderSearchInput.addEventListener("input", () => {
-  renderFolders();
+folderSearchInput.addEventListener("input", async () => {
+  await renderFolders();
   renderModels();
 });
 
@@ -266,9 +265,19 @@ folderSearchInput.addEventListener("input", () => {
 // 🚀 INITIALISATION
 // =======================
 
-renderExplorer();
+init();
 
-function getMatchingFoldersInCurrentPath(searchValue) {
+async function init() {
+  await authReady;
+
+  models = await getAllModels();
+
+  await primeModelLikes(models.map(model => model.id));
+
+  await renderExplorer();
+}
+
+async function getMatchingFoldersInCurrentPath(searchValue) {
   const folders = new Map();
 
   models.forEach(model => {
@@ -306,7 +315,9 @@ function getMatchingFoldersInCurrentPath(searchValue) {
 
   // Dossiers créés manuellement (sans modèle dedans pour l'instant)
   // qui correspondent aussi à la recherche.
-  getCustomFolders().forEach(path => {
+  const customFolders = await getCustomFolders();
+
+  customFolders.forEach(path => {
     const isInsideCurrentPath = currentPath.every(
       (folder, index) => path[index] === folder
     );

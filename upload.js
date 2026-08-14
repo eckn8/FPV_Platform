@@ -1,7 +1,8 @@
 // =======================================================
 // 📤 upload.js — Publication d'un modèle
-// Les modèles, dossiers et demandes vivent dans data.js
-// (chargé avant ce fichier).
+// Les modèles, dossiers et demandes vivent dans Supabase (voir
+// data.js) — cette page attend l'état de connexion puis charge
+// tout le nécessaire de façon asynchrone avant de s'afficher.
 // =======================================================
 
 // =======================
@@ -11,20 +12,6 @@
 const params = new URLSearchParams(window.location.search);
 
 const linkedRequestId = params.get("requestId");
-
-// =======================
-// 👤 CONNEXION REQUISE
-// Publier est une des rares pages qui n'a aucune raison d'être
-// utilisée sans compte (contrairement à parcourir/télécharger) —
-// on redirige donc directement si personne n'est connecté.
-// =======================
-
-authReady.then(() => {
-  if (!getCurrentUser()) {
-    window.location.href =
-      "login.html?redirect=" + encodeURIComponent("upload.html" + window.location.search);
-  }
-});
 
 // =======================
 // 📦 ÉLÉMENTS HTML
@@ -84,15 +71,15 @@ let currentPath = [];
 // 📁 DOSSIERS
 // =======================
 
-function getSubfolders() {
-  return getSubfoldersAt(getAllFolderPaths(), currentPath);
+async function getSubfolders() {
+  return getSubfoldersAt(await getAllFolderPaths(), currentPath);
 }
 
 // =======================
 // 📁 AFFICHAGE DOSSIERS
 // =======================
 
-function renderUploadFolders() {
+async function renderUploadFolders() {
 
   uploadFoldersGrid.innerHTML = "";
 
@@ -131,7 +118,7 @@ function renderUploadFolders() {
   // 📁 SOUS-DOSSIERS
   // =======================
 
-  const folders = getSubfolders();
+  const folders = await getSubfolders();
 
   if (folders.length === 0) {
 
@@ -178,14 +165,14 @@ function renderUploadFolders() {
 // 🚀 RENDER GLOBAL
 // =======================
 
-function renderFolderPicker() {
+async function renderFolderPicker() {
 
   renderBreadcrumb(uploadBreadcrumb, currentPath, newPath => {
     currentPath = newPath;
     renderFolderPicker();
   });
 
-  renderUploadFolders();
+  await renderUploadFolders();
 }
 
 // =======================
@@ -198,7 +185,7 @@ function renderFolderPicker() {
 
 addFolderButton.addEventListener(
   "click",
-  () => {
+  async () => {
 
     const folderName =
       newFolderInput.value.trim();
@@ -210,53 +197,23 @@ addFolderButton.addEventListener(
       folderName
     ];
 
-    const folders =
-      getCustomFolders();
-
-    const alreadyExists =
-      folders.some(
-        path =>
-          JSON.stringify(path) ===
-          JSON.stringify(newPath)
-      );
-
-    if (!alreadyExists) {
-
-      folders.push(newPath);
-
-      saveCustomFolders(folders);
+    // Idempotent côté données (voir createCustomFolder) : si le
+    // dossier existe déjà, ce n'est pas une erreur.
+    try {
+      await createCustomFolder(newPath);
+    } catch (error) {
+      uploadMessage.textContent =
+        error.message || "Impossible de créer ce dossier. Réessaie.";
+      return;
     }
 
     currentPath = newPath;
 
     newFolderInput.value = "";
 
-    renderFolderPicker();
+    await renderFolderPicker();
   }
 );
-
-// =======================
-// 🔔 DEMANDE LIÉE
-// =======================
-
-if (
-  linkedRequestId &&
-  linkedRequestInfo
-) {
-
-  const linkedRequest =
-    getRequests().find(
-      request =>
-        String(request.id) ===
-        String(linkedRequestId)
-    );
-
-  if (linkedRequest) {
-
-    linkedRequestInfo.textContent =
-      `Ce modèle répond à la demande : ${linkedRequest.title}`;
-  }
-}
 
 // =======================
 // 📸 PREVIEW IMAGE
@@ -572,93 +529,42 @@ uploadButton.addEventListener(
     }
 
     // =======================
-    // 💾 MODÈLES EXISTANTS
-    // =======================
-
-    const savedModels = getUploadedModels();
-
-    // =======================
-    // 🆕 NOUVEAU MODÈLE
+    // 🆕 CRÉATION EN BASE
     // Note : les tags saisis par l'utilisateur restent seuls
     // dans `tags` (pas de tag "Upload utilisateur"/"STL" ajouté
     // automatiquement — ça polluait l'affichage et le scoring
     // de recherche pour rien, tous les modèles matchant).
-    //
-    // images/files contiennent maintenant de vraies URLs R2,
-    // visibles par tout le monde — plus du base64 local à celui
-    // qui publie.
     // =======================
 
-    const newModel = {
+    let newModel;
 
-      id: Date.now(),
-
-      title,
-
-      description,
-
-      path: currentPath,
-
-      tags: customTags,
-
-      images: uploadedImageUrls,
-      image: uploadedImageUrls[0],
-
-      files: uploadedFiles,
-
-      fileName: uploadedFiles[0].name,
-
-      tested,
-
-      printNotes:
-        printNotes ||
-        "Non précisé",
-
-      creator:
-        user.username,
-
-      // Le vrai lien de propriété : un uuid Supabase, jamais un
-      // pseudo modifiable. `creator` (pseudo) ne sert plus qu'à
-      // l'affichage — voir isCreator() dans model.js.
-      creatorId:
-        user.id,
-
-      requestId:
-        linkedRequestId
-          ? String(linkedRequestId)
-          : null
-    };
-
-    savedModels.push(newModel);
-
-    saveUploadedModels(savedModels);
+    try {
+      newModel = await createModel({
+        title,
+        description,
+        path: currentPath,
+        tags: customTags,
+        tested,
+        printNotes: printNotes || "Non précisé",
+        creatorId: user.id,
+        creatorUsername: user.username,
+        requestId: linkedRequestId || null,
+        images: uploadedImageUrls,
+        files: uploadedFiles
+      });
+    } catch (error) {
+      uploadMessage.textContent =
+        error.message || "Échec de la publication. Réessaie.";
+      uploadButton.disabled = false;
+      return;
+    }
 
     // =======================
     // 🔒 FERMER DEMANDE
     // =======================
 
     if (linkedRequestId) {
-
-      const updatedRequests =
-        getRequests().map(request => {
-
-          if (
-            String(request.id) ===
-            String(linkedRequestId)
-          ) {
-
-            return {
-              ...request,
-              status: "closed",
-              resolvedByModelId:
-                newModel.id
-            };
-          }
-
-          return request;
-        });
-
-      saveRequests(updatedRequests);
+      await resolveRequest(linkedRequestId, newModel.id);
     }
 
     // =======================
@@ -701,7 +607,7 @@ uploadButton.addEventListener(
 
     currentPath = [];
 
-    renderFolderPicker();
+    await renderFolderPicker();
 
     // =======================
     // ↩ REDIRECTION
@@ -718,6 +624,35 @@ uploadButton.addEventListener(
 
 // =======================
 // 🚀 INITIALISATION
+// Publier n'a aucune raison d'être utilisé sans compte
+// (contrairement à parcourir/télécharger) — on redirige donc
+// directement si personne n'est connecté, avant de charger quoi
+// que ce soit d'autre.
 // =======================
 
-renderFolderPicker();
+init();
+
+async function init() {
+  await authReady;
+
+  if (!getCurrentUser()) {
+    window.location.href =
+      "login.html?redirect=" + encodeURIComponent("upload.html" + window.location.search);
+    return;
+  }
+
+  if (linkedRequestId && linkedRequestInfo) {
+    const requests = await getRequests();
+
+    const linkedRequest = requests.find(
+      request => String(request.id) === String(linkedRequestId)
+    );
+
+    if (linkedRequest) {
+      linkedRequestInfo.textContent =
+        `Ce modèle répond à la demande : ${linkedRequest.title}`;
+    }
+  }
+
+  await renderFolderPicker();
+}

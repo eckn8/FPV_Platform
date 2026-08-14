@@ -1,25 +1,11 @@
 // =======================================================
 // 👤 profile.js — Page profil public
-// Les modèles vivent dans data.js (chargé avant ce fichier).
-// Avant ce correctif, cette page utilisait sa propre copie de
-// `defaultModels` (4 entrées, ancien schéma `category`) au lieu
-// de celle de model.js/explore.js (2 entrées, schéma `path`) :
-// les cartes id 2 et 3 s'affichaient ici mais menaient à un
-// "Modèle introuvable" en cliquant, puisque model.js ne les
-// connaissait pas. getAllModels() élimine cette divergence.
+// Les modèles vivent dans data.js (chargé avant ce fichier),
+// maintenant branché sur Supabase.
 // =======================================================
 
 const params = new URLSearchParams(window.location.search);
 const username = params.get("user");
-
-const models = getAllModels();
-
-document.getElementById("profileName").textContent = username || "Utilisateur inconnu";
-
-const userModels = models.filter(model => model.creator === username);
-
-document.getElementById("profileInfo").textContent =
-  `${userModels.length} modèle(s) publié(s)`;
 
 const grid = document.getElementById("profileModels");
 
@@ -55,4 +41,17 @@ function displayModels(list) {
   });
 }
 
-displayModels(userModels);
+init();
+
+async function init() {
+  document.getElementById("profileName").textContent = username || "Utilisateur inconnu";
+
+  const models = await getAllModels();
+
+  const userModels = models.filter(model => model.creator === username);
+
+  document.getElementById("profileInfo").textContent =
+    `${userModels.length} modèle(s) publié(s)`;
+
+  displayModels(userModels);
+}

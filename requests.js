@@ -1,14 +1,8 @@
 // =======================================================
 // 💡 requests.js — Demandes communautaires
-// Les modèles, dossiers et demandes vivent dans data.js
-// (chargé avant ce fichier).
+// Les modèles, dossiers et demandes vivent dans data.js (chargé
+// avant ce fichier), maintenant branché sur Supabase.
 // =======================================================
-
-// =======================
-// 👤 UTILISATEUR
-// =======================
-
-const currentUsername = getCurrentUsername();
 
 // =======================
 // 📦 ÉLÉMENTS HTML
@@ -38,23 +32,23 @@ let currentPath = [];
 // 📦 DONNÉES
 // =======================
 
-let requests = getRequests();
+let requests = [];
 
 // =======================
 // 📁 FOLDER PICKER DEMANDE
 // =======================
 
-function getSubfolders() {
+async function getSubfolders() {
   return getSubfoldersAt(
-    getAllFolderPaths({ includeRequests: true }),
+    await getAllFolderPaths({ includeRequests: true }),
     currentPath
   );
 }
 
-function renderRequestFolders() {
+async function renderRequestFolders() {
   requestFoldersGrid.innerHTML = "";
 
-  const folders = getSubfolders();
+  const folders = await getSubfolders();
 
   if (folders.length === 0) {
     requestFoldersGrid.innerHTML =
@@ -88,48 +82,47 @@ function renderSelectedPath() {
     currentPath.length > 0 ? currentPath.join(" / ") : "Aucun";
 }
 
-function renderFolderPicker() {
+async function renderFolderPicker() {
   renderBreadcrumb(requestBreadcrumb, currentPath, newPath => {
     currentPath = newPath;
     renderFolderPicker();
   });
 
-  renderRequestFolders();
+  await renderRequestFolders();
   renderSelectedPath();
 }
 
-addRequestFolderButton.addEventListener("click", () => {
+addRequestFolderButton.addEventListener("click", async () => {
   const folderName = newRequestFolderInput.value.trim();
 
   if (!folderName) return;
 
   const newPath = [...currentPath, folderName];
 
-  const folders = getCustomFolders();
-
-  const alreadyExists = folders.some(path =>
-    JSON.stringify(path) === JSON.stringify(newPath)
-  );
-
-  if (!alreadyExists) {
-    folders.push(newPath);
-    saveCustomFolders(folders);
+  // Idempotent côté données : si le dossier existe déjà, ce n'est
+  // pas une erreur (voir createCustomFolder dans data.js).
+  try {
+    await createCustomFolder(newPath);
+  } catch (error) {
+    requestMessage.textContent =
+      error.message || "Impossible de créer ce dossier. Réessaie.";
+    return;
   }
 
   currentPath = newPath;
   newRequestFolderInput.value = "";
 
-  renderFolderPicker();
+  await renderFolderPicker();
 });
 
 // =======================
 // 👍 VOTES
 // =======================
 
-function voteRequest(id) {
+async function voteRequest(id) {
   if (!requireAuth()) return;
 
-  toggleRequestVote(id);
+  await toggleRequestVote(id);
   displayRequests();
 }
 
@@ -208,7 +201,7 @@ function displayRequests() {
 // ➕ CRÉATION DEMANDE
 // =======================
 
-createRequestButton.addEventListener("click", () => {
+createRequestButton.addEventListener("click", async () => {
   const user = requireAuth();
   if (!user) return;
 
@@ -221,19 +214,23 @@ createRequestButton.addEventListener("click", () => {
     return;
   }
 
-  const newRequest = {
-    id: Date.now(),
-    title,
-    description,
-    path: currentPath,
-    creator: user.username,
-    creatorId: user.id,
-    status: "open",
-    createdAt: new Date().toISOString()
-  };
+  let newRequest;
+
+  try {
+    newRequest = await createRequest({
+      title,
+      description,
+      path: currentPath,
+      creatorId: user.id,
+      creatorUsername: user.username
+    });
+  } catch (error) {
+    requestMessage.textContent =
+      error.message || "Échec de la création de la demande. Réessaie.";
+    return;
+  }
 
   requests.push(newRequest);
-  saveRequests(requests);
 
   requestTitle.value = "";
   requestDescription.value = "";
@@ -241,7 +238,7 @@ createRequestButton.addEventListener("click", () => {
 
   requestMessage.textContent = "Demande créée avec succès ✅";
 
-  renderFolderPicker();
+  await renderFolderPicker();
   displayRequests();
 });
 
@@ -249,10 +246,15 @@ createRequestButton.addEventListener("click", () => {
 // 🚀 INITIALISATION
 // =======================
 
-renderFolderPicker();
-displayRequests();
+init();
 
-// Rafraîchit les boutons de vote une fois l'état de connexion connu
-// (le premier rendu ci-dessus suppose "pas connecté" pour ne jamais
-// retarder l'affichage de la page derrière un appel à Supabase).
-authReady.then(() => displayRequests());
+async function init() {
+  await authReady;
+
+  requests = await getRequests();
+
+  await primeRequestVotes(requests.map(request => request.id));
+
+  await renderFolderPicker();
+  displayRequests();
+}

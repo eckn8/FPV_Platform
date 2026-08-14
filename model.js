@@ -1,42 +1,43 @@
 // =======================================================
 // 📄 model.js — Page détail d'un modèle
-// Les modèles, likes, favoris et l'échappement HTML vivent
-// dans data.js (chargé avant ce fichier).
+// Les modèles, likes, favoris, commentaires et signalements
+// vivent maintenant dans Supabase (voir data.js) — tout ce fichier
+// est donc structuré autour d'un chargement initial asynchrone,
+// plutôt que de lire des données déjà disponibles en mémoire.
 // =======================================================
-
-// =======================
-// 🔗 ID URL
-// =======================
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-const model = findModelById(id);
+init();
 
-// =======================
-// ❌ MODÈLE INTROUVABLE
-// =======================
+async function init() {
+  // On attend l'état de connexion avant de charger quoi que ce
+  // soit : contrairement aux pages de navigation, une page modèle
+  // n'a de toute façon rien d'affichable avant d'avoir interrogé
+  // Supabase (le modèle lui-même vient de là), donc pas de perte à
+  // attendre ce premier appel, rapide et local.
+  await authReady;
 
-if (!model) {
-  document.body.innerHTML = `
-    <main style="padding:40px;">
-      <h1>Modèle introuvable</h1>
-      <p>Ce modèle n’existe pas ou a été supprimé.</p>
-      <button onclick="window.location.href='index.html'">
-        Retour à l’accueil
-      </button>
-    </main>
-  `;
-} else {
-  // Tout le reste de la page ne s'exécute que si le modèle
-  // existe réellement — avant ce correctif, le script continuait
-  // après le remplacement du body et plantait sur `model.xxx`
-  // (ça "marchait" seulement parce que l'exception coupait le
-  // script après coup, par accident).
-  renderModelPage(model);
+  const model = await findModelById(id);
+
+  if (!model) {
+    document.body.innerHTML = `
+      <main style="padding:40px;">
+        <h1>Modèle introuvable</h1>
+        <p>Ce modèle n’existe pas ou a été supprimé.</p>
+        <button onclick="window.location.href='index.html'">
+          Retour à l’accueil
+        </button>
+      </main>
+    `;
+    return;
+  }
+
+  await renderModelPage(model);
 }
 
-function renderModelPage(model) {
+async function renderModelPage(model) {
 
   // =======================
   // 🖼 IMAGE
@@ -140,6 +141,21 @@ function renderModelPage(model) {
   });
 
   // =======================
+  // ☁️ CHARGEMENT DES DONNÉES DÉPENDANTES
+  // Tout ce qui suit (likes, favoris, commentaires) a besoin
+  // d'avoir interrogé Supabase au moins une fois. On le fait en
+  // une seule vague, en parallèle, puis tout le reste du rendu
+  // peut rester synchrone (lecture depuis les caches remplis par
+  // primeModelLikes()/primeFavorites()/primeCommentLikes()).
+  // =======================
+
+  const [comments] = await Promise.all([
+    getModelComments(model.id),
+    primeModelLikes([model.id]),
+    primeFavorites()
+  ]);
+
+  // =======================
   // 👍 LIKES
   // =======================
 
@@ -158,11 +174,11 @@ function renderModelPage(model) {
 
   document
     .getElementById("likeButton")
-    .addEventListener("click", () => {
+    .addEventListener("click", async () => {
 
       if (!requireAuth()) return;
 
-      toggleModelLike(model.id);
+      await toggleModelLike(model.id);
       updateLikeDisplay();
     });
 
@@ -184,11 +200,11 @@ function renderModelPage(model) {
 
   document
     .getElementById("saveButton")
-    .addEventListener("click", () => {
+    .addEventListener("click", async () => {
 
       if (!requireAuth()) return;
 
-      toggleSavedModel(model.id);
+      await toggleSavedModel(model.id);
       updateSaveButton();
     });
 
@@ -196,11 +212,12 @@ function renderModelPage(model) {
 
   // =======================
   // 🚩 SIGNALEMENT
-  // Stockage local pour l'instant (voir data.js) : ça pose la
-  // brique UI/données, mais un signalement n'est visible que dans
-  // le navigateur de la personne qui l'a fait tant qu'il n'y a pas
-  // de backend pour les centraliser. Une seule modale, réutilisée
-  // pour le modèle et pour chaque commentaire.
+  // Signalements centralisés dans Supabase désormais — chacun voit
+  // (et peut donc annuler) ses propres signalements depuis
+  // n'importe quel appareil. Toujours pas de rôle modérateur pour
+  // les traiter, c'est la prochaine étape logique côté modération.
+  // Une seule modale, réutilisée pour le modèle et pour chaque
+  // commentaire.
   // =======================
 
   const reportModal = document.getElementById("reportModal");
@@ -212,9 +229,6 @@ function renderModelPage(model) {
   // Ce que la modale est en train de signaler, rempli à l'ouverture.
   let reportTarget = null;
 
-  // targetType/targetId de la cible en cours + callback à rappeler
-  // une fois le signalement envoyé, pour rafraîchir le bon bouton
-  // (le bouton du modèle, ou toute la liste des commentaires).
   function openReportModal(targetType, targetId, label, onChange) {
     reportTarget = { targetType, targetId, onChange };
 
@@ -238,14 +252,14 @@ function renderModelPage(model) {
   // Bouton "Signaler" = un vrai toggle, comme Like/Favoris : un
   // second clic sur un contenu déjà signalé propose de l'annuler
   // (avec confirmation, pour éviter un clic accidentel).
-  function reportContent(targetType, targetId, label, onChange) {
+  async function reportContent(targetType, targetId, label, onChange) {
     if (!requireAuth()) return;
 
-    if (hasUserReported(targetType, targetId)) {
+    if (await hasUserReported(targetType, targetId)) {
       const confirmCancel = confirm(`Annuler ton signalement pour ${label} ?`);
       if (!confirmCancel) return;
 
-      removeReport(targetType, targetId);
+      await removeReport(targetType, targetId);
 
       if (onChange) onChange();
       return;
@@ -260,7 +274,7 @@ function renderModelPage(model) {
 
   document
     .getElementById("submitReportButton")
-    .addEventListener("click", () => {
+    .addEventListener("click", async () => {
 
       if (!reportTarget) return;
 
@@ -273,14 +287,17 @@ function renderModelPage(model) {
         return;
       }
 
-      const result = addReport(reportTarget.targetType, reportTarget.targetId, {
+      const result = await addReport(reportTarget.targetType, reportTarget.targetId, {
         modelId: model.id,
         reasons: selectedReasons,
         details: reportDetails.value.trim()
       });
 
       if (!result.ok) {
-        reportModalMessage.textContent = "Tu as déjà signalé ce contenu.";
+        reportModalMessage.textContent =
+          result.reason === "already-reported"
+            ? "Tu as déjà signalé ce contenu."
+            : "Échec de l'envoi du signalement. Réessaie.";
         return;
       }
 
@@ -293,9 +310,9 @@ function renderModelPage(model) {
       alert("Signalement envoyé. Merci de contribuer à garder la plateforme saine.");
     });
 
-  function updateReportModelButton() {
+  async function updateReportModelButton() {
     const reportModelButton = document.getElementById("reportModelButton");
-    const reported = hasUserReported("model", model.id);
+    const reported = await hasUserReported("model", model.id);
 
     reportModelButton.textContent = reported
       ? "🚩 Signalé (annuler)"
@@ -310,7 +327,7 @@ function renderModelPage(model) {
       reportContent("model", model.id, "ce modèle", updateReportModelButton);
     });
 
-  updateReportModelButton();
+  await updateReportModelButton();
 
   // =======================
   // 🛠 ACTIONS CRÉATEUR
@@ -328,21 +345,11 @@ function renderModelPage(model) {
   const archivedWarning =
     document.getElementById("archivedWarning");
 
-  // Les modèles publiés depuis l'arrivée de l'auth ont un
-  // `creatorId` (uuid Supabase, non falsifiable) : on l'utilise en
-  // priorité. Les modèles plus anciens / de démo n'en ont pas —
-  // pour eux uniquement, on retombe sur la comparaison de pseudo
-  // (ex : les 2 modèles de démo "FPV Print Hub", qu'aucun vrai
-  // compte ne peut posséder).
   function isCreator() {
     const user = getCurrentUser();
     if (!user) return false;
 
-    if (model.creatorId) {
-      return model.creatorId === user.id;
-    }
-
-    return model.creator === user.username;
+    return model.creatorId === user.id;
   }
 
   function updateArchiveButton() {
@@ -363,7 +370,7 @@ function renderModelPage(model) {
     updateArchiveButton();
   }
 
-  archiveButton.addEventListener("click", () => {
+  archiveButton.addEventListener("click", async () => {
     if (!isCreator()) {
       alert("Seul le créateur peut modifier l'archivage de ce modèle.");
       return;
@@ -379,18 +386,12 @@ function renderModelPage(model) {
 
     if (!confirmArchive) return;
 
-    const updatedModels = getUploadedModels().map(item => {
-      if (String(item.id) === String(model.id)) {
-        return {
-          ...item,
-          archived: newArchivedState
-        };
-      }
-
-      return item;
-    });
-
-    saveUploadedModels(updatedModels);
+    try {
+      await setModelArchived(model.id, newArchivedState);
+    } catch (error) {
+      alert(error.message || "Échec de la mise à jour. Réessaie.");
+      return;
+    }
 
     alert(
       newArchivedState
@@ -540,17 +541,17 @@ function renderModelPage(model) {
             uploadFileToStorage(file, "stl", stlFilenameOverride)
           )
         );
+
+        await addModelVersion(model.id, {
+          version,
+          changelog,
+          files: uploadedFiles
+        });
       } catch (error) {
         newVersionMessage.textContent =
           error.message || "Échec de l'envoi des fichiers. Réessaie.";
         return;
       }
-
-      addModelVersion(model.id, {
-        version,
-        changelog,
-        files: uploadedFiles
-      });
 
       newVersionMessage.textContent = "Version publiée ✅";
 
@@ -561,48 +562,17 @@ function renderModelPage(model) {
 
   // =======================
   // 💬 COMMENTAIRES
+  // `comments` a déjà été chargé plus haut (en même temps que les
+  // likes/favoris) — on prime aussi leurs likes en une seule
+  // requête avant le premier rendu.
   // =======================
 
   const commentsContainer =
     document.getElementById("comments");
 
-  const storageKey =
-    `comments_model_${model.id}`;
-
-  let comments = JSON.parse(
-    localStorage.getItem(storageKey) || "[]"
-  );
-
   let showAllComments = false;
 
-  // Convertir les anciens commentaires si besoin
-  comments = comments.map(comment => {
-    if (typeof comment === "string") {
-      return {
-        id: Date.now() + Math.random(),
-        user: "Anonyme",
-        text: comment
-      };
-    }
-
-    if (!comment.id) {
-      return {
-        ...comment,
-        id: Date.now() + Math.random()
-      };
-    }
-
-    return comment;
-  });
-
-  saveComments();
-
-  function saveComments() {
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify(comments)
-    );
-  }
+  await primeCommentLikes(comments.map(comment => comment.id));
 
   function displayComments() {
     commentsContainer.innerHTML = "";
@@ -614,7 +584,7 @@ function renderModelPage(model) {
     }
 
     const sortedComments = [...comments].sort((a, b) => {
-      return getCommentLikes(model.id, b.id) - getCommentLikes(model.id, a.id);
+      return getCommentLikes(b.id) - getCommentLikes(a.id);
     });
 
     const commentsToShow = showAllComments
@@ -637,34 +607,27 @@ function renderModelPage(model) {
 
         <div class="comment-actions">
           <button class="comment-like-btn"></button>
-          <button class="comment-report-btn"></button>
+          <button class="comment-report-btn" title="Signaler ce commentaire">🚩</button>
         </div>
       `;
 
       const likeButton = bubble.querySelector(".comment-like-btn");
 
       likeButton.textContent =
-        `${hasUserLikedComment(model.id, comment.id) ? "❌ Unlike" : "👍 Like"} · ${getCommentLikes(model.id, comment.id)}`;
+        `${hasUserLikedComment(comment.id) ? "❌ Unlike" : "👍 Like"} · ${getCommentLikes(comment.id)}`;
 
-      likeButton.addEventListener("click", () => {
+      likeButton.addEventListener("click", async () => {
         if (!requireAuth()) return;
 
-        toggleCommentLike(model.id, comment.id);
+        await toggleCommentLike(comment.id);
         displayComments();
       });
 
-      const commentReportButton = bubble.querySelector(".comment-report-btn");
-      const commentReported = hasUserReported("comment", comment.id);
-
-      commentReportButton.textContent = "🚩";
-      commentReportButton.title = commentReported
-        ? "Annuler le signalement"
-        : "Signaler ce commentaire";
-      commentReportButton.classList.toggle("reported", commentReported);
-
-      commentReportButton.addEventListener("click", () => {
-        reportContent("comment", comment.id, "ce commentaire", displayComments);
-      });
+      bubble
+        .querySelector(".comment-report-btn")
+        .addEventListener("click", () => {
+          reportContent("comment", comment.id, "ce commentaire", displayComments);
+        });
 
       commentsContainer.appendChild(bubble);
     });
@@ -687,7 +650,7 @@ function renderModelPage(model) {
     }
   }
 
-  window.addComment = function addComment() {
+  window.addComment = async function addCommentHandler() {
     const user = requireAuth();
     if (!user) return;
 
@@ -696,13 +659,16 @@ function renderModelPage(model) {
 
     if (input.value.trim() === "") return;
 
-    comments.push({
-      id: Date.now(),
-      user: user.username,
-      text: input.value.trim()
-    });
+    let newComment;
 
-    saveComments();
+    try {
+      newComment = await addComment(model.id, input.value.trim());
+    } catch (error) {
+      alert(error.message || "Échec de l'envoi du commentaire. Réessaie.");
+      return;
+    }
+
+    comments.push(newComment);
 
     input.value = "";
 
@@ -710,17 +676,6 @@ function renderModelPage(model) {
   };
 
   displayComments();
-
-  // Le rendu ci-dessus part du principe que personne n'est connecté
-  // (pour ne jamais retarder l'affichage de la page derrière un
-  // appel réseau à Supabase). Dès que l'état réel est connu, on
-  // rafraîchit uniquement ce qui en dépend.
-  authReady.then(() => {
-    updateLikeDisplay();
-    updateSaveButton();
-    updateCreatorActions();
-    displayComments();
-  });
 }
 
 // =======================
@@ -782,7 +737,7 @@ function renderVersions(model) {
 // =======================
 // 🖼 GALERIE D'IMAGES
 // Construite via le DOM plutôt qu'en injectant les data URLs
-// (potentiellement énormes) dans des attributs onclick="".
+// (potentiellement énormes) dans des attributs onclick="").
 // =======================
 
 function renderGallery(container, images, title) {

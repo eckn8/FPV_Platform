@@ -1,11 +1,11 @@
 // =======================================================
 // 🏠 script.js — Page d'accueil
-// Les modèles par défaut, l'accès localStorage, les likes et
-// la recherche avancée vivent maintenant dans data.js (chargé
-// avant ce fichier) pour éviter que les copies divergent.
+// Les modèles, likes et la recherche avancée vivent dans data.js
+// (chargé avant ce fichier), maintenant branché sur Supabase.
 // =======================================================
 
-const models = getAllModels();
+let models = [];
+let currentDisplayedModels = [];
 
 // =======================
 // 📦 ÉLÉMENTS HTML
@@ -19,12 +19,12 @@ const searchInput = document.getElementById("searchInput");
 // 👍 LIKES
 // =======================
 
-function likeModel(id) {
+async function likeModel(id) {
   // Redirige vers login.html si personne n'est connecté — liker
   // nécessite un compte, mais parcourir/rechercher n'en a pas besoin.
   if (!requireAuth()) return;
 
-  toggleModelLike(id);
+  await toggleModelLike(id);
   displayModels(currentDisplayedModels);
 }
 
@@ -32,12 +32,12 @@ function likeModel(id) {
 // 🔍 SUGGESTION DE DEMANDE
 // =======================
 
-function findClosestRequest(searchValue) {
-  const requests = getRequests().filter(
+async function findClosestRequest(searchValue) {
+  if (!searchValue) return null;
+
+  const requests = (await getRequests()).filter(
     request => request.status !== "closed"
   );
-
-  if (!searchValue) return null;
 
   const value = searchValue.toLowerCase();
 
@@ -48,7 +48,7 @@ function findClosestRequest(searchValue) {
   );
 }
 
-function showRequestSuggestion(searchValue, resultsCount) {
+async function showRequestSuggestion(searchValue, resultsCount) {
   const suggestionBox = document.getElementById("requestSuggestion");
 
   if (!suggestionBox) return;
@@ -59,7 +59,7 @@ function showRequestSuggestion(searchValue, resultsCount) {
     return;
   }
 
-  const closestRequest = findClosestRequest(searchValue);
+  const closestRequest = await findClosestRequest(searchValue);
 
   if (closestRequest) {
     suggestionBox.style.display = "block";
@@ -98,12 +98,15 @@ function showRequestSuggestion(searchValue, resultsCount) {
 // 🎨 AFFICHAGE MODÈLES
 // =======================
 
-let currentDisplayedModels = models;
-
 function displayModels(list) {
   currentDisplayedModels = list;
 
   grid.innerHTML = "";
+
+  if (list.length === 0) {
+    grid.innerHTML = "<p>Aucun modèle pour l’instant.</p>";
+    return;
+  }
 
   list.forEach(model => {
     const card = document.createElement("div");
@@ -197,24 +200,33 @@ function goToModel(id) {
 // 🔍 RECHERCHE
 // =======================
 
-searchInput.addEventListener("input", () => {
+searchInput.addEventListener("input", async () => {
   const value = searchInput.value.trim();
 
   const results = advancedSearch(value, models);
 
   displayModels(results);
 
-  showRequestSuggestion(value, results.length);
+  await showRequestSuggestion(value, results.length);
 });
 
 // =======================
 // 🚀 INITIALISATION
+// Le premier rendu attend l'état de connexion (rapide, local) pour
+// ne pas afficher un état "pas connecté" qui clignote immédiatement
+// après vers l'état réel — contrairement à une page modèle, ici la
+// liste elle-même vient de toute façon de Supabase, donc il n'y a
+// aucun affichage "instantané" possible à préserver.
 // =======================
 
-displayModels(models);
+init();
 
-// Le premier rendu ci-dessus part du principe que personne n'est
-// connecté (pour ne jamais retarder l'affichage de la page derrière
-// un appel réseau à Supabase). Dès que l'état réel est connu, on
-// rafraîchit juste les boutons like / compteurs concernés.
-authReady.then(() => displayModels(currentDisplayedModels));
+async function init() {
+  await authReady;
+
+  models = await getAllModels();
+
+  await primeModelLikes(models.map(model => model.id));
+
+  displayModels(models);
+}
