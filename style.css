@@ -630,6 +630,21 @@ select option {
   color: #ff8a8a;
 }
 
+/* Supprimer son propre commentaire — visible seulement pour son auteur */
+.comment-delete-btn {
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid #333a48;
+  background: #171b24;
+  color: #9aa3b2;
+  cursor: pointer;
+}
+
+.comment-delete-btn:hover {
+  border-color: #ff5c5c;
+  color: #ff8a8a;
+}
+
 /* =======================
    MODALE SIGNALEMENT
    Fenêtre superposée, réutilisée pour le modèle et les

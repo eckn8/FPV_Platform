@@ -149,7 +149,9 @@ async function renderModelPage(model) {
   // primeModelLikes()/primeFavorites()/primeCommentLikes()).
   // =======================
 
-  const [comments] = await Promise.all([
+  // `let` (pas const) : réassigné au fil de l'eau quand on retire
+  // un commentaire supprimé, voir plus bas.
+  let [comments] = await Promise.all([
     getModelComments(model.id),
     primeModelLikes([model.id]),
     primeFavorites()
@@ -596,6 +598,9 @@ async function renderModelPage(model) {
 
       bubble.className = "comment-bubble";
 
+      const currentUser = getCurrentUser();
+      const isOwnComment = !!currentUser && comment.userId === currentUser.id;
+
       bubble.innerHTML = `
         <div class="comment-header">
           <strong>${escapeHtml(comment.user || "Anonyme")}</strong>
@@ -608,6 +613,9 @@ async function renderModelPage(model) {
         <div class="comment-actions">
           <button class="comment-like-btn"></button>
           <button class="comment-report-btn" title="Signaler ce commentaire">🚩</button>
+          ${isOwnComment
+            ? '<button class="comment-delete-btn" title="Supprimer ce commentaire">🗑️</button>'
+            : ""}
         </div>
       `;
 
@@ -628,6 +636,24 @@ async function renderModelPage(model) {
         .addEventListener("click", () => {
           reportContent("comment", comment.id, "ce commentaire", displayComments);
         });
+
+      if (isOwnComment) {
+        bubble
+          .querySelector(".comment-delete-btn")
+          .addEventListener("click", async () => {
+            if (!confirm("Supprimer ce commentaire ?")) return;
+
+            try {
+              await deleteComment(comment.id);
+            } catch (error) {
+              alert(error.message || "Échec de la suppression. Réessaie.");
+              return;
+            }
+
+            comments = comments.filter(item => item.id !== comment.id);
+            displayComments();
+          });
+      }
 
       commentsContainer.appendChild(bubble);
     });

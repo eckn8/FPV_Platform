@@ -684,6 +684,7 @@ async function getModelComments(modelId) {
   return data.map(row => ({
     id: row.id,
     user: row.username,
+    userId: row.user_id,
     text: row.text,
     createdAt: row.created_at
   }));
@@ -712,9 +713,23 @@ async function createComment(modelId, text) {
   return {
     id: data.id,
     user: data.username,
+    userId: data.user_id,
     text: data.text,
     createdAt: data.created_at
   };
+}
+
+// L'appelant doit avoir déjà vérifié que l'utilisateur courant est
+// bien l'auteur (voir isOwnComment dans model.js) — la vraie
+// protection vient de la policy RLS "delete" (user_id =
+// auth.uid()), pas de ce contrôle côté client.
+async function deleteComment(commentId) {
+  const { error } = await supabaseClient
+    .from("comments")
+    .delete()
+    .eq("id", commentId);
+
+  if (error) throw new Error(error.message);
 }
 
 // =======================
