@@ -1049,3 +1049,51 @@ select option {
   font-size: inherit;
   padding: 0;
 }
+
+/* =======================
+   MODERATION — REPORT CARDS
+======================= */
+
+.report-card {
+  background: #191d27;
+  border: 1px solid #2a2f3a;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.report-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.report-date {
+  color: #9aa3b2;
+  font-size: 13px;
+}
+
+.report-card .form-actions {
+  margin-top: 14px;
+}
+
+.report-card .form-actions button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #333a48;
+  background: #171b24;
+  color: white;
+  cursor: pointer;
+  flex: 1;
+}
+
+.report-card .remove-content-btn {
+  border-color: #ff5c5c;
+  color: #ff8a8a;
+}
+
+.report-card .remove-content-btn:hover {
+  background: #ff5c5c;
+  color: white;
+}

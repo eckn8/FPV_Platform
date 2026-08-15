@@ -830,6 +830,118 @@ async function removeReport(targetType, targetId) {
 }
 
 // =======================
+// 🛡 MODERATION
+// Everything below is only reachable if the "moderator" RLS
+// policies let it through (see supabase_moderation.sql) —
+// isCurrentUserModerator() only controls whether the UI is shown,
+// never the real permission.
+// =======================
+
+function isCurrentUserModerator() {
+  const user = getCurrentUser();
+  return !!(user && user.isModerator);
+}
+
+// Loads every report, most recent first, with the reporter's
+// username and (for model reports) the model's title/path already
+// embedded via PostgREST foreign-key joins. Comment reports have no
+// join available (target_id is polymorphic, not a real foreign
+// key), so their comment text is fetched separately and merged in.
+async function getAllReports() {
+  const { data, error } = await supabaseClient
+    .from("reports")
+    .select("*, reporter:profiles(username), model:models(title, path)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading reports:", error.message);
+    return [];
+  }
+
+  const commentReportIds = data
+    .filter(row => row.target_type === "comment")
+    .map(row => row.target_id);
+
+  let commentsById = {};
+
+  if (commentReportIds.length > 0) {
+    const { data: comments, error: commentsError } = await supabaseClient
+      .from("comments")
+      .select("id, text, model_id")
+      .in("id", commentReportIds);
+
+    if (!commentsError) {
+      commentsById = Object.fromEntries(comments.map(comment => [comment.id, comment]));
+    }
+  }
+
+  return data.map(row => ({
+    id: row.id,
+    targetType: row.target_type,
+    targetId: row.target_id,
+    modelId: row.model_id,
+    reasons: row.reasons || [],
+    details: row.details,
+    createdAt: row.created_at,
+    reporterUsername: row.reporter ? row.reporter.username : "Unknown user",
+    modelTitle: row.model ? row.model.title : null,
+    modelPath: row.model ? row.model.path : null,
+    commentText: row.target_type === "comment" && commentsById[row.target_id]
+      ? commentsById[row.target_id].text
+      : null
+  }));
+}
+
+// Dismissing = "reviewed, no action needed". Doesn't touch the
+// reported content, just this one report.
+async function dismissReport(reportId) {
+  const { error } = await supabaseClient
+    .from("reports")
+    .delete()
+    .eq("id", reportId);
+
+  if (error) throw new Error(error.message);
+}
+
+// Soft delete (same mechanism used everywhere else — never a
+// physical deletion) + clears out any other pending report on the
+// same model, since there's nothing left to review once it's gone.
+async function removeReportedModel(modelId) {
+  const { error } = await supabaseClient
+    .from("models")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", modelId);
+
+  if (error) throw new Error(error.message);
+
+  _modelsCache = null;
+
+  await supabaseClient
+    .from("reports")
+    .delete()
+    .eq("target_type", "model")
+    .eq("target_id", modelId);
+}
+
+// Hard delete, same as a user deleting their own comment — a
+// comment has no soft-delete concept. Also clears any other pending
+// report on the same comment.
+async function removeReportedComment(commentId) {
+  const { error } = await supabaseClient
+    .from("comments")
+    .delete()
+    .eq("id", commentId);
+
+  if (error) throw new Error(error.message);
+
+  await supabaseClient
+    .from("reports")
+    .delete()
+    .eq("target_type", "comment")
+    .eq("target_id", commentId);
+}
+
+// =======================
 // 🔍 ADVANCED SEARCH
 // Stays 100% synchronous (see the note at the top of the file) —
 // operates on models already loaded in memory.

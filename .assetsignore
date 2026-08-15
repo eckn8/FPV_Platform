@@ -8,6 +8,7 @@ supabase_content_schema.sql
 supabase_content_schema_fix.sql
 supabase_comments_delete_policy.sql
 supabase_root_lock_migration.sql
+supabase_moderation.sql
 .gitignore
 .git
 .claude

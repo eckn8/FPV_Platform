@@ -32,7 +32,7 @@ const authReady = new Promise(resolve => {
 async function _loadProfile(userId) {
   const { data, error } = await supabaseClient
     .from("profiles")
-    .select("username")
+    .select("username, is_moderator")
     .eq("id", userId)
     .single();
 
@@ -56,7 +56,8 @@ async function _refreshCurrentUser(session) {
   currentUser = {
     id: session.user.id,
     email: session.user.email,
-    username: (profile && profile.username) || session.user.email
+    username: (profile && profile.username) || session.user.email,
+    isModerator: !!(profile && profile.is_moderator)
   };
 
   currentAccessToken = session.access_token;
@@ -208,6 +209,16 @@ function renderAuthStatus() {
   container.innerHTML = "";
 
   if (currentUser) {
+    // Only rendered for moderators — the real protection is the
+    // RLS policies on reports/models/comments (see
+    // supabase_moderation.sql), not this link's visibility.
+    if (currentUser.isModerator) {
+      const moderationLink = document.createElement("a");
+      moderationLink.href = "moderation.html";
+      moderationLink.textContent = "🛡️ Moderation";
+      container.appendChild(moderationLink);
+    }
+
     const link = document.createElement("a");
     link.href = `profile.html?user=${encodeURIComponent(currentUser.username)}`;
     link.textContent = `👤 ${currentUser.username}`;

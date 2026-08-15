@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moderation - FPV Print Hub</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="logo" onclick="window.location.href='index.html'">
+      FPV Print Hub
+    </div>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
+      <span id="authStatus" class="auth-status"></span>
+    </nav>
+  </header>
+
+  <main style="padding: 40px 8%;">
+    <h1>🛡️ Moderation</h1>
+    <p>Reports from the whole community — reviewed here, not visible to anyone else.</p>
+
+    <div id="reportsContainer" style="margin-top: 24px;"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="auth.js"></script>
+  <script src="data.js"></script>
+  <script src="moderation.js"></script>
+</body>
+</html>
