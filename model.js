@@ -559,6 +559,249 @@ async function renderModelPage(model) {
       window.location.reload();
     });
 
+  // =======================
+  // ✏️ EDIT MODEL
+  // Metadata only (title/description/tags/tested/print notes/
+  // folder/images) — the STL files themselves only change through
+  // "Add a new version" above, so the version history stays
+  // meaningful.
+  // =======================
+
+  const editButton = document.getElementById("editButton");
+  const editForm = document.getElementById("editForm");
+  const editTitle = document.getElementById("editTitle");
+  const editDescription = document.getElementById("editDescription");
+  const editTags = document.getElementById("editTags");
+  const editTested = document.getElementById("editTested");
+  const editPrintNotes = document.getElementById("editPrintNotes");
+  const editBreadcrumb = document.getElementById("editBreadcrumb");
+  const editCurrentFolderContainer = document.getElementById("editCurrentFolderContainer");
+  const editFoldersGrid = document.getElementById("editFoldersGrid");
+  const editImagesPreview = document.getElementById("editImagesPreview");
+  const editImagesInput = document.getElementById("editImagesInput");
+  const editMessage = document.getElementById("editMessage");
+
+  let editPath = [];
+
+  // Each entry is { type: "existing", value: url } for images the
+  // model already has, or { type: "new", value: dataUrl } for
+  // images just added (not uploaded yet — only on save). A single
+  // list so removing/reordering doesn't need to juggle two arrays.
+  let editImages = [];
+
+  async function getEditSubfolders() {
+    return getSubfoldersAt(await getAllFolderPaths(), editPath);
+  }
+
+  async function renderEditFolders() {
+    editFoldersGrid.innerHTML = "";
+    editCurrentFolderContainer.innerHTML = "";
+
+    if (editPath.length > 0) {
+      const currentFolder = editPath[editPath.length - 1];
+
+      const currentFolderCard = document.createElement("div");
+      currentFolderCard.className = "folder-card active-folder current-folder-big";
+
+      currentFolderCard.innerHTML = `
+        <div class="folder-icon">📁</div>
+        <div>
+          <h3>${escapeHtml(currentFolder)}</h3>
+          <p>Selected folder</p>
+        </div>
+      `;
+
+      editCurrentFolderContainer.appendChild(currentFolderCard);
+    }
+
+    const folders = await getEditSubfolders();
+
+    if (folders.length === 0) return;
+
+    folders.forEach(folder => {
+      const folderCard = document.createElement("div");
+      folderCard.className = "folder-card";
+
+      folderCard.innerHTML = `
+        <div class="folder-icon">📁</div>
+        <div>
+          <h3>${escapeHtml(folder)}</h3>
+          <p>Choose this folder</p>
+        </div>
+      `;
+
+      folderCard.onclick = () => {
+        editPath.push(folder);
+        renderEditFolderPicker();
+      };
+
+      editFoldersGrid.appendChild(folderCard);
+    });
+  }
+
+  async function renderEditFolderPicker() {
+    renderBreadcrumb(editBreadcrumb, editPath, newPath => {
+      editPath = newPath;
+      renderEditFolderPicker();
+    });
+
+    await renderEditFolders();
+  }
+
+  function renderEditImages() {
+    editImagesPreview.innerHTML = "";
+
+    editImages.forEach((image, index) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "edit-image-thumb-wrapper";
+
+      const img = document.createElement("img");
+      img.className = "image-preview-thumb";
+      img.src = image.value;
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "remove-image-btn";
+      removeButton.title = "Remove this image";
+      removeButton.textContent = "✕";
+      removeButton.onclick = () => {
+        editImages.splice(index, 1);
+        renderEditImages();
+      };
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(removeButton);
+      editImagesPreview.appendChild(wrapper);
+    });
+  }
+
+  editImagesInput.addEventListener("change", () => {
+    const files = Array.from(editImagesInput.files);
+
+    files.forEach(file => {
+      if (!file.type.startsWith("image/")) {
+        alert("All files must be images.");
+        return;
+      }
+
+      compressImage(file, 900, 0.75, compressedDataUrl => {
+        editImages.push({ type: "new", value: compressedDataUrl });
+        renderEditImages();
+      });
+    });
+
+    editImagesInput.value = "";
+  });
+
+  editButton.addEventListener("click", async () => {
+    if (!isCreator()) {
+      alert("Only the creator can edit this model.");
+      return;
+    }
+
+    const isOpen = editForm.style.display !== "none";
+
+    if (isOpen) {
+      editForm.style.display = "none";
+      return;
+    }
+
+    editTitle.value = model.title;
+    editDescription.value = model.description;
+    editTags.value = (model.tags || []).join(", ");
+    editTested.value = model.tested || "Not specified";
+    editPrintNotes.value = model.printNotes || "";
+    editMessage.textContent = "";
+
+    editPath = [...getModelPath(model)];
+    editImages = (model.images && model.images.length > 0 ? model.images : model.image ? [model.image] : [])
+      .map(url => ({ type: "existing", value: url }));
+
+    await renderEditFolderPicker();
+    renderEditImages();
+
+    editForm.style.display = "block";
+  });
+
+  document.getElementById("cancelEditButton").addEventListener("click", () => {
+    editForm.style.display = "none";
+  });
+
+  document.getElementById("submitEditButton").addEventListener("click", async () => {
+    if (!isCreator()) {
+      alert("Only the creator can edit this model.");
+      return;
+    }
+
+    const title = editTitle.value.trim();
+    const description = editDescription.value.trim();
+
+    const tags = editTags.value
+      .split(",")
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+
+    if (!title) {
+      editMessage.textContent = "The model title is missing.";
+      return;
+    }
+
+    if (!description) {
+      editMessage.textContent = "The model description is missing.";
+      return;
+    }
+
+    if (editPath.length === 0) {
+      editMessage.textContent = "Choose a folder before saving.";
+      return;
+    }
+
+    if (editImages.length === 0) {
+      editMessage.textContent = "At least one image of the model is required.";
+      return;
+    }
+
+    editMessage.textContent = "Saving...";
+
+    // Existing images are already URLs; only newly added ones (still
+    // base64 data URLs) need to be uploaded. Order is preserved so
+    // the gallery matches what was shown in the edit form.
+    let finalImages;
+
+    try {
+      finalImages = await Promise.all(
+        editImages.map(async image => {
+          if (image.type === "existing") return image.value;
+
+          const uploaded = await uploadFileToStorage(dataUrlToBlob(image.value), "image");
+          return uploaded.url;
+        })
+      );
+    } catch (error) {
+      editMessage.textContent = error.message || "Failed to upload the images. Please try again.";
+      return;
+    }
+
+    try {
+      await updateModel(model.id, {
+        title,
+        description,
+        path: editPath,
+        tags,
+        tested: editTested.value,
+        printNotes: editPrintNotes.value.trim() || "Not specified",
+        images: finalImages
+      });
+    } catch (error) {
+      editMessage.textContent = error.message || "Failed to save. Please try again.";
+      return;
+    }
+
+    editMessage.textContent = "Changes saved ✅";
+
+    window.location.reload();
+  });
+
   updateCreatorActions();
 
   // =======================

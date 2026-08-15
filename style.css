@@ -732,6 +732,37 @@ select option {
   border: 1px solid #333a48;
 }
 
+/* Removable thumbnail (model.js edit form): wraps a thumbnail with
+   a small "✕" button so an existing or just-added image can be
+   dropped before saving. */
+.edit-image-thumb-wrapper {
+  position: relative;
+}
+
+.edit-image-thumb-wrapper .image-preview-thumb {
+  display: block;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(15, 17, 21, 0.85);
+  color: #ff8a8a;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.remove-image-btn:hover {
+  background: #ff5c5c;
+  color: white;
+}
+
 /* =======================
    MODEL PAGE - IMAGE GALLERY
    Large image + clickable thumbnails

@@ -1,6 +1,7 @@
-# Config locale d'outils (pas partie du site)
+# Local tooling config (not part of the site)
 .claude/
+.wrangler/
 
-# Fichiers système
+# System files
 .DS_Store
 Thumbs.db

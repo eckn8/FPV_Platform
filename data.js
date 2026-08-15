@@ -156,6 +156,36 @@ async function setModelArchived(modelId, archived) {
   _modelsCache = null;
 }
 
+// Edits the model's metadata: title/description/tags/tested/
+// printNotes/path/images. Deliberately does NOT touch files/
+// versions — changing the actual STL files only happens through
+// addModelVersion(), so the version history stays meaningful. The
+// caller must have already checked the current user is really the
+// creator; the real protection is the "update" RLS policy
+// (creator_id = auth.uid()), not this client-side check.
+async function updateModel(modelId, { title, description, path, tags, tested, printNotes, images }) {
+  const { data, error } = await supabaseClient
+    .from("models")
+    .update({
+      title,
+      description,
+      path,
+      tags,
+      tested,
+      print_notes: printNotes,
+      images,
+      image: images[0] || null
+    })
+    .eq("id", modelId)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  _modelsCache = null;
+  return _normalizeModelRow(data);
+}
+
 // =======================
 // 🆕 MODEL VERSIONS
 // =======================

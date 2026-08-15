@@ -52,9 +52,45 @@ async function uploadFileToStorage(file, kind, filenameOverride) {
   return { url: result.url, name: result.name };
 }
 
-// Converts a base64 data URL (an image already compressed in the
-// browser, see compressImage() in upload.js) into a Blob, so it
-// can be sent as a real file to /api/upload.
+// Resizes + re-encodes an image in the browser (canvas) before it
+// ever reaches the network — keeps uploads fast and R2 usage low.
+// Shared by upload.js (new model) and model.js (editing a model's
+// images). callback receives a base64 data URL.
+function compressImage(file, maxWidth, quality, callback) {
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const img = new Image();
+
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      callback(canvas.toDataURL("image/jpeg", quality));
+    };
+
+    img.src = event.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// Converts a base64 data URL (an image already compressed via
+// compressImage() above) into a Blob, so it can be sent as a real
+// file to /api/upload.
 function dataUrlToBlob(dataUrl) {
   const [header, base64] = dataUrl.split(",");
   const mimeMatch = header.match(/data:(.*?);base64/);

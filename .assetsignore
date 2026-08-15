@@ -10,3 +10,6 @@ supabase_comments_delete_policy.sql
 supabase_root_lock_migration.sql
 .gitignore
 .git
+.claude
+.wrangler
+node_modules

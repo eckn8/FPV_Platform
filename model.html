@@ -94,6 +94,69 @@
 >
   <h3>Creator tools</h3>
 
+  <button id="editButton">
+    ✏️ Edit this model
+  </button>
+
+  <!-- Hidden by default, opened by clicking the button above.
+       Editing = title/description/tags/tested/print notes/folder/
+       images — everything except the STL files themselves, which
+       only change through "Add a new version" so the version
+       history stays meaningful. -->
+  <div id="editForm" class="new-version-form" style="display:none;">
+
+    <label for="editTitle"><strong>Model title</strong></label>
+    <input type="text" id="editTitle">
+
+    <label for="editDescription"><strong>Description</strong></label>
+    <textarea id="editDescription"></textarea>
+
+    <label for="editTags"><strong>Tags</strong></label>
+    <p class="upload-hint">Separate tags with commas.</p>
+    <input type="text" id="editTags">
+
+    <label for="editTested"><strong>Flight tested?</strong></label>
+    <select id="editTested">
+      <option value="Not specified">Not specified</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <label for="editPrintNotes"><strong>Print notes</strong></label>
+    <textarea id="editPrintNotes"></textarea>
+
+    <label><strong>Folder / category</strong></label>
+    <p class="upload-hint">
+      Move this model to a different folder if it's misfiled.
+    </p>
+
+    <div id="editBreadcrumb" class="breadcrumb"></div>
+    <div id="editCurrentFolderContainer"></div>
+    <div id="editFoldersGrid" class="folders-grid"></div>
+
+    <label><strong>Images</strong></label>
+    <p class="upload-hint">
+      Click a thumbnail's ✕ to remove it, or add new ones below.
+    </p>
+
+    <div id="editImagesPreview" class="images-preview-grid"></div>
+
+    <input type="file" id="editImagesInput" accept="image/*" multiple>
+
+    <div class="form-actions">
+      <button type="button" id="submitEditButton">
+        Save changes
+      </button>
+
+      <button type="button" id="cancelEditButton">
+        Cancel
+      </button>
+    </div>
+
+    <p id="editMessage" class="folder-path"></p>
+
+  </div>
+
   <button id="addVersionButton">
     🆕 Add a new version
   </button>
