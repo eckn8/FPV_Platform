@@ -25,7 +25,11 @@ function displayModels(list) {
     };
 
     card.innerHTML = `
-      <div class="model-image">🛸</div>
+      ${
+        model.image
+          ? `<img class="model-img" src="${model.image}" alt="${escapeHtml(model.title)}">`
+          : `<div class="model-image">🛸</div>`
+      }
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
         <p>${escapeHtml(model.description)}</p>
