@@ -72,6 +72,97 @@ function sanitizeFileName(name) {
     .slice(-100);
 }
 
+// =======================
+// 🛡️ IMAGE SAFETY CHECK (Google Cloud Vision SafeSearch)
+// Runs before an image is ever written to R2 — a flagged image is
+// rejected outright, never stored, never made public. This is
+// general content moderation (nudity/violence/gore), NOT CSAM
+// hash-matching — a separate, dedicated service (Thorn Safer/
+// PhotoDNA) is still needed for that.
+//
+// GOOGLE_VISION_API_KEY is a Worker secret (`wrangler secret put`),
+// never written to wrangler.toml (which is committed to git) and
+// never exposed to the browser — this check only ever runs here,
+// server-side.
+// =======================
+
+// Chunked rather than String.fromCharCode(...bytes) in one call —
+// spreading a large typed array as call arguments blows the call
+// stack on anything but small images (same class of bug as the
+// "Maximum call stack size exceeded" comment-recursion issue fixed
+// earlier in this project, different cause, same lesson).
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+
+  return btoa(binary);
+}
+
+// racy gets a stricter bar (VERY_LIKELY only) — it flags plenty of
+// innocuous content (skin-toned plastic parts, etc.) at LIKELY,
+// while adult/violence keep the normal threshold since false
+// positives there are rarer and missing a real one costs more.
+const UNSAFE_LIKELIHOODS = ["LIKELY", "VERY_LIKELY"];
+
+function isUnsafeAnnotation(annotation) {
+  if (!annotation) return false;
+
+  return (
+    UNSAFE_LIKELIHOODS.includes(annotation.adult) ||
+    UNSAFE_LIKELIHOODS.includes(annotation.violence) ||
+    annotation.racy === "VERY_LIKELY"
+  );
+}
+
+async function checkImageSafety(file, env) {
+  if (!env.GOOGLE_VISION_API_KEY) {
+    // No key configured: fail open rather than blocking every
+    // upload — logged so a missing secret doesn't go unnoticed.
+    console.error("GOOGLE_VISION_API_KEY is not set — skipping image safety check.");
+    return { safe: true };
+  }
+
+  const base64 = arrayBufferToBase64(await file.arrayBuffer());
+
+  let response;
+
+  try {
+    response = await fetch(
+      `https://vision.googleapis.com/v1/images:annotate?key=${env.GOOGLE_VISION_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requests: [{
+            image: { content: base64 },
+            features: [{ type: "SAFE_SEARCH_DETECTION" }]
+          }]
+        })
+      }
+    );
+  } catch {
+    // Network failure talking to Google: fail open — a moderation
+    // outage shouldn't take the whole publish flow down with it.
+    console.error("Could not reach Google Vision API.");
+    return { safe: true };
+  }
+
+  if (!response.ok) {
+    console.error("Google Vision API error:", await response.text());
+    return { safe: true };
+  }
+
+  const data = await response.json();
+  const annotation = data.responses && data.responses[0] && data.responses[0].safeSearchAnnotation;
+
+  return { safe: !isUnsafeAnnotation(annotation) };
+}
+
 async function handleUpload(request, env) {
   // ---- Authentication -----------------------------------
   // Publishing requires an account (see auth.js/requireAuth on the
@@ -108,6 +199,15 @@ async function handleUpload(request, env) {
 
     if (file.size > MAX_IMAGE_BYTES) {
       return jsonResponse({ error: "Image too large (8 MB maximum)." }, 400);
+    }
+
+    const safety = await checkImageSafety(file, env);
+
+    if (!safety.safe) {
+      return jsonResponse(
+        { error: "This image was flagged as inappropriate and cannot be published." },
+        422
+      );
     }
   } else if (kind === "stl") {
     if (!file.name.toLowerCase().endsWith(".stl")) {
