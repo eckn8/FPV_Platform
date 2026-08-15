@@ -18,7 +18,8 @@ main = "worker.js"
 # the DNS record + SSL certificate itself — the zone already exists
 # since the domain was registered directly through Cloudflare.
 routes = [
-  { pattern = "fpv-base.com", custom_domain = true }
+  { pattern = "fpv-base.com", custom_domain = true },
+  { pattern = "www.fpv-base.com", custom_domain = true }
 ]
 
 # Adding `routes` disables the workers.dev URL by default — kept on
