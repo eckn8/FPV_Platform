@@ -1,14 +1,13 @@
 // =======================================================
-// 🧭 explore.js — Explorateur de dossiers
-// Les modèles, dossiers et la recherche avancée vivent dans
-// data.js (chargé avant ce fichier), maintenant branché sur
-// Supabase.
+// 🧭 explore.js — Folder explorer
+// Models, folders and advanced search live in data.js (loaded
+// before this file), now backed by Supabase.
 // =======================================================
 
 let models = [];
 
 // =======================
-// 📦 ÉLÉMENTS HTML
+// 📦 HTML ELEMENTS
 // =======================
 
 const breadcrumb = document.getElementById("breadcrumb");
@@ -22,15 +21,15 @@ const folderSearchInput = document.getElementById(
 );
 
 // =======================
-// 📁 CHEMIN ACTUEL
+// 📁 CURRENT PATH
 // =======================
 
 let currentPath = [];
 
 // =======================
-// 📁 SOUS-DOSSIERS
-// Inclut les dossiers créés depuis l'upload/les demandes même
-// s'ils ne contiennent encore aucun modèle.
+// 📁 SUBFOLDERS
+// Includes folders created from upload/requests even if they don't
+// contain any model yet.
 // =======================
 
 async function getSubfolders() {
@@ -38,7 +37,7 @@ async function getSubfolders() {
 }
 
 // =======================
-// 📦 MODÈLES DOSSIER
+// 📦 MODELS IN FOLDER
 // =======================
 
 function getModelsInCurrentFolder() {
@@ -68,7 +67,7 @@ function getModelsInCurrentFolderAndSubfolders() {
 }
 
 // =======================
-// 📁 AFFICHAGE DOSSIERS
+// 📁 FOLDER DISPLAY
 // =======================
 
 async function renderFolders() {
@@ -79,7 +78,7 @@ async function renderFolders() {
   );
 
   // =======================
-  // 🔍 MODE NORMAL
+  // 🔍 NORMAL MODE
   // =======================
 
   if (!searchValue) {
@@ -88,7 +87,7 @@ async function renderFolders() {
 
     if (folders.length === 0) {
       foldersGrid.innerHTML =
-        "<p>Aucun sous-dossier.</p>";
+        "<p>No subfolders.</p>";
       return;
     }
 
@@ -104,7 +103,7 @@ async function renderFolders() {
 
         <div>
           <h3>${escapeHtml(folder)}</h3>
-          <p>Ouvrir le dossier</p>
+          <p>Open folder</p>
         </div>
       `;
 
@@ -121,7 +120,7 @@ async function renderFolders() {
   }
 
   // =======================
-  // 🔍 RECHERCHE DOSSIERS
+  // 🔍 FOLDER SEARCH
   // =======================
 
   const matchingFolders =
@@ -129,7 +128,7 @@ async function renderFolders() {
 
   if (matchingFolders.length === 0) {
     foldersGrid.innerHTML =
-      "<p>Aucun dossier trouvé.</p>";
+      "<p>No folder found.</p>";
     return;
   }
 
@@ -167,7 +166,7 @@ async function renderFolders() {
 }
 
 // =======================
-// 📦 AFFICHAGE MODÈLES
+// 📦 MODEL DISPLAY
 // =======================
 
 function renderModels() {
@@ -184,7 +183,7 @@ function renderModels() {
   }
 
   if (folderModels.length === 0) {
-    modelsGrid.innerHTML = "<p>Aucun modèle trouvé dans ce dossier.</p>";
+    modelsGrid.innerHTML = "<p>No models found in this folder.</p>";
     return;
   }
 
@@ -209,7 +208,7 @@ function renderModels() {
 
         <p>${escapeHtml(model.description)}</p>
 
-        <p><strong>Créateur :</strong> ${escapeHtml(model.creator || "Utilisateur")}</p>
+        <p><strong>Creator:</strong> ${escapeHtml(model.creator || "User")}</p>
 
         <p class="folder-path">
           📁 ${escapeHtml(getModelPath(model).join(" / "))}
@@ -226,7 +225,7 @@ function renderModels() {
         </p>
 
         <button class="download-btn">
-          Voir le modèle
+          View model
         </button>
       </div>
     `;
@@ -236,7 +235,7 @@ function renderModels() {
 }
 
 // =======================
-// 🚀 RENDER GLOBAL
+// 🚀 GLOBAL RENDER
 // =======================
 
 async function renderExplorer() {
@@ -253,7 +252,7 @@ async function renderExplorer() {
 }
 
 // =======================
-// 🔍 RECHERCHE DOSSIER
+// 🔍 FOLDER SEARCH
 // =======================
 
 folderSearchInput.addEventListener("input", async () => {
@@ -262,7 +261,7 @@ folderSearchInput.addEventListener("input", async () => {
 });
 
 // =======================
-// 🚀 INITIALISATION
+// 🚀 INITIALIZATION
 // =======================
 
 init();
@@ -291,14 +290,13 @@ async function getMatchingFoldersInCurrentPath(searchValue) {
 
     const score = getSearchScore(model, searchValue);
 
-    // Si le modèle correspond à la recherche,
-    // on affiche le dossier qui le contient
+    // If the model matches the search, show the folder that
+    // contains it
     if (score > 0 && path.length > currentPath.length) {
       folders.set(path.join("/"), path);
     }
 
-    // Si le nom d’un dossier correspond directement,
-    // on l’affiche aussi
+    // If a folder's own name matches directly, show it too
     for (let i = currentPath.length; i < path.length; i++) {
       const folderPath = path.slice(0, i + 1);
       const folderName = normalizeText(path[i]);
@@ -313,8 +311,8 @@ async function getMatchingFoldersInCurrentPath(searchValue) {
     }
   });
 
-  // Dossiers créés manuellement (sans modèle dedans pour l'instant)
-  // qui correspondent aussi à la recherche.
+  // Manually created folders (with no model inside yet) that also
+  // match the search.
   const customFolders = await getCustomFolders();
 
   customFolders.forEach(path => {

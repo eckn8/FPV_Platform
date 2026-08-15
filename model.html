@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -9,7 +9,7 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Détail modèle - FPV Print Hub</title>
+  <title>Model detail - FPV Print Hub</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -27,17 +27,17 @@
     </div>
 
     <nav>
-      <a href="index.html">Accueil</a>
-      <a href="explore.html">Explorer</a>
-      <a href="requests.html">Demandes</a>
-      <a href="upload.html">Publier</a>
-      <a href="favorites.html">Mes favoris</a>
+      <a href="index.html">Home</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
       <span id="authStatus" class="auth-status"></span>
     </nav>
 
   </header>
 
-  <!-- CONTENU -->
+  <!-- CONTENT -->
   <main class="model-page">
 
     <!-- IMAGE -->
@@ -45,7 +45,7 @@
       <div id="modelImageContainer"></div>
     </section>
 
-    <!-- INFOS PRINCIPALES -->
+    <!-- MAIN INFO -->
     <section class="model-detail-content">
 
       <p
@@ -58,7 +58,7 @@
       <p id="description"></p>
 
       <p>
-        <strong>Créateur :</strong>
+        <strong>Creator:</strong>
         <a
           id="creator"
           href="#"
@@ -79,11 +79,11 @@
         <span id="likeCount"></span>
 
         <button id="saveButton">
-          ❤️ Sauvegarder
+          ❤️ Save
         </button>
 
-        <button id="reportModelButton" class="report-btn" title="Signaler ce modèle">
-          🚩 Signaler
+        <button id="reportModelButton" class="report-btn" title="Report this model">
+          🚩 Report
         </button>
       </div>
 
@@ -92,40 +92,39 @@
   class="creator-actions"
   style="display:none;"
 >
-  <h3>Gestion créateur</h3>
+  <h3>Creator tools</h3>
 
   <button id="addVersionButton">
-    🆕 Ajouter une nouvelle version
+    🆕 Add a new version
   </button>
 
-  <!-- Formulaire caché par défaut, ouvert au clic sur le bouton
-       ci-dessus. Publier une nouvelle version = nouveaux fichiers
-       STL + changelog, contrairement à une simple modification des
-       infos (titre/description/tags), qui n'a pas besoin de créer
-       de version. -->
+  <!-- Hidden by default, opened by clicking the button above.
+       Publishing a new version = new STL files + a changelog,
+       unlike a simple info edit (title/description/tags), which
+       doesn't need to create a version. -->
   <div id="newVersionForm" class="new-version-form" style="display:none;">
 
-    <label for="newVersionNumber"><strong>Numéro de version</strong></label>
+    <label for="newVersionNumber"><strong>Version number</strong></label>
     <input type="text" id="newVersionNumber" placeholder="1.1">
 
     <label for="newVersionChangelog"><strong>Changelog</strong></label>
     <textarea
       id="newVersionChangelog"
-      placeholder="Ex : Fixation renforcée, compatibilité Hero 13..."
+      placeholder="E.g.: reinforced mount, Hero 13 compatibility..."
     ></textarea>
 
-    <label for="newVersionFiles"><strong>Nouveaux fichiers STL</strong></label>
+    <label for="newVersionFiles"><strong>New STL files</strong></label>
     <input type="file" id="newVersionFiles" accept=".stl" multiple>
 
     <div id="newVersionFilesPreview" class="files-preview"></div>
 
     <div class="form-actions">
       <button type="button" id="submitVersionButton">
-        Publier la version
+        Publish version
       </button>
 
       <button type="button" id="cancelVersionButton">
-        Annuler
+        Cancel
       </button>
     </div>
 
@@ -134,7 +133,7 @@
   </div>
 
   <button id="archiveButton">
-    📦 Archiver ce modèle
+    📦 Archive this model
   </button>
 </div>
 
@@ -143,33 +142,33 @@
   class="archived-warning"
   style="display:none;"
 >
-  ⚠️ Ce modèle est archivé. Il n’est peut-être plus maintenu.
+  ⚠️ This model is archived. It may no longer be maintained.
 </div>
 
       <a id="downloadMainButton" class="download-btn" href="#">
-        Télécharger STL
+        Download STL
       </a>
 
     </section>
 
-    <!-- INFOS TECHNIQUES -->
+    <!-- TECHNICAL INFO -->
     <section class="model-info-panel">
 
-      <h2>Informations techniques</h2>
+      <h2>Technical information</h2>
 
       <p>
-        <strong>Testé en vol :</strong>
+        <strong>Flight tested:</strong>
         <span id="tested"></span>
       </p>
 
       <p>
-        <strong>Notes d’impression :</strong>
+        <strong>Print notes:</strong>
       </p>
 
       <p id="printNotes"></p>
 
       <p>
-        <strong>Fichier :</strong>
+        <strong>File:</strong>
         <span id="fileName"></span>
       </p>
 
@@ -181,7 +180,7 @@
       <h2>Versions</h2>
 
       <p class="current-version-badge">
-        <strong>Version actuelle :</strong>
+        <strong>Current version:</strong>
         <span id="currentVersionLabel"></span>
       </p>
 
@@ -189,82 +188,82 @@
 
     </section>
 
-    <!-- COMMENTAIRES -->
+    <!-- COMMENTS -->
     <section class="comments-section">
 
-      <h2>Commentaires</h2>
+      <h2>Comments</h2>
 
       <div id="comments"></div>
 
       <textarea
         id="commentInput"
-        placeholder="Ajouter un retour d’expérience..."
+        placeholder="Add feedback from your experience..."
       ></textarea>
 
       <button
         onclick="addComment()"
         class="download-btn"
       >
-        Publier le commentaire
+        Post comment
       </button>
 
     </section>
 
   </main>
 
-  <!-- MODALE SIGNALEMENT
-       Une seule instance, réutilisée pour signaler le modèle ou
-       n'importe lequel de ses commentaires — voir model.js. -->
+  <!-- REPORT MODAL
+       A single instance, reused to report the model or any of its
+       comments — see model.js. -->
   <div id="reportModal" class="modal-overlay" style="display:none;">
     <div class="modal-card">
 
-      <h3 id="reportModalTitle">Signaler</h3>
+      <h3 id="reportModalTitle">Report</h3>
 
       <p class="upload-hint">
-        Sélectionne une ou plusieurs raisons :
+        Select one or more reasons:
       </p>
 
       <div id="reportReasonsList" class="report-reasons-list">
         <label>
-          <input type="checkbox" value="Hors-sujet (pas lié au FPV)">
-          Hors-sujet (pas lié au FPV)
+          <input type="checkbox" value="Off-topic (not FPV-related)">
+          Off-topic (not FPV-related)
         </label>
         <label>
-          <input type="checkbox" value="Contenu inapproprié ou choquant">
-          Contenu inapproprié ou choquant
+          <input type="checkbox" value="Inappropriate or shocking content">
+          Inappropriate or shocking content
         </label>
         <label>
-          <input type="checkbox" value="Spam ou publicité">
-          Spam ou publicité
+          <input type="checkbox" value="Spam or advertising">
+          Spam or advertising
         </label>
         <label>
-          <input type="checkbox" value="Insultes ou harcèlement">
-          Insultes ou harcèlement
+          <input type="checkbox" value="Insults or harassment">
+          Insults or harassment
         </label>
         <label>
-          <input type="checkbox" value="Atteinte aux droits d'auteur">
-          Atteinte aux droits d'auteur
+          <input type="checkbox" value="Copyright infringement">
+          Copyright infringement
         </label>
         <label>
-          <input type="checkbox" value="Autre">
-          Autre
+          <input type="checkbox" value="Other">
+          Other
         </label>
       </div>
 
-      <label for="reportDetails"><strong>Précisions (optionnel)</strong></label>
+      <label for="reportDetails"><strong>Details (optional)</strong></label>
       <textarea
         id="reportDetails"
-        placeholder="Ajoute des détails si besoin..."
+        placeholder="Add details if needed..."
       ></textarea>
 
       <p id="reportModalMessage" class="folder-path"></p>
 
       <div class="form-actions">
         <button type="button" id="submitReportButton">
-          Envoyer le signalement
+          Send report
         </button>
         <button type="button" id="cancelReportButton">
-          Annuler
+          Cancel
         </button>
       </div>
 

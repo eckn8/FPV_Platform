@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Demandes - FPV Print Hub</title>
+  <title>Requests - FPV Print Hub</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -20,90 +20,72 @@
     </div>
 
     <nav>
-      <a href="index.html">Accueil</a>
-      <a href="explore.html">Explorer</a>
-      <a href="requests.html">Demandes</a>
-      <a href="upload.html">Publier</a>
-      <a href="favorites.html">Mes favoris</a>
+      <a href="index.html">Home</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
       <span id="authStatus" class="auth-status"></span>
     </nav>
 
   </header>
 
-  <!-- CONTENU -->
+  <!-- CONTENT -->
   <main style="padding: 40px 8%;">
 
-    <!-- TITRE -->
+    <!-- TITLE -->
     <section class="section-title">
 
-      <h1>Demandes de modèles FPV</h1>
+      <h1>FPV model requests</h1>
 
       <p>
-        Propose une idée de modèle 3D à la communauté et vote pour les demandes les plus utiles.
+        Suggest a 3D model idea to the community and vote for the most useful requests.
       </p>
 
     </section>
 
-    <!-- CRÉER UNE DEMANDE -->
+    <!-- CREATE A REQUEST -->
     <section class="upload-section">
 
-      <h2>Créer une demande</h2>
+      <h2>Create a request</h2>
 
-      <!-- TITRE -->
+      <!-- TITLE -->
       <input
         type="text"
         id="requestTitle"
-        placeholder="Ex : Support GPS pour Nazgul5"
+        placeholder="E.g.: GPS mount for Nazgul5"
       >
 
       <!-- DESCRIPTION -->
       <textarea
         id="requestDescription"
-        placeholder="Décris précisément ce que tu recherches..."
+        placeholder="Describe precisely what you're looking for..."
       ></textarea>
 
-      <!-- DOSSIERS -->
+      <!-- FOLDERS -->
       <label>
-        <strong>Dossier / rubrique de la demande</strong>
+        <strong>Folder / category for the request</strong>
       </label>
 
       <p class="upload-hint">
-        Choisis où cette demande doit être rangée, ou crée un nouveau sous-dossier.
+        Choose where this request should live.
       </p>
 
-      <!-- FIL D’ARIANE -->
+      <!-- BREADCRUMB -->
       <div id="requestBreadcrumb" class="breadcrumb"></div>
 
-      <!-- DOSSIERS -->
+      <!-- FOLDERS -->
       <div id="requestFoldersGrid" class="folders-grid"></div>
 
-      <!-- CRÉATION DOSSIER -->
-      <div class="new-folder-box">
-
-        <input
-          type="text"
-          id="newRequestFolderInput"
-          placeholder="Créer un nouveau sous-dossier..."
-        >
-
-        <button
-          type="button"
-          id="addRequestFolderButton"
-        >
-          Créer le dossier
-        </button>
-
-      </div>
-
-      <!-- DOSSIER ACTUEL -->
+      <!-- CURRENT FOLDER -->
       <p class="folder-path">
-        Dossier sélectionné :
-        <span id="selectedRequestPathText">Aucun</span>
+        Selected folder:
+        <span id="selectedRequestPathText">None</span>
       </p>
 
-      <!-- BOUTON -->
+      <!-- BUTTON -->
       <button id="createRequestButton">
-        Créer la demande
+        Create request
       </button>
 
       <!-- MESSAGE -->
@@ -111,16 +93,16 @@
 
     </section>
 
-    <!-- LISTE DES DEMANDES -->
+    <!-- REQUEST LIST -->
     <section
       class="section-title"
       style="margin-top: 50px;"
     >
 
-      <h2>Demandes populaires</h2>
+      <h2>Popular requests</h2>
 
       <p>
-        Les demandes les plus votées apparaissent en premier.
+        The most voted requests appear first.
       </p>
 
     </section>

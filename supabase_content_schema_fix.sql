@@ -1,12 +1,12 @@
 -- =======================================================
--- 🩹 supabase_content_schema_fix.sql — Petit correctif
--- À exécuter juste après supabase_content_schema.sql (SQL Editor
--- → New query → coller → Run).
+-- 🩹 supabase_content_schema_fix.sql — Small fix
+-- Run right after supabase_content_schema.sql (SQL Editor
+-- → New query → paste → Run).
 --
--- Ajoute le pseudo dénormalisé sur `requests` (oublié dans le
--- script initial — models et comments l'ont déjà) pour afficher
--- "Demandé par : X" sans jointure, et relie proprement
--- resolved_by_model_id à models maintenant que la table existe.
+-- Adds the denormalized username to `requests` (missed in the
+-- initial script — models and comments already had it) to display
+-- "Requested by: X" without a join, and properly links
+-- resolved_by_model_id to models now that the table exists.
 -- =======================================================
 
 alter table public.requests

@@ -1,9 +1,9 @@
 // =======================================================
-// 📄 model.js — Page détail d'un modèle
-// Les modèles, likes, favoris, commentaires et signalements
-// vivent maintenant dans Supabase (voir data.js) — tout ce fichier
-// est donc structuré autour d'un chargement initial asynchrone,
-// plutôt que de lire des données déjà disponibles en mémoire.
+// 📄 model.js — Model detail page
+// Models, likes, favorites, comments and reports now live in
+// Supabase (see data.js) — this entire file is therefore
+// structured around an asynchronous initial load, rather than
+// reading data already available in memory.
 // =======================================================
 
 const params = new URLSearchParams(window.location.search);
@@ -12,11 +12,11 @@ const id = params.get("id");
 init();
 
 async function init() {
-  // On attend l'état de connexion avant de charger quoi que ce
-  // soit : contrairement aux pages de navigation, une page modèle
-  // n'a de toute façon rien d'affichable avant d'avoir interrogé
-  // Supabase (le modèle lui-même vient de là), donc pas de perte à
-  // attendre ce premier appel, rapide et local.
+  // We wait for the login state before loading anything: unlike
+  // navigation pages, a model page has nothing to display anyway
+  // before querying Supabase (the model itself comes from there),
+  // so there's nothing lost by waiting for this first, fast, local
+  // call.
   await authReady;
 
   const model = await findModelById(id);
@@ -24,10 +24,10 @@ async function init() {
   if (!model) {
     document.body.innerHTML = `
       <main style="padding:40px;">
-        <h1>Modèle introuvable</h1>
-        <p>Ce modèle n’existe pas ou a été supprimé.</p>
+        <h1>Model not found</h1>
+        <p>This model doesn't exist or has been removed.</p>
         <button onclick="window.location.href='index.html'">
-          Retour à l’accueil
+          Back to home
         </button>
       </main>
     `;
@@ -56,7 +56,7 @@ async function renderModelPage(model) {
   renderGallery(modelImageContainer, modelImages, model.title);
 
   // =======================
-  // 📝 CONTENU PRINCIPAL
+  // 📝 MAIN CONTENT
   // =======================
 
   document.getElementById("title").textContent =
@@ -69,20 +69,20 @@ async function renderModelPage(model) {
     `📁 ${getModelPath(model).join(" / ")}`;
 
   document.getElementById("tested").textContent =
-    model.tested || "Non précisé";
+    model.tested || "Not specified";
 
   document.getElementById("printNotes").textContent =
-    model.printNotes || "Non précisé";
+    model.printNotes || "Not specified";
 
   document.getElementById("fileName").textContent =
-    model.fileName || "Fichier inconnu";
+    model.fileName || "Unknown file";
 
   // =======================
-  // ⬇️ TÉLÉCHARGEMENT
-  // Pointe vers le premier fichier de la version actuelle (celui
-  // affiché juste au-dessus). Les modèles publiés avant le
-  // stockage réel (R2) n'ont pas d'URL : le bouton l'explique au
-  // clic plutôt que de mener vers une page cassée.
+  // ⬇️ DOWNLOAD
+  // Points to the first file of the current version (the one shown
+  // just above). Models published before real storage (R2) don't
+  // have a URL: the button explains this on click instead of
+  // leading to a broken page.
   // =======================
 
   const downloadMainButton = document.getElementById("downloadMainButton");
@@ -95,7 +95,7 @@ async function renderModelPage(model) {
     downloadMainButton.addEventListener("click", event => {
       event.preventDefault();
       alert(
-        "Ce fichier n'est pas disponible au téléchargement — publié avant la mise en place du stockage réel des fichiers."
+        "This file is not available for download — it was published before real file storage was set up."
       );
     });
   }
@@ -107,14 +107,14 @@ async function renderModelPage(model) {
   renderVersions(model);
 
   // =======================
-  // 👤 CRÉATEUR
+  // 👤 CREATOR
   // =======================
 
   const creatorLink =
     document.getElementById("creator");
 
   const creatorName =
-    model.creator || "Utilisateur inconnu";
+    model.creator || "Unknown user";
 
   creatorLink.textContent = creatorName;
 
@@ -141,16 +141,16 @@ async function renderModelPage(model) {
   });
 
   // =======================
-  // ☁️ CHARGEMENT DES DONNÉES DÉPENDANTES
-  // Tout ce qui suit (likes, favoris, commentaires) a besoin
-  // d'avoir interrogé Supabase au moins une fois. On le fait en
-  // une seule vague, en parallèle, puis tout le reste du rendu
-  // peut rester synchrone (lecture depuis les caches remplis par
-  // primeModelLikes()/primeFavorites()/primeCommentLikes()).
+  // ☁️ LOADING DEPENDENT DATA
+  // Everything below (likes, favorites, comments) needs Supabase
+  // to have been queried at least once. We do it in a single wave,
+  // in parallel, so the rest of the rendering can stay synchronous
+  // (reading from the caches filled by primeModelLikes()/
+  // primeFavorites()/primeCommentLikes()).
   // =======================
 
-  // `let` (pas const) : réassigné au fil de l'eau quand on retire
-  // un commentaire supprimé, voir plus bas.
+  // `let` (not const): reassigned on the fly when removing a
+  // deleted comment, see further below.
   let [comments] = await Promise.all([
     getModelComments(model.id),
     primeModelLikes([model.id]),
@@ -187,7 +187,7 @@ async function renderModelPage(model) {
   updateLikeDisplay();
 
   // =======================
-  // ❤️ FAVORIS
+  // ❤️ FAVORITES
   // =======================
 
   function updateSaveButton() {
@@ -196,8 +196,8 @@ async function renderModelPage(model) {
 
     saveButton.textContent =
       isModelSaved(model.id)
-        ? "❌ Retirer des favoris"
-        : "❤️ Sauvegarder";
+        ? "❌ Remove from favorites"
+        : "❤️ Save";
   }
 
   document
@@ -213,13 +213,12 @@ async function renderModelPage(model) {
   updateSaveButton();
 
   // =======================
-  // 🚩 SIGNALEMENT
-  // Signalements centralisés dans Supabase désormais — chacun voit
-  // (et peut donc annuler) ses propres signalements depuis
-  // n'importe quel appareil. Toujours pas de rôle modérateur pour
-  // les traiter, c'est la prochaine étape logique côté modération.
-  // Une seule modale, réutilisée pour le modèle et pour chaque
-  // commentaire.
+  // 🚩 REPORTING
+  // Reports are now centralized in Supabase — everyone can see
+  // (and therefore cancel) their own reports from any device.
+  // Still no moderator role to act on them, that's the logical
+  // next step on the moderation side. A single modal, reused for
+  // the model and for each comment.
   // =======================
 
   const reportModal = document.getElementById("reportModal");
@@ -228,13 +227,13 @@ async function renderModelPage(model) {
   const reportDetails = document.getElementById("reportDetails");
   const reportModalMessage = document.getElementById("reportModalMessage");
 
-  // Ce que la modale est en train de signaler, rempli à l'ouverture.
+  // What the modal is currently reporting, filled in when it opens.
   let reportTarget = null;
 
   function openReportModal(targetType, targetId, label, onChange) {
     reportTarget = { targetType, targetId, onChange };
 
-    reportModalTitle.textContent = `Signaler ${label}`;
+    reportModalTitle.textContent = `Report ${label}`;
 
     reportReasonsList
       .querySelectorAll("input[type=checkbox]")
@@ -251,14 +250,14 @@ async function renderModelPage(model) {
     reportTarget = null;
   }
 
-  // Bouton "Signaler" = un vrai toggle, comme Like/Favoris : un
-  // second clic sur un contenu déjà signalé propose de l'annuler
-  // (avec confirmation, pour éviter un clic accidentel).
+  // "Report" button = a real toggle, like Like/Favorite: a second
+  // click on already-reported content offers to cancel it (with a
+  // confirmation, to avoid an accidental click).
   async function reportContent(targetType, targetId, label, onChange) {
     if (!requireAuth()) return;
 
     if (await hasUserReported(targetType, targetId)) {
-      const confirmCancel = confirm(`Annuler ton signalement pour ${label} ?`);
+      const confirmCancel = confirm(`Cancel your report for ${label}?`);
       if (!confirmCancel) return;
 
       await removeReport(targetType, targetId);
@@ -285,7 +284,7 @@ async function renderModelPage(model) {
       ).map(checkbox => checkbox.value);
 
       if (selectedReasons.length === 0) {
-        reportModalMessage.textContent = "Sélectionne au moins une raison.";
+        reportModalMessage.textContent = "Select at least one reason.";
         return;
       }
 
@@ -298,8 +297,8 @@ async function renderModelPage(model) {
       if (!result.ok) {
         reportModalMessage.textContent =
           result.reason === "already-reported"
-            ? "Tu as déjà signalé ce contenu."
-            : "Échec de l'envoi du signalement. Réessaie.";
+            ? "You've already reported this content."
+            : "Failed to send the report. Please try again.";
         return;
       }
 
@@ -309,7 +308,7 @@ async function renderModelPage(model) {
 
       if (onChange) onChange();
 
-      alert("Signalement envoyé. Merci de contribuer à garder la plateforme saine.");
+      alert("Report sent. Thank you for helping keep the platform healthy.");
     });
 
   async function updateReportModelButton() {
@@ -317,8 +316,8 @@ async function renderModelPage(model) {
     const reported = await hasUserReported("model", model.id);
 
     reportModelButton.textContent = reported
-      ? "🚩 Signalé (annuler)"
-      : "🚩 Signaler";
+      ? "🚩 Reported (cancel)"
+      : "🚩 Report";
 
     reportModelButton.classList.toggle("reported", reported);
   }
@@ -326,13 +325,13 @@ async function renderModelPage(model) {
   document
     .getElementById("reportModelButton")
     .addEventListener("click", () => {
-      reportContent("model", model.id, "ce modèle", updateReportModelButton);
+      reportContent("model", model.id, "this model", updateReportModelButton);
     });
 
   await updateReportModelButton();
 
   // =======================
-  // 🛠 ACTIONS CRÉATEUR
+  // 🛠 CREATOR ACTIONS
   // =======================
 
   const creatorActions =
@@ -356,8 +355,8 @@ async function renderModelPage(model) {
 
   function updateArchiveButton() {
     archiveButton.textContent = model.archived
-      ? "♻️ Désarchiver ce modèle"
-      : "📦 Archiver ce modèle";
+      ? "♻️ Unarchive this model"
+      : "📦 Archive this model";
   }
 
   function updateCreatorActions() {
@@ -374,15 +373,15 @@ async function renderModelPage(model) {
 
   archiveButton.addEventListener("click", async () => {
     if (!isCreator()) {
-      alert("Seul le créateur peut modifier l'archivage de ce modèle.");
+      alert("Only the creator can change this model's archive status.");
       return;
     }
 
     const newArchivedState = !model.archived;
 
     const confirmMessage = newArchivedState
-      ? "Archiver ce modèle ? Il ne sera plus mis en avant, mais restera consultable."
-      : "Désarchiver ce modèle ? Il pourra à nouveau être affiché normalement.";
+      ? "Archive this model? It will no longer be featured, but will remain viewable."
+      : "Unarchive this model? It will be displayed normally again.";
 
     const confirmArchive = confirm(confirmMessage);
 
@@ -391,24 +390,24 @@ async function renderModelPage(model) {
     try {
       await setModelArchived(model.id, newArchivedState);
     } catch (error) {
-      alert(error.message || "Échec de la mise à jour. Réessaie.");
+      alert(error.message || "Update failed. Please try again.");
       return;
     }
 
     alert(
       newArchivedState
-        ? "Modèle archivé."
-        : "Modèle désarchivé."
+        ? "Model archived."
+        : "Model unarchived."
     );
 
     window.location.reload();
   });
 
   // =======================
-  // 🆕 FORMULAIRE NOUVELLE VERSION
-  // Publier une nouvelle version = nouveaux fichiers STL + un
-  // changelog. Modifier juste le titre/la description/les tags ne
-  // crée pas de version (voir doc projet, §38).
+  // 🆕 NEW VERSION FORM
+  // Publishing a new version = new STL files + a changelog. Just
+  // editing the title/description/tags does not create a version
+  // (see project doc, §38).
   // =======================
 
   const newVersionForm =
@@ -431,7 +430,7 @@ async function renderModelPage(model) {
 
   addVersionButton.addEventListener("click", () => {
     if (!isCreator()) {
-      alert("Seul le créateur peut ajouter une version.");
+      alert("Only the creator can add a version.");
       return;
     }
 
@@ -472,7 +471,7 @@ async function renderModelPage(model) {
     .addEventListener("click", async () => {
 
       if (!isCreator()) {
-        alert("Seul le créateur peut ajouter une version.");
+        alert("Only the creator can add a version.");
         return;
       }
 
@@ -481,7 +480,7 @@ async function renderModelPage(model) {
       const files = Array.from(newVersionFiles.files);
 
       if (!version) {
-        newVersionMessage.textContent = "Indique un numéro de version.";
+        newVersionMessage.textContent = "Enter a version number.";
         return;
       }
 
@@ -490,19 +489,19 @@ async function renderModelPage(model) {
 
       if (alreadyUsed) {
         newVersionMessage.textContent =
-          `La version "${version}" existe déjà pour ce modèle.`;
+          `Version "${version}" already exists for this model.`;
         return;
       }
 
       if (!changelog) {
         newVersionMessage.textContent =
-          "Décris ce qui a changé (changelog).";
+          "Describe what changed (changelog).";
         return;
       }
 
       if (files.length === 0) {
         newVersionMessage.textContent =
-          "Ajoute au moins un fichier STL.";
+          "Add at least one STL file.";
         return;
       }
 
@@ -512,7 +511,7 @@ async function renderModelPage(model) {
 
       if (invalidFile) {
         newVersionMessage.textContent =
-          "Tous les fichiers doivent être des STL.";
+          "All files must be STL files.";
         return;
       }
 
@@ -522,16 +521,16 @@ async function renderModelPage(model) {
 
       if (oversizedFile) {
         newVersionMessage.textContent =
-          `"${oversizedFile.name}" dépasse 50 Mo — fichier trop lourd.`;
+          `"${oversizedFile.name}" exceeds 50 MB — file too large.`;
         return;
       }
 
-      // Envoi réel vers R2 — si ça échoue, on ne crée pas de
-      // version à moitié publiée. Un seul fichier : son nom reprend
-      // le titre du modèle (même logique qu'à la publication
-      // initiale, voir upload.js) ; plusieurs fichiers : on garde
-      // leurs noms d'origine pour rester distinguables.
-      newVersionMessage.textContent = "Envoi des fichiers...";
+      // Real upload to R2 — if it fails, no half-published version
+      // is created. A single file: its name takes the model's
+      // title (same logic as the initial publish, see upload.js);
+      // several files: original names are kept so they stay
+      // distinguishable.
+      newVersionMessage.textContent = "Uploading files...";
 
       const stlFilenameOverride = files.length === 1 ? model.title : undefined;
 
@@ -551,11 +550,11 @@ async function renderModelPage(model) {
         });
       } catch (error) {
         newVersionMessage.textContent =
-          error.message || "Échec de l'envoi des fichiers. Réessaie.";
+          error.message || "Failed to upload the files. Please try again.";
         return;
       }
 
-      newVersionMessage.textContent = "Version publiée ✅";
+      newVersionMessage.textContent = "Version published ✅";
 
       window.location.reload();
     });
@@ -563,10 +562,10 @@ async function renderModelPage(model) {
   updateCreatorActions();
 
   // =======================
-  // 💬 COMMENTAIRES
-  // `comments` a déjà été chargé plus haut (en même temps que les
-  // likes/favoris) — on prime aussi leurs likes en une seule
-  // requête avant le premier rendu.
+  // 💬 COMMENTS
+  // `comments` was already loaded above (at the same time as
+  // likes/favorites) — their likes are also primed in a single
+  // request before the first render.
   // =======================
 
   const commentsContainer =
@@ -581,7 +580,7 @@ async function renderModelPage(model) {
 
     if (comments.length === 0) {
       commentsContainer.innerHTML =
-        "<p>Aucun commentaire pour le moment.</p>";
+        "<p>No comments yet.</p>";
       return;
     }
 
@@ -603,7 +602,7 @@ async function renderModelPage(model) {
 
       bubble.innerHTML = `
         <div class="comment-header">
-          <strong>${escapeHtml(comment.user || "Anonyme")}</strong>
+          <strong>${escapeHtml(comment.user || "Anonymous")}</strong>
         </div>
 
         <p class="comment-text">
@@ -612,9 +611,9 @@ async function renderModelPage(model) {
 
         <div class="comment-actions">
           <button class="comment-like-btn"></button>
-          <button class="comment-report-btn" title="Signaler ce commentaire">🚩</button>
+          <button class="comment-report-btn" title="Report this comment">🚩</button>
           ${isOwnComment
-            ? '<button class="comment-delete-btn" title="Supprimer ce commentaire">🗑️</button>'
+            ? '<button class="comment-delete-btn" title="Delete this comment">🗑️</button>'
             : ""}
         </div>
       `;
@@ -634,19 +633,19 @@ async function renderModelPage(model) {
       bubble
         .querySelector(".comment-report-btn")
         .addEventListener("click", () => {
-          reportContent("comment", comment.id, "ce commentaire", displayComments);
+          reportContent("comment", comment.id, "this comment", displayComments);
         });
 
       if (isOwnComment) {
         bubble
           .querySelector(".comment-delete-btn")
           .addEventListener("click", async () => {
-            if (!confirm("Supprimer ce commentaire ?")) return;
+            if (!confirm("Delete this comment?")) return;
 
             try {
               await deleteComment(comment.id);
             } catch (error) {
-              alert(error.message || "Échec de la suppression. Réessaie.");
+              alert(error.message || "Failed to delete. Please try again.");
               return;
             }
 
@@ -664,8 +663,8 @@ async function renderModelPage(model) {
       showMoreButton.className = "show-more-comments-btn";
 
       showMoreButton.textContent = showAllComments
-        ? "Voir moins"
-        : `Voir plus de commentaires (${comments.length - 2})`;
+        ? "Show less"
+        : `Show more comments (${comments.length - 2})`;
 
       showMoreButton.onclick = () => {
         showAllComments = !showAllComments;
@@ -690,7 +689,7 @@ async function renderModelPage(model) {
     try {
       newComment = await createComment(model.id, input.value.trim());
     } catch (error) {
-      alert(error.message || "Échec de l'envoi du commentaire. Réessaie.");
+      alert(error.message || "Failed to post the comment. Please try again.");
       return;
     }
 
@@ -705,9 +704,8 @@ async function renderModelPage(model) {
 }
 
 // =======================
-// 🆕 HISTORIQUE DES VERSIONS
-// Visible par tout le monde (pas que le créateur) — la plus
-// récente en premier.
+// 🆕 VERSION HISTORY
+// Visible to everyone (not just the creator) — most recent first.
 // =======================
 
 function renderVersions(model) {
@@ -723,19 +721,18 @@ function renderVersions(model) {
     const entry = document.createElement("div");
     entry.className = "version-entry";
 
-    // Chaque fichier est son propre lien de téléchargement — une
-    // version peut contenir plusieurs STL, un seul bouton par
-    // version serait ambigu. Les fichiers publiés avant le
-    // stockage réel (R2) n'ont pas d'URL : on les affiche quand
-    // même, mais non cliquables, plutôt que de les faire
-    // disparaître silencieusement.
+    // Each file is its own download link — a version can contain
+    // several STL files, a single button per version would be
+    // ambiguous. Files published before real storage (R2) have no
+    // URL: they're still shown, but not clickable, rather than
+    // silently disappearing.
     const filesHtml = (version.files || [])
       .map(file => {
         if (file.url) {
           return `<a class="version-file-link" href="${escapeHtml(file.url)}">📦 ${escapeHtml(file.name)}</a>`;
         }
 
-        return `<span class="version-file-link version-file-unavailable" title="Publié avant le stockage réel des fichiers — indisponible">📦 ${escapeHtml(file.name)}</span>`;
+        return `<span class="version-file-link version-file-unavailable" title="Published before real file storage — unavailable">📦 ${escapeHtml(file.name)}</span>`;
       })
       .join("");
 
@@ -744,7 +741,7 @@ function renderVersions(model) {
         <span class="version-number">${escapeHtml(version.version)}</span>
         <span class="version-date">
           ${version.createdAt
-            ? new Date(version.createdAt).toLocaleDateString("fr-FR")
+            ? new Date(version.createdAt).toLocaleDateString("en-US")
             : ""}
         </span>
       </div>
@@ -761,9 +758,9 @@ function renderVersions(model) {
 }
 
 // =======================
-// 🖼 GALERIE D'IMAGES
-// Construite via le DOM plutôt qu'en injectant les data URLs
-// (potentiellement énormes) dans des attributs onclick="").
+// 🖼 IMAGE GALLERY
+// Built via the DOM rather than injecting data URLs (potentially
+// huge) into onclick="" attributes.
 // =======================
 
 function renderGallery(container, images, title) {

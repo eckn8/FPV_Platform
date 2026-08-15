@@ -1,11 +1,11 @@
 -- =======================================================
--- 🩹 supabase_comments_delete_policy.sql — Petit correctif
--- À exécuter (SQL Editor → New query → coller → Run).
+-- 🩹 supabase_comments_delete_policy.sql — Small fix
+-- Run it (SQL Editor → New query → paste → Run).
 --
--- La table `comments` n'avait pas de policy DELETE — RLS refuse
--- tout par défaut sans règle explicite, donc personne ne pouvait
--- supprimer un commentaire, même le sien. Ajoute la permission
--- réservée à l'auteur du commentaire.
+-- The `comments` table had no DELETE policy — RLS denies
+-- everything by default without an explicit rule, so no one could
+-- delete a comment, not even their own. Adds the permission,
+-- restricted to the comment's author.
 -- =======================================================
 
 create policy "Users can delete their own comments"

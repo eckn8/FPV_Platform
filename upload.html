@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -9,7 +9,7 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Publier un modèle - FPV Print Hub</title>
+  <title>Publish a model - FPV Print Hub</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -27,48 +27,48 @@
     </div>
 
     <nav>
-      <a href="index.html">Accueil</a>
-      <a href="explore.html">Explorer</a>
-      <a href="requests.html">Demandes</a>
-      <a href="upload.html">Publier</a>
-      <a href="favorites.html">Mes favoris</a>
+      <a href="index.html">Home</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
       <span id="authStatus" class="auth-status"></span>
     </nav>
 
   </header>
 
-  <!-- CONTENU -->
+  <!-- CONTENT -->
   <main style="padding: 40px 8%;">
 
-    <!-- TITRE -->
+    <!-- TITLE -->
     <section class="section-title">
 
-      <h1>Publier un modèle FPV</h1>
+      <h1>Publish an FPV model</h1>
 
       <p>
-        Partage tes fichiers STL, pièces CNC ou accessoires avec la communauté FPV.
+        Share your STL files, CNC parts or accessories with the FPV community.
       </p>
 
     </section>
 
-    <!-- FORMULAIRE -->
+    <!-- FORM -->
     <section class="upload-section">
 
-      <!-- DEMANDE LIÉE -->
+      <!-- LINKED REQUEST -->
       <p
         id="linkedRequestInfo"
         class="folder-path"
       ></p>
 
-      <!-- TITRE -->
+      <!-- TITLE -->
       <label for="uploadTitle">
-        <strong>Titre du modèle</strong>
+        <strong>Model title</strong>
       </label>
 
       <input
         type="text"
         id="uploadTitle"
-        placeholder="Ex : Support GPS O4 pour Nazgul5"
+        placeholder="E.g.: GPS O4 mount for Nazgul5"
       >
 
       <!-- DESCRIPTION -->
@@ -78,12 +78,12 @@
 
       <textarea
         id="uploadDescription"
-        placeholder="Décris précisément le modèle, son utilité, ses contraintes, etc..."
+        placeholder="Describe the model precisely: its purpose, constraints, etc..."
       ></textarea>
 
       <!-- IMAGE -->
       <label for="uploadImage">
-        <strong>Image du modèle</strong>
+        <strong>Model image</strong>
       </label>
 
       <input
@@ -93,7 +93,7 @@
         multiple
       >
 
-      <!-- PREVIEW IMAGE -->
+      <!-- IMAGE PREVIEW -->
       <div
        id="imagesPreview"
        class="images-preview-grid"
@@ -101,7 +101,7 @@
 
       <!-- STL -->
       <label for="uploadFile">
-        <strong>Fichier STL</strong>
+        <strong>STL file</strong>
       </label>
 
       <input
@@ -116,22 +116,22 @@
        class="files-preview"
       ></div>
 
-      <!-- DOSSIERS -->
+      <!-- FOLDERS -->
       <label>
-        <strong>Dossier / rubrique</strong>
+        <strong>Folder / category</strong>
       </label>
 
       <p class="upload-hint">
-        Choisis le dossier le plus adapté avant de publier ton modèle.
+        Choose the most fitting folder before publishing your model.
       </p>
 
-      <!-- FIL D’ARIANE -->
+      <!-- BREADCRUMB -->
       <div
         id="uploadBreadcrumb"
         class="breadcrumb"
       ></div>
 
-      <!-- DOSSIERS -->
+      <!-- FOLDERS -->
       <div
        id="currentFolderContainer">
       </div>
@@ -140,39 +140,13 @@
         class="folders-grid"
       ></div>
 
-      <!-- NOUVEAU DOSSIER -->
-      <div class="new-folder-box">
-
-        <div style="width:100%;">
-
-          <p class="folder-helper">
-            Utilise les dossiers existants si possible pour garder le site organisé.
-          </p>
-
-          <input
-            type="text"
-            id="newFolderInput"
-            placeholder="Créer un nouveau dossier uniquement si nécessaire..."
-          >
-
-        </div>
-
-        <button
-          type="button"
-          id="addFolderButton"
-        >
-          Créer
-        </button>
-
-      </div>
-
       <!-- TAGS -->
       <label for="uploadTags">
         <strong>Tags</strong>
       </label>
 
       <p class="upload-hint">
-        Sépare les tags par des virgules :
+        Separate tags with commas:
         gps, tpu, nazgul5, dji o3...
       </p>
 
@@ -182,40 +156,40 @@
         placeholder="gps, tpu, nazgul5, dji o3"
       >
 
-      <!-- TESTÉ -->
+      <!-- FLIGHT TESTED -->
       <label for="uploadTested">
-        <strong>Testé en vol ?</strong>
+        <strong>Flight tested?</strong>
       </label>
 
       <select id="uploadTested">
 
-        <option value="Non précisé">
-          Non précisé
+        <option value="Not specified">
+          Not specified
         </option>
 
-        <option value="Oui">
-          Oui
+        <option value="Yes">
+          Yes
         </option>
 
-        <option value="Non">
-          Non
+        <option value="No">
+          No
         </option>
 
       </select>
 
       <!-- NOTES -->
       <label for="uploadPrintNotes">
-        <strong>Notes d’impression</strong>
+        <strong>Print notes</strong>
       </label>
 
       <textarea
         id="uploadPrintNotes"
-        placeholder="Ex : imprimer en TPU, 25% infill, supports non nécessaires..."
+        placeholder="E.g.: print in TPU, 25% infill, no supports needed..."
       ></textarea>
 
-      <!-- BOUTON -->
+      <!-- BUTTON -->
       <button id="uploadButton">
-        Publier le modèle
+        Publish model
       </button>
 
       <!-- MESSAGE -->

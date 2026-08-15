@@ -1,11 +1,12 @@
-# Fichiers internes à ne jamais servir publiquement comme asset du
-# site (même s'ils ne contiennent aucun secret, ce ne sont pas des
-# fichiers destinés aux visiteurs).
+# Internal files that should never be served publicly as a site
+# asset (even though none of them contain secrets, they're not
+# meant for visitors).
 worker.js
 wrangler.toml
 supabase_setup.sql
 supabase_content_schema.sql
 supabase_content_schema_fix.sql
 supabase_comments_delete_policy.sql
+supabase_root_lock_migration.sql
 .gitignore
 .git

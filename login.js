@@ -1,6 +1,6 @@
 // =======================================================
-// 🔑 login.js — Page de connexion / inscription
-// Nécessite supabaseClient.js + auth.js chargés avant ce fichier.
+// 🔑 login.js — Login / sign-up page
+// Requires supabaseClient.js + auth.js loaded before this file.
 // =======================================================
 
 const params = new URLSearchParams(window.location.search);
@@ -13,7 +13,7 @@ const tabSignupButton = document.getElementById("tabSignupButton");
 const authMessage = document.getElementById("authMessage");
 
 // =======================
-// 🔀 ONGLETS
+// 🔀 TABS
 // =======================
 
 function showLogin() {
@@ -35,7 +35,7 @@ function showSignup() {
 tabLoginButton.addEventListener("click", showLogin);
 tabSignupButton.addEventListener("click", showSignup);
 
-// Déjà connecté ? Pas besoin de rester sur cette page.
+// Already logged in? No need to stay on this page.
 authReady.then(() => {
   if (getCurrentUser()) {
     window.location.href = redirectTarget;
@@ -43,11 +43,10 @@ authReady.then(() => {
 });
 
 // =======================
-// 🤖 ANTI-ROBOT (Cloudflare Turnstile)
-// Un seul widget partagé entre les deux onglets. Un jeton n'est
-// utilisable qu'une fois : on le remet à zéro après chaque
-// tentative (réussie ou non) pour que le prochain essai en
-// redemande un frais.
+// 🤖 ANTI-BOT (Cloudflare Turnstile)
+// A single widget shared between both tabs. A token can only be
+// used once: we reset it after each attempt (successful or not)
+// so the next attempt requests a fresh one.
 // =======================
 
 let turnstileToken = null;
@@ -69,7 +68,7 @@ function resetTurnstile() {
 }
 
 // =======================
-// 🔓 CONNEXION
+// 🔓 LOGIN
 // =======================
 
 document.getElementById("loginButton").addEventListener("click", async () => {
@@ -77,34 +76,34 @@ document.getElementById("loginButton").addEventListener("click", async () => {
   const password = document.getElementById("loginPassword").value;
 
   if (!email || !password) {
-    authMessage.textContent = "Renseigne ton email et ton mot de passe.";
+    authMessage.textContent = "Enter your email and password.";
     return;
   }
 
   if (!turnstileToken) {
-    authMessage.textContent = "Merci de valider la vérification anti-robot.";
+    authMessage.textContent = "Please complete the anti-bot check.";
     return;
   }
 
-  authMessage.textContent = "Connexion en cours...";
+  authMessage.textContent = "Logging in...";
 
   const { error } = await signIn({ email, password, captchaToken: turnstileToken });
 
   resetTurnstile();
 
   if (error) {
-    // Le message reste volontairement générique (Supabase ne dit
-    // jamais si l'email existe ou non, pour éviter qu'on puisse
-    // deviner qui a un compte) — on ajoute juste un rappel qu'il
-    // faut peut-être en créer un, sans jamais confirmer/infirmer
-    // l'existence du compte.
+    // The message stays deliberately generic (Supabase never
+    // reveals whether an email exists, to prevent guessing who
+    // has an account) — we just add a reminder that an account
+    // may need to be created, without ever confirming/denying
+    // its existence.
     authMessage.innerHTML = "";
     authMessage.appendChild(document.createTextNode(error + " "));
 
     const signupHint = document.createElement("button");
     signupHint.type = "button";
     signupHint.className = "auth-inline-link";
-    signupHint.textContent = "Pas encore de compte ? Créer un compte";
+    signupHint.textContent = "No account yet? Create one";
     signupHint.addEventListener("click", showSignup);
 
     authMessage.appendChild(signupHint);
@@ -115,7 +114,7 @@ document.getElementById("loginButton").addEventListener("click", async () => {
 });
 
 // =======================
-// 🆕 INSCRIPTION
+// 🆕 SIGN UP
 // =======================
 
 document.getElementById("signupButton").addEventListener("click", async () => {
@@ -124,21 +123,21 @@ document.getElementById("signupButton").addEventListener("click", async () => {
   const password = document.getElementById("signupPassword").value;
 
   if (!username || !email || !password) {
-    authMessage.textContent = "Remplis le pseudo, l'email et le mot de passe.";
+    authMessage.textContent = "Fill in the username, email and password.";
     return;
   }
 
   if (password.length < 6) {
-    authMessage.textContent = "Le mot de passe doit faire au moins 6 caractères.";
+    authMessage.textContent = "Password must be at least 6 characters.";
     return;
   }
 
   if (!turnstileToken) {
-    authMessage.textContent = "Merci de valider la vérification anti-robot.";
+    authMessage.textContent = "Please complete the anti-bot check.";
     return;
   }
 
-  authMessage.textContent = "Création du compte...";
+  authMessage.textContent = "Creating account...";
 
   const { error, needsEmailConfirmation } = await signUp({
     email,
@@ -156,7 +155,7 @@ document.getElementById("signupButton").addEventListener("click", async () => {
 
   if (needsEmailConfirmation) {
     authMessage.textContent =
-      "Compte créé ✅ Vérifie tes emails pour confirmer ton adresse avant de te connecter.";
+      "Account created ✅ Check your email to confirm your address before logging in.";
     return;
   }
 

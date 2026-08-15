@@ -1,27 +1,26 @@
 // =======================================================
-// 🪣 storage.js — Upload de fichiers vers le stockage réel (R2)
-// Nécessite auth.js chargé avant ce fichier (pour le jeton d'accès).
+// 🪣 storage.js — Upload files to real storage (R2)
+// Requires auth.js loaded before this file (for the access token).
 //
-// Les fichiers ne transitent plus par localStorage : ils sont
-// envoyés à POST /api/upload (voir worker.js), qui vérifie
-// l'utilisateur auprès de Supabase puis écrit dans R2. On récupère
-// en retour une vraie URL publique, visible par tout le monde —
-// pas juste par la personne qui a publié.
+// Files no longer go through localStorage: they're sent to
+// POST /api/upload (see worker.js), which verifies the user with
+// Supabase and then writes to R2. We get back a real public URL,
+// visible to everyone — not just to the person who published it.
 // =======================================================
 
-// Envoie un fichier vers /api/upload et renvoie { url, name } (le
-// nom final choisi par le serveur — voir worker.js, il peut
-// différer de file.name si filenameOverride est fourni). kind :
-// "image" | "stl". filenameOverride est optionnel — utile pour
-// qu'un fichier STL unique porte le titre du modèle plutôt que le
-// nom choisi sur l'ordinateur (voir upload.js). Lance une erreur
-// au message lisible en cas d'échec (auth manquante, fichier
-// refusé, panne réseau...) — à catcher côté appelant.
+// Sends a file to /api/upload and returns { url, name } (the final
+// name chosen by the server — see worker.js, it can differ from
+// file.name if filenameOverride is provided). kind: "image" | "stl".
+// filenameOverride is optional — useful so a single STL file
+// carries the model's title instead of the name picked on the
+// computer (see upload.js). Throws a readable error message on
+// failure (missing auth, rejected file, network failure...) — to
+// be caught by the caller.
 async function uploadFileToStorage(file, kind, filenameOverride) {
   const token = getAccessToken();
 
   if (!token) {
-    throw new Error("Tu dois être connecté pour publier un fichier.");
+    throw new Error("You must be logged in to publish a file.");
   }
 
   const formData = new FormData();
@@ -41,21 +40,21 @@ async function uploadFileToStorage(file, kind, filenameOverride) {
       body: formData
     });
   } catch {
-    throw new Error("Impossible de contacter le serveur — vérifie ta connexion.");
+    throw new Error("Could not reach the server — check your connection.");
   }
 
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(result.error || "Échec de l'envoi du fichier.");
+    throw new Error(result.error || "Failed to upload the file.");
   }
 
   return { url: result.url, name: result.name };
 }
 
-// Convertit un data URL base64 (image déjà compressée côté
-// navigateur, voir compressImage() dans upload.js) en Blob, pour
-// pouvoir l'envoyer comme un vrai fichier à /api/upload.
+// Converts a base64 data URL (an image already compressed in the
+// browser, see compressImage() in upload.js) into a Blob, so it
+// can be sent as a real file to /api/upload.
 function dataUrlToBlob(dataUrl) {
   const [header, base64] = dataUrl.split(",");
   const mimeMatch = header.match(/data:(.*?);base64/);

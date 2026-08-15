@@ -1,14 +1,14 @@
 // =======================================================
-// 🏠 script.js — Page d'accueil
-// Les modèles, likes et la recherche avancée vivent dans data.js
-// (chargé avant ce fichier), maintenant branché sur Supabase.
+// 🏠 script.js — Home page
+// Models, likes and advanced search live in data.js (loaded
+// before this file), now backed by Supabase.
 // =======================================================
 
 let models = [];
 let currentDisplayedModels = [];
 
 // =======================
-// 📦 ÉLÉMENTS HTML
+// 📦 HTML ELEMENTS
 // =======================
 
 const grid = document.getElementById("modelsGrid");
@@ -20,8 +20,8 @@ const searchInput = document.getElementById("searchInput");
 // =======================
 
 async function likeModel(id) {
-  // Redirige vers login.html si personne n'est connecté — liker
-  // nécessite un compte, mais parcourir/rechercher n'en a pas besoin.
+  // Redirects to login.html if no one is logged in — liking
+  // requires an account, but browsing/searching doesn't.
   if (!requireAuth()) return;
 
   await toggleModelLike(id);
@@ -29,7 +29,7 @@ async function likeModel(id) {
 }
 
 // =======================
-// 🔍 SUGGESTION DE DEMANDE
+// 🔍 REQUEST SUGGESTION
 // =======================
 
 async function findClosestRequest(searchValue) {
@@ -65,37 +65,37 @@ async function showRequestSuggestion(searchValue, resultsCount) {
     suggestionBox.style.display = "block";
 
     suggestionBox.innerHTML = `
-      <h2>Aucun modèle trouvé</h2>
+      <h2>No model found</h2>
 
-      <p>Une demande proche existe :</p>
+      <p>A similar request already exists:</p>
 
       <h3>${escapeHtml(closestRequest.title)}</h3>
 
       <p>${escapeHtml(closestRequest.description)}</p>
 
       <button onclick="window.location.href='requests.html'">
-        Voir les demandes
+        View requests
       </button>
     `;
   } else {
     suggestionBox.style.display = "block";
 
     suggestionBox.innerHTML = `
-      <h2>Aucun modèle trouvé</h2>
+      <h2>No model found</h2>
 
       <p>
-        Tu peux créer une demande pour ce modèle.
+        You can create a request for this model.
       </p>
 
       <button onclick="window.location.href='requests.html'">
-        Créer une demande
+        Create a request
       </button>
     `;
   }
 }
 
 // =======================
-// 🎨 AFFICHAGE MODÈLES
+// 🎨 MODEL DISPLAY
 // =======================
 
 function displayModels(list) {
@@ -104,7 +104,7 @@ function displayModels(list) {
   grid.innerHTML = "";
 
   if (list.length === 0) {
-    grid.innerHTML = "<p>Aucun modèle pour l’instant.</p>";
+    grid.innerHTML = "<p>No models yet.</p>";
     return;
   }
 
@@ -137,8 +137,8 @@ function displayModels(list) {
         <p>${escapeHtml(model.description)}</p>
 
         <p>
-          <strong>Créateur :</strong>
-          ${escapeHtml(model.creator || "Utilisateur")}
+          <strong>Creator:</strong>
+          ${escapeHtml(model.creator || "User")}
         </p>
 
         <p class="folder-path">
@@ -164,7 +164,7 @@ function displayModels(list) {
         </div>
 
         <button class="download-btn">
-          Voir le modèle
+          View model
         </button>
 
       </div>
@@ -189,7 +189,7 @@ function displayModels(list) {
 }
 
 // =======================
-// 📄 PAGE MODÈLE
+// 📄 MODEL PAGE
 // =======================
 
 function goToModel(id) {
@@ -197,7 +197,7 @@ function goToModel(id) {
 }
 
 // =======================
-// 🔍 RECHERCHE
+// 🔍 SEARCH
 // =======================
 
 searchInput.addEventListener("input", async () => {
@@ -211,12 +211,12 @@ searchInput.addEventListener("input", async () => {
 });
 
 // =======================
-// 🚀 INITIALISATION
-// Le premier rendu attend l'état de connexion (rapide, local) pour
-// ne pas afficher un état "pas connecté" qui clignote immédiatement
-// après vers l'état réel — contrairement à une page modèle, ici la
-// liste elle-même vient de toute façon de Supabase, donc il n'y a
-// aucun affichage "instantané" possible à préserver.
+// 🚀 INITIALIZATION
+// The first render waits for the login state (fast, local) to
+// avoid showing a "logged out" state that immediately flickers to
+// the real one afterward — unlike a model page, here the list
+// itself comes from Supabase anyway, so there's no "instant"
+// display to preserve.
 // =======================
 
 init();

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Explorer - FPV Print Hub</title>
+  <title>Explore - FPV Print Hub</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -18,42 +18,42 @@
     </div>
 
     <nav>
-      <a href="index.html">Accueil</a>
-      <a href="explore.html">Explorer</a>
-      <a href="requests.html">Demandes</a>
-      <a href="upload.html">Publier</a>
-      <a href="favorites.html">Mes favoris</a>
+      <a href="index.html">Home</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
       <span id="authStatus" class="auth-status"></span>
     </nav>
   </header>
 
-  <!-- CONTENU -->
+  <!-- CONTENT -->
   <main style="padding: 40px 8%;">
 
-    <h1>Explorer les dossiers</h1>
+    <h1>Browse folders</h1>
     <p>
-      Parcours les fichiers comme dans un explorateur : impression 3D, CNC, accessoires, catégories FPV...
+      Browse files like a file explorer: 3D printing, CNC, accessories, FPV categories...
     </p>
 
-    <!-- Fil d’Ariane -->
+    <!-- Breadcrumb -->
     <div id="breadcrumb" class="breadcrumb"></div>
 
     <input
     type="text"
     id="folderSearchInput"
-    placeholder="Rechercher dans ce dossier..."
+    placeholder="Search within this folder..."
     class="folder-search"
     />
 
-    <!-- Dossiers -->
+    <!-- Folders -->
     <section>
-      <h2>Dossiers</h2>
+      <h2>Folders</h2>
       <div id="foldersGrid" class="folders-grid"></div>
     </section>
 
-    <!-- Modèles -->
+    <!-- Models -->
     <section style="margin-top: 40px;">
-      <h2>Modèles dans ce dossier</h2>
+      <h2>Models in this folder</h2>
       <div id="modelsGrid" class="models-grid"></div>
     </section>
 

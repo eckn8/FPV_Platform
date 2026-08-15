@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-  <!-- Réglages de base du site -->
+  <!-- Basic page setup -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Titre affiché dans l’onglet du navigateur -->
+  <!-- Browser tab title -->
   <title>FPV Print Hub</title>
 
-  <!-- Lien vers le fichier CSS -->
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -23,107 +23,107 @@
     </div>
 
     <nav>
-      <a href="index.html">Modèles</a>
-      <a href="explore.html">Explorer</a>
-      <a href="requests.html">Demandes</a>
-      <a href="upload.html">Publier</a>
-      <a href="favorites.html">Mes favoris</a>
+      <a href="index.html">Models</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
       <span id="authStatus" class="auth-status"></span>
     </nav>
   </header>
 
 
-  
+
 
 
   <!-- =======================
-       HERO / INTRODUCTION
+       HERO / INTRO
   ======================== -->
   <section class="hero">
-    <h1>Les meilleurs fichiers STL pour le drone FPV</h1>
+    <h1>The best STL files for FPV drones</h1>
     <p>
-      Trouve, partage et améliore des modèles 3D pensés pour les pilotes FPV.
+      Find, share and improve 3D models designed for FPV pilots.
     </p>
 
-    <!-- Barre de recherche -->
+    <!-- Search bar -->
     <input
       type="text"
       id="searchInput"
-      placeholder="Rechercher un support GoPro, antenne, Nazgul, TPU..."
+      placeholder="Search for a GoPro mount, antenna, Nazgul, TPU..."
     />
   </section>
 
 
   <!-- =======================
-       STATISTIQUES VISUELLES
-       Pour donner un côté plateforme active
+       VISUAL STATS
+       Gives a sense of an active platform
   ======================== -->
   <section class="stats-section">
     <div class="stat-card">
       <strong>+120</strong>
-      <span>modèles FPV</span>
+      <span>FPV models</span>
     </div>
 
     <div class="stat-card">
       <strong>+35</strong>
-      <span>créateurs</span>
+      <span>creators</span>
     </div>
 
     <div class="stat-card">
-      <strong>+4 800</strong>
-      <span>téléchargements</span>
+      <strong>+4,800</strong>
+      <span>downloads</span>
     </div>
   </section>
 
 
   <!-- =======================
-       MODÈLES POPULAIRES
-       Pour l’instant, affichage visuel seulement
+       POPULAR MODELS
+       Visual only for now
   ======================== -->
   <section class="section-title">
-    <h2>Modèles populaires</h2>
-    <p>Les fichiers les plus consultés et téléchargés par la communauté.</p>
+    <h2>Popular models</h2>
+    <p>The most viewed and downloaded files in the community.</p>
   </section>
 
 
   <!-- =======================
-       FILTRES PAR CATÉGORIE
-       Les boutons sont reliés à script.js
+       CATEGORY FILTERS
+       Buttons are wired to script.js
   ======================== -->
   <section class="filters">
-    <button data-category="all">Tous</button>
-    <button data-category="camera">Supports caméra</button>
-    <button data-category="antenna">Antennes</button>
+    <button data-category="all">All</button>
+    <button data-category="camera">Camera mounts</button>
+    <button data-category="antenna">Antennas</button>
     <button data-category="protection">Protections</button>
-    <button data-category="electronics">Électronique</button>
+    <button data-category="electronics">Electronics</button>
   </section>
 
-  <button onclick="sortByLikes()">🔥 Les plus populaires</button>
+  <button onclick="sortByLikes()">🔥 Most popular</button>
   <!-- =======================
-       LISTE DES MODÈLES
-       Cette grille est remplie automatiquement par script.js
+       MODEL LIST
+       This grid is filled automatically by script.js
   ======================== -->
   <main class="models-grid" id="modelsGrid"></main>
   <section id="requestSuggestion" class="publish-callout" style="display:none;"></section>
 
 
   <!-- =======================
-       APPEL À LA PUBLICATION
-       Redirection vers upload.html
+       PUBLISH CALL TO ACTION
+       Redirects to upload.html
   ======================== -->
   <section class="publish-callout">
-    <h2>Tu as créé une pièce FPV utile ?</h2>
+    <h2>Made a useful FPV part?</h2>
     <p>
-      Partage ton fichier STL avec la communauté et aide d’autres pilotes à améliorer leurs drones.
+      Share your STL file with the community and help other pilots improve their drones.
     </p>
     <button onclick="window.location.href='upload.html'">
-      Publier un modèle
+      Publish a model
     </button>
   </section>
 
 
   <!-- =======================
-       SCRIPT JAVASCRIPT
+       JAVASCRIPT
   ======================== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabaseClient.js"></script>

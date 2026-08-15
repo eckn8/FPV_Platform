@@ -1,17 +1,16 @@
 // =======================================================
-// 🌐 worker.js — Point d'entrée du site (Cloudflare Workers)
+// 🌐 worker.js — Site entry point (Cloudflare Workers)
 //
-// Ce projet est déployé comme un vrai Worker (pas la "Pages"
-// classique) — la convention functions/api/*.js ne s'applique pas
-// ici, d'où ce fichier unique. Par défaut (voir [assets] dans
-// wrangler.toml), Cloudflare sert directement les fichiers
-// statiques (HTML/CSS/JS) quand ils correspondent à la requête et
-// n'invoque ce script QUE pour ce qui ne correspond à aucun
-// fichier — donc uniquement /api/upload en pratique.
+// This project is deployed as a real Worker (not classic "Pages")
+// — the functions/api/*.js convention doesn't apply here, hence
+// this single file. By default (see [assets] in wrangler.toml),
+// Cloudflare serves static files (HTML/CSS/JS) directly when they
+// match the request, and only invokes this script for what doesn't
+// match any file — so in practice, only /api/upload.
 // =======================================================
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;   // 8 Mo
-const MAX_STL_BYTES = 50 * 1024 * 1024;    // 50 Mo
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;   // 8 MB
+const MAX_STL_BYTES = 50 * 1024 * 1024;    // 50 MB
 
 export default {
   async fetch(request, env, ctx) {
@@ -21,9 +20,9 @@ export default {
       return handleUpload(request, env);
     }
 
-    // Tout le reste : fichiers statiques (filet de sécurité — en
-    // pratique Cloudflare les sert déjà avant même d'appeler ce
-    // script quand un fichier correspond).
+    // Everything else: static files (safety net — in practice
+    // Cloudflare already serves them before ever calling this
+    // script when a file matches).
     return env.ASSETS.fetch(request);
   }
 };
@@ -35,9 +34,9 @@ function jsonResponse(body, status) {
   });
 }
 
-// Vérifie le jeton Supabase auprès de Supabase lui-même plutôt que
-// de réimplémenter la vérification du JWT ici — plus simple, et ça
-// gère correctement l'expiration/révocation côté Supabase.
+// Verifies the Supabase token against Supabase itself rather than
+// reimplementing JWT verification here — simpler, and it correctly
+// handles expiry/revocation on Supabase's side.
 async function verifyUser(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
@@ -57,16 +56,16 @@ async function verifyUser(request, env) {
   return user && user.id ? user : null;
 }
 
-// Regex construite dynamiquement (plutôt qu'un littéral \uXXXX)
-// pour matcher les marques diacritiques combinantes après une
-// normalisation NFD — même technique que dans data.js.
+// Dynamically built regex (rather than a literal \uXXXX) to match
+// combining diacritical marks after an NFD normalization — same
+// technique as in data.js.
 const COMBINING_MARKS_REGEX = new RegExp(
   "[" + String.fromCharCode(0x0300) + "-" + String.fromCharCode(0x036f) + "]",
   "g"
 );
 
 function sanitizeFileName(name) {
-  return String(name || "fichier")
+  return String(name || "file")
     .normalize("NFD")
     .replace(COMBINING_MARKS_REGEX, "")
     .replace(/[^a-zA-Z0-9._-]/g, "-")
@@ -74,83 +73,80 @@ function sanitizeFileName(name) {
 }
 
 async function handleUpload(request, env) {
-  // ---- Authentification -----------------------------------
-  // Publier nécessite un compte (voir auth.js/requireAuth côté
-  // client) — mais la vraie vérification doit se faire ICI, côté
-  // serveur : un contrôle uniquement côté navigateur se contourne
-  // trivialement.
+  // ---- Authentication -----------------------------------
+  // Publishing requires an account (see auth.js/requireAuth on the
+  // client side) — but the real check must happen HERE, server-
+  // side: a browser-only check is trivially bypassed.
   const user = await verifyUser(request, env);
 
   if (!user) {
-    return jsonResponse({ error: "Connexion requise." }, 401);
+    return jsonResponse({ error: "You must be logged in." }, 401);
   }
 
-  // ---- Lecture du fichier envoyé -----------------------------
+  // ---- Reading the uploaded file -----------------------------
   let formData;
 
   try {
     formData = await request.formData();
   } catch {
-    return jsonResponse({ error: "Requête invalide." }, 400);
+    return jsonResponse({ error: "Invalid request." }, 400);
   }
 
   const file = formData.get("file");
   const kind = formData.get("kind"); // "image" | "stl"
-  const filenameOverride = formData.get("filename"); // optionnel
+  const filenameOverride = formData.get("filename"); // optional
 
   if (!(file instanceof File)) {
-    return jsonResponse({ error: "Aucun fichier reçu." }, 400);
+    return jsonResponse({ error: "No file received." }, 400);
   }
 
-  // ---- Validation par type ------------------------------------
+  // ---- Validation by type ------------------------------------
   if (kind === "image") {
     if (!file.type.startsWith("image/")) {
-      return jsonResponse({ error: "Le fichier doit être une image." }, 400);
+      return jsonResponse({ error: "The file must be an image." }, 400);
     }
 
     if (file.size > MAX_IMAGE_BYTES) {
-      return jsonResponse({ error: "Image trop lourde (8 Mo maximum)." }, 400);
+      return jsonResponse({ error: "Image too large (8 MB maximum)." }, 400);
     }
   } else if (kind === "stl") {
     if (!file.name.toLowerCase().endsWith(".stl")) {
-      return jsonResponse({ error: "Le fichier doit être un .stl." }, 400);
+      return jsonResponse({ error: "The file must be a .stl." }, 400);
     }
 
     if (file.size > MAX_STL_BYTES) {
-      return jsonResponse({ error: "Fichier STL trop lourd (50 Mo maximum)." }, 400);
+      return jsonResponse({ error: "STL file too large (50 MB maximum)." }, 400);
     }
   } else {
-    return jsonResponse({ error: "Type de fichier non reconnu." }, 400);
+    return jsonResponse({ error: "Unrecognized file type." }, 400);
   }
 
-  // ---- Écriture dans R2 ---------------------------------------
-  // `filenameOverride` permet à l'appelant (voir upload.js) de
-  // faire porter le titre du modèle plutôt que le nom du fichier
-  // choisi sur l'ordinateur — seulement pertinent quand il n'y a
-  // qu'un seul fichier ; avec plusieurs fichiers, c'est l'appelant
-  // qui décide de ne PAS l'envoyer, pour garder des noms distincts
-  // (ex : "Support_camera.stl" / "Support_GPS.stl").
+  // ---- Writing to R2 ---------------------------------------
+  // `filenameOverride` lets the caller (see upload.js) make the
+  // model's title carry the file name instead of the name picked
+  // on the computer — only relevant when there's a single file;
+  // with several files, the caller chooses NOT to send it, to keep
+  // distinct names (e.g. "Camera_mount.stl" / "GPS_mount.stl").
   let cleanName = sanitizeFileName(filenameOverride || file.name);
 
   if (kind === "stl" && !cleanName.toLowerCase().endsWith(".stl")) {
     cleanName += ".stl";
   }
 
-  // Le préfixe uuid dans `key` n'existe que pour éviter les
-  // collisions de noms dans le bucket (deux personnes qui
-  // uploadent "support.stl" ne doivent pas s'écraser) — ça ne doit
-  // pas se voir au téléchargement. Content-Disposition force le
-  // navigateur à proposer `cleanName`, indépendamment du chemin de
-  // stockage réel.
+  // The uuid prefix in `key` only exists to avoid name collisions
+  // in the bucket (two people uploading "mount.stl" must not
+  // overwrite each other) — it should never show up at download
+  // time. Content-Disposition forces the browser to suggest
+  // `cleanName`, independent of the actual storage path.
   const key = `${kind}/${user.id}/${crypto.randomUUID()}-${cleanName}`;
 
   const httpMetadata = {
     contentType: file.type || "application/octet-stream"
   };
 
-  // Uniquement pour les STL : "attachment" force le téléchargement.
-  // Les images doivent rester affichables en <img> (mode "inline"
-  // implicite), sinon elles casseraient sur la page modèle.
+  // STL only: "attachment" forces a download. Images must stay
+  // renderable in <img> (implicit "inline" mode), otherwise they'd
+  // break on the model page.
   if (kind === "stl") {
     httpMetadata.contentDisposition = `attachment; filename="${cleanName}"`;
   }

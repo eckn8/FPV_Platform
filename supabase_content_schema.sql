@@ -1,25 +1,25 @@
 -- =======================================================
--- 🗄 supabase_content_schema.sql — Schéma contenu pour FPV Print Hub
+-- 🗄 supabase_content_schema.sql — Content schema for FPV Print Hub
 --
--- À exécuter UNE FOIS dans Supabase : Project → SQL Editor →
--- New query → coller ce fichier → Run.
+-- Run ONCE in Supabase: Project → SQL Editor →
+-- New query → paste this file → Run.
 --
--- Complète supabase_setup.sql (qui ne gérait que l'identité —
--- table `profiles`). Ce script ajoute tout le reste : modèles,
--- likes, favoris, commentaires, demandes, signalements, dossiers.
--- Après ça, plus rien de ce contenu n'a besoin de localStorage.
+-- Completes supabase_setup.sql (which only handled identity — the
+-- `profiles` table). This script adds everything else: models,
+-- likes, favorites, comments, requests, reports, folders.
+-- After this, none of this content needs localStorage anymore.
 --
--- Choix volontaire : `versions`, `images` et `files` restent des
--- colonnes JSONB sur `models` plutôt que des tables séparées
--- normalisées. Le code JS manipule déjà ces champs comme des
--- tableaux (voir getModelVersions()/addModelVersion() dans
--- data.js) — les stocker tels quels évite une réécriture massive
--- pour un bénéfice nul à cette échelle (pas besoin de filtrer/
--- requêter une version précise côté base pour l'instant).
+-- Deliberate choice: `versions`, `images` and `files` stay as
+-- JSONB columns on `models` rather than separate normalized
+-- tables. The JS code already treats these fields as arrays (see
+-- getModelVersions()/addModelVersion() in data.js) — storing them
+-- as-is avoids a massive rewrite for zero benefit at this scale
+-- (no need to filter/query a specific version on the database side
+-- for now).
 -- =======================================================
 
 -- =======================
--- 📁 DOSSIERS PERSONNALISÉS
+-- 📁 CUSTOM FOLDERS
 -- =======================
 
 create table public.custom_folders (
@@ -41,7 +41,7 @@ create policy "Authenticated users can create folders"
   with check (true);
 
 -- =======================
--- 💡 DEMANDES COMMUNAUTAIRES
+-- 💡 COMMUNITY REQUESTS
 -- =======================
 
 create table public.requests (
@@ -51,9 +51,9 @@ create table public.requests (
   path text[] not null,
   creator_id uuid not null references public.profiles(id),
   status text not null default 'open',
-  -- Pas de clé étrangère vers models (créée après) — cohérence
-  -- gérée côté application, comme resolvedByModelId l'était déjà
-  -- en local.
+  -- No foreign key to models (created afterward) — consistency
+  -- handled on the application side, same as resolvedByModelId
+  -- already was locally.
   resolved_by_model_id uuid,
   created_at timestamptz not null default now()
 );
@@ -69,10 +69,9 @@ create policy "Authenticated users can create requests"
   to authenticated
   with check (auth.uid() = creator_id);
 
--- Autorisé pour n'importe quel utilisateur connecté (pas juste le
--- créateur) : publier un modèle qui répond à la demande de
--- quelqu'un d'autre doit pouvoir la fermer — même règle qu'en
--- local jusqu'ici.
+-- Allowed for any logged-in user (not just the creator): publishing
+-- a model that answers someone else's request must be able to
+-- close it — same rule as locally until now.
 create policy "Authenticated users can update request status"
   on public.requests for update
   to authenticated
@@ -102,7 +101,7 @@ create policy "Users can remove their own vote"
   using (auth.uid() = user_id);
 
 -- =======================
--- 📦 MODÈLES
+-- 📦 MODELS
 -- =======================
 
 create table public.models (
@@ -117,15 +116,15 @@ create table public.models (
   print_notes text,
 
   creator_id uuid not null references public.profiles(id),
-  -- Dénormalisé volontairement : évite une jointure juste pour
-  -- afficher "publié par X" partout où un modèle est listé.
+  -- Deliberately denormalized: avoids a join just to display
+  -- "published by X" everywhere a model is listed.
   creator_username text not null,
 
   request_id uuid references public.requests(id),
 
   archived boolean not null default false,
-  -- Soft delete (voir doc projet §35) : jamais de suppression
-  -- physique déclenchable depuis l'API.
+  -- Soft delete (see project doc §35): never a physical deletion
+  -- triggerable from the API.
   deleted_at timestamptz,
 
   images jsonb not null default '[]',
@@ -157,7 +156,7 @@ create policy "Creators can update their own models"
   using (auth.uid() = creator_id);
 
 -- =======================
--- 👍 LIKES DE MODÈLES
+-- 👍 MODEL LIKES
 -- =======================
 
 create table public.model_likes (
@@ -184,9 +183,9 @@ create policy "Users can remove their own like"
   using (auth.uid() = user_id);
 
 -- =======================
--- ❤️ FAVORIS
--- Contrairement aux likes, pas d'intérêt à ce que ce soit public —
--- seule la personne concernée doit voir ses propres favoris.
+-- ❤️ FAVORITES
+-- Unlike likes, no benefit to being public — only the person
+-- concerned should see their own favorites.
 -- =======================
 
 create table public.favorites (
@@ -214,14 +213,14 @@ create policy "Users can remove their own favorite"
   using (auth.uid() = user_id);
 
 -- =======================
--- 💬 COMMENTAIRES
+-- 💬 COMMENTS
 -- =======================
 
 create table public.comments (
   id uuid primary key default gen_random_uuid(),
   model_id uuid not null references public.models(id) on delete cascade,
   user_id uuid not null references public.profiles(id),
-  -- Dénormalisé, même raison que creator_username sur models.
+  -- Denormalized, same reason as creator_username on models.
   username text not null,
   text text not null,
   created_at timestamptz not null default now()
@@ -262,10 +261,10 @@ create policy "Users can remove their own comment like"
   using (auth.uid() = user_id);
 
 -- =======================
--- 🚩 SIGNALEMENTS
--- Contrairement à likes/comments, PAS public : seule la personne
--- qui a signalé voit son propre signalement pour l'instant (pas
--- encore de rôle modérateur — voir doc projet, section modération).
+-- 🚩 REPORTS
+-- Unlike likes/comments, NOT public: only the person who reported
+-- sees their own report for now (no moderator role yet — see
+-- project doc, moderation section).
 -- =======================
 
 create table public.reports (

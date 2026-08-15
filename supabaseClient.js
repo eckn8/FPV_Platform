@@ -1,32 +1,31 @@
 // =======================================================
-// 🔌 supabaseClient.js — Connexion à Supabase (Auth uniquement)
+// 🔌 supabaseClient.js — Connection to Supabase (Auth only)
 //
-// Nécessite la librairie officielle chargée AVANT ce fichier :
+// Requires the official library loaded BEFORE this file:
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 //   <script src="supabaseClient.js"></script>
 //
-// Supabase ne gère ICI que l'authentification (email/mot de
-// passe) et la table `profiles` (pseudo public). Aucun modèle,
-// image ou fichier STL ne transite par Supabase — ces données
-// restent en localStorage pour l'instant et migreront plus tard
-// vers un stockage dédié (voir supabase_setup.sql pour le détail
-// du schéma, volontairement limité à l'identité).
+// Supabase ONLY handles authentication here (email/password) and
+// the `profiles` table (public username). No model, image or STL
+// file goes through Supabase — see supabase_content_schema.sql for
+// where that content actually lives (Postgres tables + R2 for the
+// real files).
 //
-// ⚠️ SUPABASE_PUBLISHABLE_KEY est une clé "publishable" : elle
-// est FAITE pour être publique dans du code frontend (comme une
-// clé Stripe "publishable"). La sécurité réelle vient des règles
-// RLS définies côté serveur, pas du secret de cette valeur.
-// Ne jamais mettre ici une clé "secret" / "service_role" — celle-là
-// donne un accès total à la base et ne doit exister que côté
-// serveur, jamais dans du code qui tourne dans le navigateur.
+// ⚠️ SUPABASE_PUBLISHABLE_KEY is a "publishable" key: it is MEANT
+// to be public in frontend code (like a Stripe "publishable" key).
+// Real security comes from the RLS rules defined server-side, not
+// from keeping this value secret. Never put a "secret" /
+// "service_role" key here — that one grants full access to the
+// database and must only ever exist server-side, never in code
+// that runs in the browser.
 // =======================================================
 
 const SUPABASE_URL = "https://coyfyedaokkkhtmlcvaq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_DeZEOG8W7hbVJ6KBu463QA_9w0bn-nR";
 
-// La librairie expose son propre espace de noms global `supabase`
-// (qui contient createClient) — on nomme notre instance autrement
-// pour ne pas l'écraser.
+// The library exposes its own global `supabase` namespace (which
+// contains createClient) — our instance is named differently so we
+// don't overwrite it.
 const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY

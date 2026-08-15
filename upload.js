@@ -1,12 +1,12 @@
 // =======================================================
-// 📤 upload.js — Publication d'un modèle
-// Les modèles, dossiers et demandes vivent dans Supabase (voir
-// data.js) — cette page attend l'état de connexion puis charge
-// tout le nécessaire de façon asynchrone avant de s'afficher.
+// 📤 upload.js — Publish a model
+// Models, folders and requests live in Supabase (see data.js) —
+// this page waits for the login state then loads everything it
+// needs asynchronously before rendering.
 // =======================================================
 
 // =======================
-// 🔗 PARAMÈTRES URL
+// 🔗 URL PARAMETERS
 // =======================
 
 const params = new URLSearchParams(window.location.search);
@@ -14,7 +14,7 @@ const params = new URLSearchParams(window.location.search);
 const linkedRequestId = params.get("requestId");
 
 // =======================
-// 📦 ÉLÉMENTS HTML
+// 📦 HTML ELEMENTS
 // =======================
 
 const uploadButton =
@@ -40,12 +40,6 @@ const uploadBreadcrumb =
 const uploadFoldersGrid =
   document.getElementById("uploadFoldersGrid");
 
-const newFolderInput =
-  document.getElementById("newFolderInput");
-
-const addFolderButton =
-  document.getElementById("addFolderButton");
-
 const currentFolderContainer =
   document.getElementById(
     "currentFolderContainer"
@@ -55,20 +49,20 @@ const filesPreview =
   document.getElementById("filesPreview");
 
 // =======================
-// 🖼 IMAGE COMPRESSÉE
+// 🖼 COMPRESSED IMAGES
 // =======================
 
 let compressedImages = [];
 let isCompressingImages = false;
 
 // =======================
-// 📁 DOSSIER ACTUEL
+// 📁 CURRENT FOLDER
 // =======================
 
 let currentPath = [];
 
 // =======================
-// 📁 DOSSIERS
+// 📁 FOLDERS
 // =======================
 
 async function getSubfolders() {
@@ -76,7 +70,7 @@ async function getSubfolders() {
 }
 
 // =======================
-// 📁 AFFICHAGE DOSSIERS
+// 📁 FOLDER DISPLAY
 // =======================
 
 async function renderUploadFolders() {
@@ -86,7 +80,7 @@ async function renderUploadFolders() {
   currentFolderContainer.innerHTML = "";
 
   // =======================
-  // 📁 DOSSIER ACTUEL
+  // 📁 CURRENT FOLDER
   // =======================
 
   if (currentPath.length > 0) {
@@ -105,7 +99,7 @@ async function renderUploadFolders() {
 
       <div>
         <h3>${escapeHtml(currentFolder)}</h3>
-        <p>Dossier sélectionné</p>
+        <p>Selected folder</p>
       </div>
     `;
 
@@ -115,7 +109,7 @@ async function renderUploadFolders() {
   }
 
   // =======================
-  // 📁 SOUS-DOSSIERS
+  // 📁 SUBFOLDERS
   // =======================
 
   const folders = await getSubfolders();
@@ -125,7 +119,7 @@ async function renderUploadFolders() {
     if (currentPath.length === 0) {
 
       uploadFoldersGrid.innerHTML =
-        "<p>Aucun dossier disponible.</p>";
+        "<p>No folder available.</p>";
     }
 
     return;
@@ -144,7 +138,7 @@ async function renderUploadFolders() {
 
       <div>
         <h3>${escapeHtml(folder)}</h3>
-        <p>Choisir ce dossier</p>
+        <p>Choose this folder</p>
       </div>
     `;
 
@@ -162,7 +156,7 @@ async function renderUploadFolders() {
 }
 
 // =======================
-// 🚀 RENDER GLOBAL
+// 🚀 GLOBAL RENDER
 // =======================
 
 async function renderFolderPicker() {
@@ -176,47 +170,7 @@ async function renderFolderPicker() {
 }
 
 // =======================
-// ➕ NOUVEAU DOSSIER
-// Rappel produit : c'est une option de secours, pas le chemin
-// recommandé. Utiliser un dossier existant évite de finir avec
-// "Support GPS" / "Supports GPS" / "GPS mounts"... qui désignent
-// tous la même chose.
-// =======================
-
-addFolderButton.addEventListener(
-  "click",
-  async () => {
-
-    const folderName =
-      newFolderInput.value.trim();
-
-    if (!folderName) return;
-
-    const newPath = [
-      ...currentPath,
-      folderName
-    ];
-
-    // Idempotent côté données (voir createCustomFolder) : si le
-    // dossier existe déjà, ce n'est pas une erreur.
-    try {
-      await createCustomFolder(newPath);
-    } catch (error) {
-      uploadMessage.textContent =
-        error.message || "Impossible de créer ce dossier. Réessaie.";
-      return;
-    }
-
-    currentPath = newPath;
-
-    newFolderInput.value = "";
-
-    await renderFolderPicker();
-  }
-);
-
-// =======================
-// 📸 PREVIEW IMAGE
+// 📸 IMAGE PREVIEW
 // =======================
 
 uploadImage.addEventListener("change", () => {
@@ -236,7 +190,7 @@ uploadImage.addEventListener("change", () => {
 
   images.forEach(image => {
     if (!image.type.startsWith("image/")) {
-      alert("Tous les fichiers doivent être des images.");
+      alert("All files must be images.");
       uploadImage.value = "";
       compressedImages = [];
       imagesPreview.innerHTML = "";
@@ -258,14 +212,14 @@ uploadImage.addEventListener("change", () => {
       if (processedImages === images.length) {
         isCompressingImages = false;
         uploadMessage.textContent =
-          `${compressedImages.length} image(s) prête(s) pour la publication.`;
+          `${compressedImages.length} image(s) ready to publish.`;
       }
     });
   });
 });
 
 // =======================
-// 🗜 COMPRESSION IMAGE
+// 🗜 IMAGE COMPRESSION
 // =======================
 
 function compressImage(
@@ -358,15 +312,15 @@ uploadFile.addEventListener(
 );
 
 // =======================
-// 🚀 PUBLICATION
+// 🚀 PUBLISHING
 // =======================
 
 uploadButton.addEventListener(
   "click",
   async () => {
 
-    // Anti double-clic : un clic pendant que la publication est
-    // déjà en cours de traitement ne doit pas créer un doublon.
+    // Anti double-click: a click while the publish is already in
+    // progress must not create a duplicate.
     if (uploadButton.disabled) return;
 
     const user = requireAuth();
@@ -403,7 +357,7 @@ uploadButton.addEventListener(
         );
 
     // =======================
-    // ✈️ TESTÉ EN VOL
+    // ✈️ FLIGHT TESTED
     // =======================
 
     const tested =
@@ -427,22 +381,22 @@ uploadButton.addEventListener(
 
      if (isCompressingImages) {
       uploadMessage.textContent =
-       "Les images sont encore en préparation. Réessaie dans une seconde.";
+       "Images are still being prepared. Try again in a second.";
        return;
      }
 
      if (!title) {
-       uploadMessage.textContent = "Il manque le titre du modèle.";
+       uploadMessage.textContent = "The model title is missing.";
        return;
       }
 
      if (!description) {
-       uploadMessage.textContent = "Il manque la description du modèle.";
+       uploadMessage.textContent = "The model description is missing.";
        return;
       }
 
      if (files.length === 0) {
-       uploadMessage.textContent = "Il manque le fichier STL.";
+       uploadMessage.textContent = "The STL file is missing.";
        return;
       }
 
@@ -456,7 +410,7 @@ uploadButton.addEventListener(
 
       if (invalidFile) {
         uploadMessage.textContent =
-        "Tous les fichiers doivent être des STL.";
+        "All files must be STL files.";
         return;
       }
 
@@ -468,45 +422,45 @@ uploadButton.addEventListener(
 
       if (oversizedFile) {
         uploadMessage.textContent =
-        `"${oversizedFile.name}" dépasse 50 Mo — fichier trop lourd.`;
+        `"${oversizedFile.name}" exceeds 50 MB — file too large.`;
         return;
       }
 
      if (compressedImages.length === 0) {
        uploadMessage.textContent =
-       "Il manque au moins une image du modèle.";
+       "At least one image of the model is required.";
       return;
       }
 
      if (currentPath.length === 0) {
        uploadMessage.textContent =
-       "Il faut choisir un dossier avant de publier.";
+       "Choose a folder before publishing.";
       return;
       }
 
     uploadButton.disabled = true;
 
     // =======================
-    // ☁️ ENVOI DES FICHIERS VERS R2
-    // Les images sont déjà compressées (voir compressImage()) mais
-    // toujours en base64 local à ce stade — on les convertit en
-    // vrais fichiers pour les envoyer. Si un envoi échoue (panne
-    // réseau, fichier refusé côté serveur...), on n'enregistre PAS
-    // le modèle : pas de publication à moitié faite.
+    // ☁️ SENDING FILES TO R2
+    // Images are already compressed (see compressImage()) but
+    // still local base64 at this point — we convert them to real
+    // files to send them. If an upload fails (network issue,
+    // rejected file...), the model is NOT saved: no half-published
+    // model.
     // =======================
 
-    uploadMessage.textContent = "Envoi des fichiers...";
+    uploadMessage.textContent = "Uploading files...";
 
     let uploadedImageUrls;
     let uploadedFiles;
 
-    // Un seul fichier STL : son nom (à l'upload et au téléchargement)
-    // reprend le titre du modèle plutôt que le nom choisi sur
-    // l'ordinateur — plus lisible pour qui télécharge. Avec
-    // plusieurs fichiers, on garde leurs noms d'origine : ils
-    // décrivent chacun une pièce différente ("Support_camera.stl",
-    // "Support_GPS.stl"...), les remplacer tous par le même titre
-    // les rendrait indiscernables.
+    // A single STL file: its name (at upload and download time)
+    // takes the model's title instead of the name picked on the
+    // computer — more readable for whoever downloads it. With
+    // several files, original names are kept: they each describe a
+    // different part ("Camera_mount.stl", "GPS_mount.stl"...),
+    // replacing them all with the same title would make them
+    // indistinguishable.
     const stlFilenameOverride = files.length === 1 ? title : undefined;
 
     try {
@@ -523,17 +477,17 @@ uploadButton.addEventListener(
       );
     } catch (error) {
       uploadMessage.textContent =
-        error.message || "Échec de l'envoi des fichiers. Réessaie.";
+        error.message || "Failed to upload the files. Please try again.";
       uploadButton.disabled = false;
       return;
     }
 
     // =======================
-    // 🆕 CRÉATION EN BASE
-    // Note : les tags saisis par l'utilisateur restent seuls
-    // dans `tags` (pas de tag "Upload utilisateur"/"STL" ajouté
-    // automatiquement — ça polluait l'affichage et le scoring
-    // de recherche pour rien, tous les modèles matchant).
+    // 🆕 CREATE IN THE DATABASE
+    // Note: user-entered tags stay on their own in `tags` (no
+    // automatic "User upload"/"STL" tag added — it used to pollute
+    // the display and search scoring for nothing, since every
+    // model would match).
     // =======================
 
     let newModel;
@@ -545,7 +499,7 @@ uploadButton.addEventListener(
         path: currentPath,
         tags: customTags,
         tested,
-        printNotes: printNotes || "Non précisé",
+        printNotes: printNotes || "Not specified",
         creatorId: user.id,
         creatorUsername: user.username,
         requestId: linkedRequestId || null,
@@ -554,13 +508,13 @@ uploadButton.addEventListener(
       });
     } catch (error) {
       uploadMessage.textContent =
-        error.message || "Échec de la publication. Réessaie.";
+        error.message || "Failed to publish. Please try again.";
       uploadButton.disabled = false;
       return;
     }
 
     // =======================
-    // 🔒 FERMER DEMANDE
+    // 🔒 CLOSE REQUEST
     // =======================
 
     if (linkedRequestId) {
@@ -572,7 +526,7 @@ uploadButton.addEventListener(
     // =======================
 
     uploadMessage.textContent =
-      "Modèle publié avec succès ✅";
+      "Model published successfully ✅";
 
     // =======================
     // 🔄 RESET
@@ -592,7 +546,7 @@ uploadButton.addEventListener(
 
     document.getElementById(
       "uploadTested"
-    ).value = "Non précisé";
+    ).value = "Not specified";
 
     document.getElementById(
       "uploadPrintNotes"
@@ -610,7 +564,7 @@ uploadButton.addEventListener(
     await renderFolderPicker();
 
     // =======================
-    // ↩ REDIRECTION
+    // ↩ REDIRECT
     // =======================
 
     setTimeout(() => {
@@ -623,11 +577,10 @@ uploadButton.addEventListener(
 );
 
 // =======================
-// 🚀 INITIALISATION
-// Publier n'a aucune raison d'être utilisé sans compte
-// (contrairement à parcourir/télécharger) — on redirige donc
-// directement si personne n'est connecté, avant de charger quoi
-// que ce soit d'autre.
+// 🚀 INITIALIZATION
+// Publishing has no reason to be used without an account (unlike
+// browsing/downloading) — redirect right away if no one is logged
+// in, before loading anything else.
 // =======================
 
 init();
@@ -650,7 +603,7 @@ async function init() {
 
     if (linkedRequest) {
       linkedRequestInfo.textContent =
-        `Ce modèle répond à la demande : ${linkedRequest.title}`;
+        `This model answers the request: ${linkedRequest.title}`;
     }
   }
 

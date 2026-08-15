@@ -156,10 +156,10 @@ nav a:hover {
 }
 
 .download-btn {
-  /* display/text-align/text-decoration : sans effet sur un
-     <button> (déjà son rendu par défaut), nécessaires pour que
-     .download-btn se comporte pareil sur le lien <a> de
-     "Télécharger STL" (model.html). */
+  /* display/text-align/text-decoration: no effect on a <button>
+     (already its default rendering), needed so .download-btn
+     behaves the same on the <a> link for
+     "Download STL" (model.html). */
   display: inline-block;
   text-align: center;
   text-decoration: none;
@@ -402,26 +402,6 @@ select option {
   border-color: #00e0ff;
 }
 
-.new-folder-box {
-  display: flex;
-  gap: 10px;
-  margin: 18px 0;
-}
-
-.new-folder-box input {
-  flex: 1;
-}
-
-.new-folder-box button {
-  padding: 12px 16px;
-  border: none;
-  border-radius: 10px;
-  background: #00e0ff;
-  color: #0f1115;
-  font-weight: bold;
-  cursor: pointer;
-}
-
 .selected-folder-box {
   background: #171b24;
   border: 1px solid #00e0ff40;
@@ -441,12 +421,6 @@ select option {
   font-size: 16px;
   font-weight: 600;
   word-break: break-word;
-}
-
-.folder-helper {
-  color: #9aa3b2;
-  font-size: 13px;
-  margin-bottom: 8px;
 }
 
 .active-folder {
@@ -520,15 +494,15 @@ select option {
   cursor: pointer;
 }
 
-/* Signalement : reste discret par défaut, s'accentue au survol
-   pour ne pas attirer l'œil en permanence à côté de Like/Sauvegarder. */
+/* Report: stays discreet by default, stands out on hover so it
+   doesn't permanently draw the eye next to Like/Save. */
 .report-btn:hover {
   border-color: #ff5c5c;
   color: #ff8a8a;
 }
 
-/* Contenu déjà signalé par l'utilisateur — même logique visuelle
-   que le survol, mais permanente tant que ce n'est pas annulé. */
+/* Content already reported by the user — same visual logic as
+   the hover state, but permanent until it's cancelled. */
 .report-btn.reported {
   border-color: #ff5c5c;
   color: #ff8a8a;
@@ -562,8 +536,8 @@ select option {
 }
 
 /* =======================
-   COMMENTAIRES - BULLES
-   Transforme les commentaires en cartes/bulles lisibles
+   COMMENTS - BUBBLES
+   Turns comments into readable cards/bubbles
 ======================= */
 
 .comment-bubble {
@@ -574,21 +548,21 @@ select option {
   margin-bottom: 14px;
 }
 
-/* Haut de la bulle : pseudo de l'utilisateur */
+/* Top of the bubble: username */
 .comment-header {
   color: #00e0ff;
   margin-bottom: 8px;
   font-size: 14px;
 }
 
-/* Texte du commentaire */
+/* Comment text */
 .comment-text {
   color: #dce2ee;
   line-height: 1.5;
   margin-bottom: 12px;
 }
 
-/* Bouton like/unlike du commentaire */
+/* Comment like/unlike button */
 .comment-like-btn {
   padding: 8px 12px;
   border-radius: 999px;
@@ -598,13 +572,13 @@ select option {
   cursor: pointer;
 }
 
-/* Effet au survol du bouton like */
+/* Hover effect on the like button */
 .comment-like-btn:hover {
   border-color: #00e0ff;
   color: #00e0ff;
 }
 
-/* Ligne like + signaler sous chaque commentaire */
+/* Like + report row under each comment */
 .comment-actions {
   display: flex;
   align-items: center;
@@ -630,7 +604,7 @@ select option {
   color: #ff8a8a;
 }
 
-/* Supprimer son propre commentaire — visible seulement pour son auteur */
+/* Delete your own comment — only visible to its author */
 .comment-delete-btn {
   padding: 8px 10px;
   border-radius: 999px;
@@ -646,9 +620,9 @@ select option {
 }
 
 /* =======================
-   MODALE SIGNALEMENT
-   Fenêtre superposée, réutilisée pour le modèle et les
-   commentaires (voir #reportModal dans model.html).
+   REPORT MODAL
+   Overlay window, reused for the model and for comments
+   (see #reportModal in model.html).
 ======================= */
 
 .modal-overlay {
@@ -697,9 +671,9 @@ select option {
   margin-top: 14px;
 }
 
-/* Liste de cases à cocher : plus spécifique que ".modal-card label"
-   pour ne pas hériter de son display:block (on veut la case et le
-   texte alignés côte à côte, pas empilés). */
+/* Checkbox list: more specific than ".modal-card label" so it
+   doesn't inherit its display:block (we want the checkbox and
+   text aligned side by side, not stacked). */
 .modal-card .report-reasons-list {
   margin: 10px 0 16px;
 }
@@ -719,8 +693,8 @@ select option {
 }
 
 /* =======================
-   COMMENTAIRES - VOIR PLUS
-   Bouton pour afficher ou masquer les commentaires supplémentaires
+   COMMENTS - SHOW MORE
+   Button to show or hide additional comments
 ======================= */
 
 .show-more-comments-btn {
@@ -738,8 +712,8 @@ select option {
 }
 
 /* =======================
-   UPLOAD - PREVIEW MULTI-IMAGES
-   Affiche les images sélectionnées avant publication
+   UPLOAD - MULTI-IMAGE PREVIEW
+   Shows selected images before publishing
 ======================= */
 
 .images-preview-grid {
@@ -749,7 +723,7 @@ select option {
   margin: 14px 0 20px;
 }
 
-/* Miniature de chaque image uploadée */
+/* Thumbnail for each uploaded image */
 .image-preview-thumb {
   width: 100%;
   height: 120px;
@@ -759,8 +733,8 @@ select option {
 }
 
 /* =======================
-   PAGE MODÈLE - GALERIE IMAGES
-   Grande image + miniatures cliquables
+   MODEL PAGE - IMAGE GALLERY
+   Large image + clickable thumbnails
 ======================= */
 
 .model-thumbnails {
@@ -770,7 +744,7 @@ select option {
   flex-wrap: wrap;
 }
 
-/* Miniature dans la page modèle */
+/* Thumbnail on the model page */
 .model-thumbnail {
   width: 72px;
   height: 72px;
@@ -781,15 +755,15 @@ select option {
   opacity: 0.65;
 }
 
-/* Miniature sélectionnée */
+/* Selected thumbnail */
 .active-thumbnail {
   border-color: #00e0ff;
   opacity: 1;
 }
 
 /* =======================
-   PAGE MODÈLE - ACTIONS CRÉATEUR
-   Zone visible uniquement pour le créateur du modèle
+   MODEL PAGE - CREATOR ACTIONS
+   Area visible only to the model's creator
 ======================= */
 
 .creator-actions {
@@ -822,10 +796,10 @@ select option {
 }
 
 /* =======================
-   BADGE "VERSION ACTUELLE" (haut de page)
-   Affiché seulement quand un modèle a plus d'une version — pour
-   la plupart des modèles (une seule version), ce serait juste du
-   bruit. L'historique complet reste plus bas dans la page.
+   "CURRENT VERSION" BADGE (top of page)
+   Shown only when a model has more than one version — for most
+   models (a single version), it would just be noise. The full
+   history stays further down the page.
 ======================= */
 
 .current-version-badge {
@@ -841,9 +815,9 @@ select option {
 }
 
 /* =======================
-   HISTORIQUE DES VERSIONS
-   Visible par tout le monde (pas que le créateur), dans la
-   section "Informations techniques" de la page modèle.
+   VERSION HISTORY
+   Visible to everyone (not just the creator), in the
+   "Technical information" section of the model page.
 ======================= */
 
 .version-history {
@@ -888,7 +862,7 @@ select option {
   gap: 6px 14px;
 }
 
-/* Un lien par fichier — une version peut en contenir plusieurs */
+/* One link per file — a version can contain several */
 .version-file-link {
   color: #00e0ff;
   text-decoration: none;
@@ -898,18 +872,18 @@ select option {
   text-decoration: underline;
 }
 
-/* Fichier publié avant le stockage réel : affiché mais pas
-   cliquable, plutôt que de disparaître silencieusement. */
+/* File published before real storage: shown but not clickable,
+   rather than silently disappearing. */
 .version-file-unavailable {
   color: #9aa3b2;
   cursor: not-allowed;
 }
 
 /* =======================
-   FORMULAIRE "NOUVELLE VERSION"
-   Imbriqué dans .creator-actions : on annule volontairement le
-   "width:100%" des boutons hérité de .creator-actions button pour
-   que Publier/Annuler restent côte à côte au lieu de s'empiler.
+   "NEW VERSION" FORM
+   Nested inside .creator-actions: we deliberately cancel the
+   "width:100%" on buttons inherited from .creator-actions button
+   so Publish/Cancel stay side by side instead of stacking.
 ======================= */
 
 .new-version-form {
@@ -954,7 +928,7 @@ select option {
   flex: 1;
 }
 
-/* Avertissement quand un modèle est archivé */
+/* Warning shown when a model is archived */
 .archived-warning {
   margin-top: 18px;
   padding: 14px;
@@ -965,17 +939,17 @@ select option {
 }
 
 /* =======================
-   STATUT DE CONNEXION (HEADER)
-   Le lien "👤 pseudo" hérite déjà du style de "nav a" ;
-   seul le bouton de déconnexion a besoin de son propre style,
-   pour rester discret à côté des liens du menu.
+   LOGIN STATUS (HEADER)
+   The "👤 username" link already inherits the "nav a" style;
+   only the logout button needs its own style, to stay discreet
+   next to the menu links.
 ======================= */
 
 .auth-status {
-  /* inline-flex, pas flex : "nav" n'est pas un conteneur flex, ses
-     enfants (les <a>) s'enchaînent en ligne. Un simple "flex" ici
-     bloquifie le <span> et le fait sauter sur sa propre ligne,
-     cassant l'alignement avec les autres liens du menu. */
+  /* inline-flex, not flex: "nav" is not a flex container, its
+     children (the <a> tags) flow inline. A plain "flex" here
+     would blockify the <span> and push it onto its own line,
+     breaking the alignment with the other menu links. */
   display: inline-flex;
   align-items: center;
   margin-left: 24px;
@@ -999,12 +973,11 @@ select option {
 }
 
 /* =======================
-   PAGE CONNEXION — CARTE + ONGLETS
-   .login-card cadre les onglets/message/formulaire à la même
-   largeur que .upload-section (700px centré), pour que le bloc
-   entier soit cohérent au lieu que les onglets s'étirent sur
-   toute la largeur de l'écran pendant que le formulaire en
-   dessous reste étroit.
+   LOGIN PAGE — CARD + TABS
+   .login-card frames the tabs/message/form at the same width as
+   .upload-section (700px centered), so the whole block stays
+   consistent instead of the tabs stretching across the full
+   screen width while the form below stays narrow.
 ======================= */
 
 .login-card {
@@ -1034,8 +1007,8 @@ select option {
   color: #00e0ff;
 }
 
-/* Lien texte inline dans un message (ex : suggestion de créer un
-   compte à côté d'une erreur de connexion). */
+/* Inline text link inside a message (e.g. suggestion to create
+   an account next to a login error). */
 .auth-inline-link {
   background: none;
   border: none;

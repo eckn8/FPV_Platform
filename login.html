@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Connexion - FPV Print Hub</title>
+  <title>Login - FPV Print Hub</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -18,47 +18,46 @@
     </div>
 
     <nav>
-      <a href="index.html">Accueil</a>
-      <a href="explore.html">Explorer</a>
-      <a href="requests.html">Demandes</a>
-      <a href="upload.html">Publier</a>
-      <a href="favorites.html">Mes favoris</a>
+      <a href="index.html">Home</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
       <span id="authStatus" class="auth-status"></span>
     </nav>
   </header>
 
-  <!-- CONTENU -->
+  <!-- CONTENT -->
   <main style="padding: 40px 8%;">
 
     <section class="section-title">
-      <h1>Ton compte FPV Print Hub</h1>
+      <h1>Your FPV Print Hub account</h1>
       <p>
-        Un compte sert à liker, sauvegarder des favoris, commenter,
-        voter pour des demandes et publier tes propres modèles.
-        Parcourir et télécharger restent accessibles sans connexion.
+        An account is needed to like, save favorites, comment,
+        vote on requests and publish your own models.
+        Browsing and downloading remain available without an account.
       </p>
     </section>
 
-    <!-- Même largeur que .upload-section (700px centré) pour que
-         les onglets, le message et le formulaire s'alignent en un
-         seul bloc cohérent au lieu que les onglets s'étirent sur
-         toute la largeur de l'écran. -->
+    <!-- Same width as .upload-section (700px centered) so the
+         tabs, message and form line up as one coherent block
+         instead of the tabs stretching across the full screen. -->
     <div class="login-card">
 
-      <!-- ONGLETS -->
+      <!-- TABS -->
       <div class="auth-tabs">
         <button type="button" id="tabLoginButton" class="auth-tab active">
-          Se connecter
+          Log in
         </button>
         <button type="button" id="tabSignupButton" class="auth-tab">
-          Créer un compte
+          Create account
         </button>
       </div>
 
-      <!-- ANTI-ROBOT
-           Un seul widget, partagé entre les deux onglets — le
-           jeton obtenu est transmis à signIn() ou signUp() selon
-           le formulaire réellement soumis. Voir login.js. -->
+      <!-- ANTI-BOT
+           A single widget, shared between both tabs — the token
+           obtained is passed to signIn() or signUp() depending on
+           which form is actually submitted. See login.js. -->
       <div
         class="cf-turnstile"
         data-sitekey="0x4AAAAAAEQE4H-e_NFD6kSp"
@@ -71,32 +70,32 @@
       <!-- MESSAGE -->
       <p id="authMessage" class="folder-path"></p>
 
-      <!-- CONNEXION -->
+      <!-- LOGIN -->
       <section id="loginForm" class="upload-section">
 
         <label for="loginEmail"><strong>Email</strong></label>
-        <input type="email" id="loginEmail" placeholder="toi@exemple.com">
+        <input type="email" id="loginEmail" placeholder="you@example.com">
 
-        <label for="loginPassword"><strong>Mot de passe</strong></label>
+        <label for="loginPassword"><strong>Password</strong></label>
         <input type="password" id="loginPassword" placeholder="••••••••">
 
-        <button id="loginButton" class="download-btn">Se connecter</button>
+        <button id="loginButton" class="download-btn">Log in</button>
 
       </section>
 
-      <!-- INSCRIPTION -->
+      <!-- SIGN UP -->
       <section id="signupForm" class="upload-section" style="display:none;">
 
-        <label for="signupUsername"><strong>Pseudo</strong></label>
+        <label for="signupUsername"><strong>Username</strong></label>
         <input type="text" id="signupUsername" placeholder="FPVRider">
 
         <label for="signupEmail"><strong>Email</strong></label>
-        <input type="email" id="signupEmail" placeholder="toi@exemple.com">
+        <input type="email" id="signupEmail" placeholder="you@example.com">
 
-        <label for="signupPassword"><strong>Mot de passe</strong></label>
-        <input type="password" id="signupPassword" placeholder="6 caractères minimum">
+        <label for="signupPassword"><strong>Password</strong></label>
+        <input type="password" id="signupPassword" placeholder="6 characters minimum">
 
-        <button id="signupButton" class="download-btn">Créer mon compte</button>
+        <button id="signupButton" class="download-btn">Create my account</button>
 
       </section>
 

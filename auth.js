@@ -1,33 +1,30 @@
 // =======================================================
-// 🔐 auth.js — État d'authentification partagé
+// 🔐 auth.js — Shared authentication state
 //
-// Nécessite supabaseClient.js chargé avant ce fichier.
+// Requires supabaseClient.js loaded before this file.
 //
-// Règle produit : browser / explorer / rechercher / télécharger
-// ne nécessitent PAS de compte. Liker, sauvegarder, commenter,
-// voter et publier en nécessitent un. Ce fichier ne bloque donc
-// JAMAIS le rendu d'une page — il expose juste un état qui se met
-// à jour dès que la session Supabase est connue, et un garde-fou
-// (requireAuth) que les actions qui en ont besoin appellent au
-// moment du clic.
+// Product rule: browsing / exploring / searching / downloading do
+// NOT require an account. Liking, saving favorites, commenting,
+// voting and publishing do. This file therefore NEVER blocks a
+// page's rendering — it just exposes a state that updates as soon
+// as the Supabase session is known, and a guard (requireAuth) that
+// actions needing it call at click time.
 // =======================================================
 
-// Cache synchrone : { id, email, username } une fois connu, sinon null.
+// Synchronous cache: { id, email, username } once known, else null.
 let currentUser = null;
 
-// Jeton d'accès Supabase courant — nécessaire pour prouver son
-// identité auprès de worker.js (POST /api/upload), en plus de
-// currentUser qui ne sert qu'à l'affichage/aux vérifications côté
-// client. Voir storage.js.
+// Current Supabase access token — needed to prove identity to
+// worker.js (POST /api/upload), in addition to currentUser which
+// is only used for display/client-side checks. See storage.js.
 let currentAccessToken = null;
 
 let _authReadyResolve;
 
-// Résolu une première fois dès que l'état de connexion initial est
-// connu. Les pages qui affichent quelque chose de dépendant de
-// l'utilisateur (like déjà mis ? favoris déjà sauvegardé ?) font
-// `authReady.then(() => ...)` pour se rafraîchir une fois prêt,
-// SANS jamais retarder le premier rendu de la page.
+// Resolved once the initial connection state is known. Pages that
+// display something dependent on the user (already liked? already
+// saved to favorites?) do `authReady.then(() => ...)` to refresh
+// once ready, WITHOUT ever delaying the page's first render.
 const authReady = new Promise(resolve => {
   _authReadyResolve = resolve;
 });
@@ -40,7 +37,7 @@ async function _loadProfile(userId) {
     .single();
 
   if (error) {
-    console.error("Impossible de charger le profil :", error.message);
+    console.error("Could not load profile:", error.message);
     return null;
   }
 
@@ -80,8 +77,8 @@ async function initAuth() {
   return currentUser;
 }
 
-// Tient le cache à jour si la session change dans un autre onglet,
-// expire, ou est rafraîchie automatiquement par la librairie.
+// Keeps the cache up to date if the session changes in another
+// tab, expires, or is refreshed automatically by the library.
 supabaseClient.auth.onAuthStateChange(async (_event, session) => {
   await _refreshCurrentUser(session);
   renderAuthStatus();
@@ -96,43 +93,42 @@ function getAccessToken() {
 }
 
 // =======================
-// 🔑 INSCRIPTION / CONNEXION / DÉCONNEXION
-// Supabase gère lui-même le hashage du mot de passe, les tokens
-// de session et leur renouvellement — rien de tout ça n'est
-// réimplémenté ici.
+// 🔑 SIGN UP / LOG IN / LOG OUT
+// Supabase itself handles password hashing, session tokens and
+// their renewal — none of that is reimplemented here.
 // =======================
 
 function _translateAuthError(error) {
   const message = (error && error.message) || "";
 
   if (message.includes("already registered")) {
-    return "Un compte existe déjà avec cet email.";
+    return "An account already exists with this email.";
   }
 
   if (message.includes("Invalid login credentials")) {
-    return "Email ou mot de passe incorrect.";
+    return "Incorrect email or password.";
   }
 
   if (message.includes("Password should be at least")) {
-    return "Le mot de passe doit faire au moins 6 caractères.";
+    return "Password must be at least 6 characters long.";
   }
 
   if (message.includes("duplicate key value") && message.includes("profiles_username")) {
-    return "Ce pseudo est déjà pris.";
+    return "This username is already taken.";
   }
 
   if (message.toLowerCase().includes("captcha")) {
-    return "Vérification anti-robot manquante ou expirée, réessaie.";
+    return "Missing or expired anti-bot verification, please try again.";
   }
 
-  return message || "Une erreur est survenue.";
+  return message || "Something went wrong.";
 }
 
 async function signUp({ email, password, username, captchaToken }) {
   const cleanUsername = (username || "").trim();
 
   if (!cleanUsername) {
-    return { error: "Choisis un pseudo." };
+    return { error: "Choose a username." };
   }
 
   const { data, error } = await supabaseClient.auth.signUp({
@@ -148,8 +144,8 @@ async function signUp({ email, password, username, captchaToken }) {
     return { error: _translateAuthError(error) };
   }
 
-  // Si la confirmation par email est activée sur le projet,
-  // `data.session` est null tant que le lien n'a pas été cliqué.
+  // If email confirmation is enabled on the project, `data.session`
+  // stays null until the link has been clicked.
   const needsEmailConfirmation = !data.session;
 
   return { data, needsEmailConfirmation };
@@ -179,11 +175,11 @@ async function signOut() {
 }
 
 // =======================
-// 🚧 GARDE-FOU CONNEXION
-// À appeler au moment du clic sur une action qui nécessite un
-// compte (like, favoris, commentaire, vote, publication). Renvoie
-// l'utilisateur courant, ou redirige vers login.html et renvoie
-// null si personne n'est connecté.
+// 🚧 LOGIN GUARD
+// Call at the moment someone clicks an action that requires an
+// account (like, favorite, comment, vote, publish). Returns the
+// current user, or redirects to login.html and returns null if no
+// one is logged in.
 // =======================
 
 function requireAuth() {
@@ -200,8 +196,8 @@ function requireAuth() {
 }
 
 // =======================
-// 🧭 STATUT DE CONNEXION DANS LE HEADER
-// Alimente <span id="authStatus"></span> si la page en a un.
+// 🧭 LOGIN STATUS IN THE HEADER
+// Fills <span id="authStatus"></span> if the page has one.
 // =======================
 
 function renderAuthStatus() {
@@ -220,7 +216,7 @@ function renderAuthStatus() {
     const logoutButton = document.createElement("button");
     logoutButton.type = "button";
     logoutButton.className = "auth-logout-btn";
-    logoutButton.textContent = "Se déconnecter";
+    logoutButton.textContent = "Log out";
 
     logoutButton.addEventListener("click", async () => {
       await signOut();
@@ -231,12 +227,11 @@ function renderAuthStatus() {
   } else {
     const link = document.createElement("a");
     link.href = "login.html";
-    link.textContent = "Connexion";
+    link.textContent = "Log in";
     container.appendChild(link);
   }
 }
 
-// Lance la résolution de l'état de connexion dès que ce fichier
-// est chargé, sur chaque page — sans que chaque script de page
-// ait besoin d'y penser.
+// Kicks off resolving the login state as soon as this file loads,
+// on every page — so no page script needs to think about it.
 initAuth();

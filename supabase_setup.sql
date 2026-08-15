@@ -1,20 +1,20 @@
 -- =======================================================
--- 🗄 supabase_setup.sql — Schéma auth pour FPV Print Hub
+-- 🗄 supabase_setup.sql — Auth schema for FPV Print Hub
 --
--- À exécuter UNE FOIS dans Supabase : Project → SQL Editor →
--- New query → coller ce fichier → Run.
+-- Run ONCE in Supabase: Project → SQL Editor →
+-- New query → paste this file → Run.
 --
--- Ce script ne crée QUE la partie "identité utilisateur"
--- (profils publics liés aux comptes Supabase Auth). Les
--- modèles/likes/favoris restent en localStorage pour l'instant
--- (prochaine étape du projet, une fois l'identité sécurisée).
+-- This script only creates the "user identity" part (public
+-- profiles linked to Supabase Auth accounts). Models/likes/
+-- favorites stay in localStorage for now (next step of the
+-- project, once identity is secured).
 -- =======================================================
 
--- ---- Table des profils publics --------------------------
--- Un profil par utilisateur inscrit. `id` est le même uuid que
--- celui de auth.users : c'est CET id (jamais le pseudo) qui doit
--- servir de référence de propriété/permission dans tout le reste
--- de l'app.
+-- ---- Public profiles table --------------------------
+-- One profile per registered user. `id` is the same uuid as
+-- auth.users' — it's THIS id (never the username) that must be
+-- used as the ownership/permission reference throughout the rest
+-- of the app.
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username text not null unique,
@@ -25,27 +25,27 @@ create table public.profiles (
 
 alter table public.profiles enable row level security;
 
--- Les pseudos/profils sont publics en lecture (comme sur toute
--- plateforme communautaire : on doit pouvoir voir qui a publié quoi).
+-- Usernames/profiles are publicly readable (like on any
+-- community platform: people need to see who published what).
 create policy "Profiles are viewable by everyone"
   on public.profiles for select
   using (true);
 
--- Un utilisateur ne peut créer que SON PROPRE profil.
+-- A user can only create THEIR OWN profile.
 create policy "Users can insert their own profile"
   on public.profiles for insert
   with check (auth.uid() = id);
 
--- Un utilisateur ne peut modifier que SON PROPRE profil.
--- C'est la BDD elle-même qui l'impose (pas juste le frontend).
+-- A user can only update THEIR OWN profile.
+-- This is enforced by the database itself (not just the frontend).
 create policy "Users can update their own profile"
   on public.profiles for update
   using (auth.uid() = id);
 
--- ---- Création automatique du profil à l'inscription -----
--- Le pseudo choisi à l'inscription est passé en "user metadata"
--- lors du signUp() côté client ; ce trigger le recopie dans la
--- table publique dès que le compte auth.users est créé.
+-- ---- Automatic profile creation on sign-up -----
+-- The username chosen at sign-up is passed as "user metadata"
+-- during the client-side signUp() call; this trigger copies it
+-- into the public table as soon as the auth.users account is created.
 create function public.handle_new_user()
 returns trigger as $$
 begin

@@ -1,32 +1,32 @@
 # =======================================================
-# ⚙️ wrangler.toml — Config de déploiement (Cloudflare Workers)
+# ⚙️ wrangler.toml — Deployment config (Cloudflare Workers)
 #
-# Ce projet est un vrai Worker (déployé via `wrangler deploy`,
-# pas `wrangler pages deploy`) — d'où [assets] plutôt que la
-# convention Pages Functions (functions/). Par défaut, Cloudflare
-# sert les fichiers statiques directement quand ils correspondent
-# à la requête, et n'invoque worker.js que pour le reste (donc
-# uniquement /api/upload en pratique).
+# This project is a real Worker (deployed via `wrangler deploy`,
+# not `wrangler pages deploy`) — hence [assets] instead of the
+# Pages Functions convention (functions/). By default, Cloudflare
+# serves static files directly when they match the request, and
+# only invokes worker.js for everything else (so in practice, only
+# /api/upload).
 # =======================================================
 
 name = "fpv-platform"
 compatibility_date = "2026-08-14"
 main = "worker.js"
 
-# ---- Site statique (HTML/CSS/JS à la racine) ---------------
+# ---- Static site (HTML/CSS/JS at the root) ---------------
 [assets]
 directory = "."
 binding = "ASSETS"
 
-# ---- Stockage des fichiers (images/STL) -------------------
+# ---- File storage (images/STL) -------------------
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "fpv-platform-files"
 
-# ---- Variables utilisées par worker.js ----------------------
-# Valeurs publiques (mêmes que dans supabaseClient.js / login.html)
-# — aucun secret ici, la vraie protection vient de la vérification
-# du jeton utilisateur dans worker.js, pas du secret de ces valeurs.
+# ---- Variables used by worker.js ----------------------
+# Public values (same as in supabaseClient.js / login.html) — no
+# secrets here, the real protection comes from verifying the
+# user's token in worker.js, not from keeping these values secret.
 [vars]
 SUPABASE_URL = "https://coyfyedaokkkhtmlcvaq.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_DeZEOG8W7hbVJ6KBu463QA_9w0bn-nR"

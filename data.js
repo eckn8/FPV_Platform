@@ -1,30 +1,29 @@
 // =======================================================
-// 📦 data.js — Source unique de données partagées
+// 📦 data.js — Shared data source
 //
-// Version Supabase : les modèles/likes/favoris/commentaires/
-// demandes/signalements/dossiers vivent maintenant dans de vraies
-// tables Postgres (voir supabase_content_schema.sql), plus dans
-// localStorage. Regroupe toujours ce qui doit rester commun à
-// script.js / explore.js / upload.js / requests.js / model.js /
-// profile.js / favorites.js :
-//   - accès aux données (modèles, dossiers, demandes)
-//   - likes / votes / favoris / commentaires / signalements
-//   - recherche avancée (scoring + synonymes)
-//   - le rendu du breadcrumb de dossiers
-//   - l'échappement HTML anti-XSS
+// Supabase version: models/likes/favorites/comments/requests/
+// reports/folders now live in real Postgres tables (see
+// supabase_content_schema.sql), not in localStorage. Still groups
+// everything that needs to stay common to script.js / explore.js /
+// upload.js / requests.js / model.js / profile.js / favorites.js:
+//   - data access (models, folders, requests)
+//   - likes / votes / favorites / comments / reports
+//   - advanced search (scoring + synonyms)
+//   - folder breadcrumb rendering
+//   - anti-XSS HTML escaping
 //
-// Nécessite supabaseClient.js + auth.js chargés avant ce fichier.
-// Chargé lui-même AVANT le script de chaque page.
+// Requires supabaseClient.js + auth.js loaded before this file.
+// Loaded itself BEFORE each page's script.
 //
-// Point important : getSearchScore()/advancedSearch() DOIVENT
-// rester synchrones (la recherche doit répondre à chaque frappe
-// sans latence réseau) — les likes utilisés pour le score de
-// popularité sont donc mis en cache en mémoire via primeModelLikes()
-// une fois par chargement de page, pas requêtés à la volée.
+// Important note: getSearchScore()/advancedSearch() MUST stay
+// synchronous (search has to respond on every keystroke with no
+// network latency) — the likes used for the popularity bonus are
+// therefore cached in memory via primeModelLikes() once per page
+// load, never fetched on the fly.
 // =======================================================
 
 // =======================
-// 📦 MODÈLES
+// 📦 MODELS
 // =======================
 
 let _modelsCache = null;
@@ -52,9 +51,8 @@ function _normalizeModelRow(row) {
   };
 }
 
-// Mise en cache mémoire (voir note en haut de fichier) — remise à
-// zéro à chaque chargement de page, jamais périmée entre deux
-// pages différentes.
+// In-memory cache (see note at the top of the file) — reset on
+// every page load, never stale across two different pages.
 async function getAllModels() {
   if (_modelsCache) return _modelsCache;
 
@@ -64,7 +62,7 @@ async function getAllModels() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Erreur de chargement des modèles :", error.message);
+    console.error("Error loading models:", error.message);
     return [];
   }
 
@@ -72,8 +70,8 @@ async function getAllModels() {
   return _modelsCache;
 }
 
-// Requête ciblée (pas besoin de charger tout le catalogue pour
-// afficher une seule page modèle).
+// Targeted query (no need to load the whole catalog just to show
+// a single model page).
 async function findModelById(id) {
   const { data, error } = await supabaseClient
     .from("models")
@@ -82,7 +80,7 @@ async function findModelById(id) {
     .maybeSingle();
 
   if (error) {
-    console.error("Erreur de chargement du modèle :", error.message);
+    console.error("Error loading model:", error.message);
     return null;
   }
 
@@ -92,11 +90,11 @@ async function findModelById(id) {
 function getModelPath(model) {
   return model.path && model.path.length > 0
     ? model.path
-    : ["Non classé"];
+    : ["Uncategorized"];
 }
 
-// Crée un modèle en base — l'appelant (upload.js) a déjà vérifié
-// que l'utilisateur est connecté et uploadé les fichiers vers R2.
+// Creates a model in the database — the caller (upload.js) has
+// already checked the user is logged in and uploaded the files to R2.
 async function createModel({
   title,
   description,
@@ -128,7 +126,7 @@ async function createModel({
       file_name: files[0] ? files[0].name : null,
       versions: [{
         version: "1.0",
-        changelog: "Version initiale",
+        changelog: "Initial version",
         files,
         createdAt: new Date().toISOString()
       }],
@@ -143,10 +141,10 @@ async function createModel({
   return _normalizeModelRow(data);
 }
 
-// L'appelant doit avoir déjà vérifié que l'utilisateur courant est
-// bien le créateur (voir isCreator() dans model.js) — la vraie
-// protection vient de la policy RLS "update" (creator_id =
-// auth.uid()), pas de ce contrôle côté client.
+// The caller must have already checked that the current user is
+// really the creator (see isCreator() in model.js) — the real
+// protection comes from the "update" RLS policy (creator_id =
+// auth.uid()), not this client-side check.
 async function setModelArchived(modelId, archived) {
   const { error } = await supabaseClient
     .from("models")
@@ -159,7 +157,7 @@ async function setModelArchived(modelId, archived) {
 }
 
 // =======================
-// 🆕 VERSIONS DE MODÈLE
+// 🆕 MODEL VERSIONS
 // =======================
 
 function getModelVersions(model) {
@@ -169,7 +167,7 @@ function getModelVersions(model) {
 
   return [{
     version: "1.0",
-    changelog: "Version initiale",
+    changelog: "Initial version",
     files: model.files && model.files.length > 0 ? model.files : [],
     createdAt: model.createdAt || null
   }];
@@ -180,9 +178,9 @@ function getCurrentVersionLabel(model) {
   return model.currentVersion || versions[versions.length - 1].version;
 }
 
-// Suggère un numéro de version suivant en incrémentant le dernier
-// segment numérique (1.0 -> 1.1, 2 -> 3, 1.9 -> 1.10...). Reste
-// modifiable par le créateur, ce n'est qu'une suggestion.
+// Suggests the next version number by incrementing the last
+// numeric segment (1.0 -> 1.1, 2 -> 3, 1.9 -> 1.10...). Still
+// editable by the creator, it's only a suggestion.
 function suggestNextVersion(model) {
   const versions = getModelVersions(model);
   const last = String(versions[versions.length - 1].version || "1.0");
@@ -198,13 +196,13 @@ function suggestNextVersion(model) {
   return parts.join(".");
 }
 
-// Met aussi à jour `files`/`fileName` au niveau du modèle pour que
-// le reste du code (qui les lit directement) affiche toujours la
-// dernière version. L'appelant doit avoir déjà vérifié que
-// l'utilisateur courant est bien le créateur.
+// Also updates `files`/`fileName` at the model level so the rest
+// of the code (which reads them directly) always shows the latest
+// version. The caller must have already checked that the current
+// user is really the creator.
 async function addModelVersion(modelId, { version, changelog, files }) {
   const model = await findModelById(modelId);
-  if (!model) throw new Error("Modèle introuvable.");
+  if (!model) throw new Error("Model not found.");
 
   const newVersion = {
     version,
@@ -234,7 +232,7 @@ async function addModelVersion(modelId, { version, changelog, files }) {
 }
 
 // =======================
-// 📁 DOSSIERS PERSONNALISÉS
+// 📁 CUSTOM FOLDERS
 // =======================
 
 async function getCustomFolders() {
@@ -243,30 +241,23 @@ async function getCustomFolders() {
     .select("path");
 
   if (error) {
-    console.error("Erreur dossiers personnalisés :", error.message);
+    console.error("Error loading custom folders:", error.message);
     return [];
   }
 
   return data.map(row => row.path);
 }
 
-// Idempotent : si le dossier existe déjà (contrainte unique sur
-// `path`), on considère juste que c'est réussi plutôt que
-// d'afficher une erreur — c'est exactement l'état voulu.
-async function createCustomFolder(path) {
-  const userId = getCurrentUserId();
-
-  const { error } = await supabaseClient
-    .from("custom_folders")
-    .insert({ path, created_by: userId });
-
-  if (error && error.code !== "23505") {
-    throw new Error(error.message);
-  }
-}
+// The folder tree is a fixed, curated taxonomy (Drone / Camera /
+// Equipment and everything below) seeded once via
+// supabase_root_lock_migration.sql. There is deliberately no
+// client-side way to create a folder anymore — publishing/
+// requesting only ever *picks* an existing folder (see
+// getSubfoldersAt() below). New categories are added directly in
+// the database as the catalog grows.
 
 // =======================
-// 💡 DEMANDES COMMUNAUTAIRES
+// 💡 COMMUNITY REQUESTS
 // =======================
 
 function _normalizeRequestRow(row) {
@@ -290,7 +281,7 @@ async function getRequests() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Erreur de chargement des demandes :", error.message);
+    console.error("Error loading requests:", error.message);
     return [];
   }
 
@@ -316,9 +307,9 @@ async function createRequest({ title, description, path, creatorId, creatorUsern
   return _normalizeRequestRow(data);
 }
 
-// Autorisé pour n'importe quel utilisateur connecté, pas juste le
-// créateur de la demande — publier un modèle qui y répond doit
-// pouvoir la fermer (même règle que côté RLS, voir le schéma SQL).
+// Allowed for any logged-in user, not just the request's creator —
+// publishing a model that answers it must be able to close it
+// (same rule enforced on the RLS side, see the SQL schema).
 async function resolveRequest(requestId, modelId) {
   const { error } = await supabaseClient
     .from("requests")
@@ -326,15 +317,15 @@ async function resolveRequest(requestId, modelId) {
     .eq("id", requestId);
 
   if (error) {
-    console.error("Erreur de fermeture de la demande :", error.message);
+    console.error("Error closing request:", error.message);
   }
 }
 
 // =======================
-// 📁 CHEMINS DE DOSSIERS COMBINÉS
-// Utilisé pour peupler les folder-pickers (upload, demandes,
-// explorateur) : modèles + dossiers créés à la main, et
-// éventuellement les dossiers visés par des demandes ouvertes.
+// 📁 COMBINED FOLDER PATHS
+// Used to populate the folder pickers (upload, requests,
+// explorer): models + manually created folders, and optionally
+// the folders targeted by open requests.
 // =======================
 
 async function getAllFolderPaths(options = {}) {
@@ -383,17 +374,17 @@ function getSubfoldersAt(paths, currentPath) {
 }
 
 // =======================
-// 🧭 BREADCRUMB GÉNÉRIQUE
-// container : élément HTML cible
-// currentPath : tableau de noms de dossiers
-// onNavigate : fonction appelée avec le nouveau currentPath
+// 🧭 GENERIC BREADCRUMB
+// container: target HTML element
+// currentPath: array of folder names
+// onNavigate: function called with the new currentPath
 // =======================
 
 function renderBreadcrumb(container, currentPath, onNavigate) {
   container.innerHTML = "";
 
   const homeButton = document.createElement("button");
-  homeButton.textContent = "Accueil";
+  homeButton.textContent = "Home";
   homeButton.onclick = () => onNavigate([]);
   container.appendChild(homeButton);
 
@@ -410,11 +401,11 @@ function renderBreadcrumb(container, currentPath, onNavigate) {
 }
 
 // =======================
-// 👤 UTILISATEUR COURANT
-// L'identité vient de auth.js (session Supabase réelle).
-// getCurrentUsername() sert à l'affichage (ex : "publié par ...")
-// ; toute vérification de permission ou clé d'écriture doit
-// utiliser getCurrentUserId() (uuid stable), jamais le pseudo.
+// 👤 CURRENT USER
+// Identity comes from auth.js (real Supabase session).
+// getCurrentUsername() is for display (e.g. "published by...");
+// any permission check or write key must use getCurrentUserId()
+// (stable uuid), never the username.
 // =======================
 
 function getCurrentUsername() {
@@ -428,10 +419,10 @@ function getCurrentUserId() {
 }
 
 // =======================
-// 🔒 ÉCHAPPEMENT HTML (anti-XSS)
-// Toute donnée qui vient d'un utilisateur (titre, description,
-// tags, commentaire, nom de dossier, pseudo...) doit passer par
-// escapeHtml() avant d'être insérée via innerHTML.
+// 🔒 HTML ESCAPING (anti-XSS)
+// Any data that comes from a user (title, description, tags,
+// comment, folder name, username...) must go through escapeHtml()
+// before being inserted via innerHTML.
 // =======================
 
 function escapeHtml(value) {
@@ -441,11 +432,11 @@ function escapeHtml(value) {
 }
 
 // =======================
-// 👍 LIKES / VOTES GÉNÉRIQUES
-// Moteur commun pour : likes de modèles, votes de demandes, likes
-// de commentaires — même forme de table à chaque fois
-// (item_id, user_id). Lecture synchrone depuis un cache mémoire
-// rempli par primeXxx(), écriture directe vers Supabase.
+// 👍 GENERIC LIKES / VOTES
+// Common engine for: model likes, request votes, comment likes —
+// same table shape every time (item_id, user_id). Synchronous
+// reads from an in-memory cache filled by primeXxx(), direct
+// writes to Supabase.
 // =======================
 
 const _voteCache = new Map(); // `${table}:${itemId}` -> { count, likedByMe }
@@ -454,9 +445,9 @@ function _voteCacheKey(table, itemId) {
   return `${table}:${itemId}`;
 }
 
-// À appeler une fois (avec tous les ids concernés) avant de rendre
-// des boutons like/vote — sans ça, getXxxLikes()/hasUserXxx()
-// renvoient juste "0 / pas liké" par défaut.
+// Call once (with every relevant id) before rendering like/vote
+// buttons — without this, getXxxLikes()/hasUserXxx() just return
+// "0 / not liked" by default.
 async function _primeVotes(table, idColumn, itemIds) {
   itemIds.forEach(id => {
     _voteCache.set(_voteCacheKey(table, id), { count: 0, likedByMe: false });
@@ -470,7 +461,7 @@ async function _primeVotes(table, idColumn, itemIds) {
     .in(idColumn, itemIds);
 
   if (error) {
-    console.error(`Erreur ${table} :`, error.message);
+    console.error(`Error loading ${table}:`, error.message);
     return;
   }
 
@@ -500,10 +491,10 @@ function _hasVoted(table, itemId) {
   return entry ? entry.likedByMe : false;
 }
 
-// Retourne false si personne n'est connecté (rien n'est modifié).
-// L'appelant doit alors passer par requireAuth() (voir auth.js).
-// Met aussi à jour le cache en mémoire pour un retour visuel
-// immédiat, sans refaire de requête juste pour l'affichage.
+// Returns false if no one is logged in (nothing is changed). The
+// caller should go through requireAuth() in that case (see auth.js).
+// Also updates the in-memory cache for instant visual feedback,
+// without an extra request just for display.
 async function _toggleVote(table, idColumn, itemId) {
   const userId = getCurrentUserId();
   if (!userId) return false;
@@ -527,8 +518,8 @@ async function _toggleVote(table, idColumn, itemId) {
       .from(table)
       .insert({ [idColumn]: itemId, user_id: userId });
 
-    // 23505 = déjà liké (double-clic rapide) : pas une vraie
-    // erreur, l'état voulu est déjà atteint.
+    // 23505 = already liked (fast double-click): not a real error,
+    // the intended state is already reached.
     if (error && error.code !== "23505") return false;
 
     entry.likedByMe = true;
@@ -539,7 +530,7 @@ async function _toggleVote(table, idColumn, itemId) {
   return true;
 }
 
-// ---- Likes de modèles -------------------------------------
+// ---- Model likes -------------------------------------
 
 async function primeModelLikes(modelIds) {
   return _primeVotes("model_likes", "model_id", modelIds);
@@ -557,7 +548,7 @@ async function toggleModelLike(modelId) {
   return _toggleVote("model_likes", "model_id", modelId);
 }
 
-// ---- Votes de demandes --------------------------------------
+// ---- Request votes --------------------------------------
 
 async function primeRequestVotes(requestIds) {
   return _primeVotes("request_votes", "request_id", requestIds);
@@ -575,7 +566,7 @@ async function toggleRequestVote(requestId) {
   return _toggleVote("request_votes", "request_id", requestId);
 }
 
-// ---- Likes de commentaires -----------------------------------
+// ---- Comment likes -----------------------------------
 
 async function primeCommentLikes(commentIds) {
   return _primeVotes("comment_likes", "comment_id", commentIds);
@@ -594,15 +585,15 @@ async function toggleCommentLike(commentId) {
 }
 
 // =======================
-// ❤️ FAVORIS
-// Toujours pour L'UTILISATEUR CONNECTÉ — pas de cas où on a besoin
-// de lire les favoris de quelqu'un d'autre dans cette app, donc
-// pas de policy RLS publique dessus (contrairement aux likes).
+// ❤️ FAVORITES
+// Always for the LOGGED-IN USER — there's no case in this app
+// where we need to read someone else's favorites, hence no public
+// RLS policy on this table (unlike likes).
 // =======================
 
 let _favoriteIdsCache = null;
 
-// À appeler une fois avant de lire isModelSaved()/getSavedModelIds().
+// Call once before reading isModelSaved()/getSavedModelIds().
 async function primeFavorites() {
   const userId = getCurrentUserId();
 
@@ -617,7 +608,7 @@ async function primeFavorites() {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("Erreur favoris :", error.message);
+    console.error("Error loading favorites:", error.message);
     _favoriteIdsCache = new Set();
     return;
   }
@@ -633,7 +624,7 @@ function getSavedModelIds() {
   return _favoriteIdsCache ? Array.from(_favoriteIdsCache) : [];
 }
 
-// Retourne false si personne n'est connecté (rien n'est modifié).
+// Returns false if no one is logged in (nothing is changed).
 async function toggleSavedModel(modelId) {
   const userId = getCurrentUserId();
   if (!userId) return false;
@@ -666,7 +657,7 @@ async function toggleSavedModel(modelId) {
 }
 
 // =======================
-// 💬 COMMENTAIRES
+// 💬 COMMENTS
 // =======================
 
 async function getModelComments(modelId) {
@@ -677,7 +668,7 @@ async function getModelComments(modelId) {
     .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Erreur de chargement des commentaires :", error.message);
+    console.error("Error loading comments:", error.message);
     return [];
   }
 
@@ -690,17 +681,17 @@ async function getModelComments(modelId) {
   }));
 }
 
-// Nommée createComment (et pas addComment) volontairement : la
-// page modèle expose un window.addComment lié au bouton du
-// formulaire — même nom des deux côtés aurait fait que l'appel à
-// "addComment(...)" dans ce handler se rappelle lui-même à l'infini
-// au lieu d'atteindre cette fonction-ci (vécu : "Maximum call stack
-// size exceeded").
+// Deliberately named createComment (not addComment): the model
+// page exposes a window.addComment tied to the form button — using
+// the same name on both sides made the internal call to
+// "addComment(...)" inside that handler resolve back to the
+// handler itself, causing infinite recursion (lived experience:
+// "Maximum call stack size exceeded").
 async function createComment(modelId, text) {
   const userId = getCurrentUserId();
   const username = getCurrentUsername();
 
-  if (!userId) throw new Error("Connexion requise.");
+  if (!userId) throw new Error("You must be logged in.");
 
   const { data, error } = await supabaseClient
     .from("comments")
@@ -719,10 +710,10 @@ async function createComment(modelId, text) {
   };
 }
 
-// L'appelant doit avoir déjà vérifié que l'utilisateur courant est
-// bien l'auteur (voir isOwnComment dans model.js) — la vraie
-// protection vient de la policy RLS "delete" (user_id =
-// auth.uid()), pas de ce contrôle côté client.
+// The caller must have already checked that the current user is
+// really the author (see isOwnComment in model.js) — the real
+// protection comes from the "delete" RLS policy (user_id =
+// auth.uid()), not this client-side check.
 async function deleteComment(commentId) {
   const { error } = await supabaseClient
     .from("comments")
@@ -733,11 +724,11 @@ async function deleteComment(commentId) {
 }
 
 // =======================
-// 🚩 SIGNALEMENTS
-// Pas encore de rôle modérateur — chacun ne voit (et ne peut donc
-// vérifier) que ses propres signalements pour l'instant (voir RLS
-// dans supabase_content_schema.sql), mais ils sont désormais
-// centralisés en base plutôt que dans le localStorage de chacun.
+// 🚩 REPORTS
+// No moderator role yet — everyone can currently only see (and
+// therefore only cancel) their own reports (see the RLS policies
+// in supabase_content_schema.sql), but they're now centralized in
+// the database instead of everyone's own localStorage.
 // =======================
 
 async function hasUserReported(targetType, targetId) {
@@ -753,16 +744,16 @@ async function hasUserReported(targetType, targetId) {
     .maybeSingle();
 
   if (error) {
-    console.error("Erreur signalement :", error.message);
+    console.error("Error checking report status:", error.message);
     return false;
   }
 
   return !!data;
 }
 
-// Ne throw jamais — renvoie { ok, reason } pour rester simple à
-// utiliser dans un if. `reason` (singulier, code d'erreur) vaut
-// "not-authenticated" ou "already-reported" quand ok est false.
+// Never throws — returns { ok, reason } to keep usage simple in an
+// if statement. `reason` (singular, error code) is
+// "not-authenticated" or "already-reported" when ok is false.
 async function addReport(targetType, targetId, { modelId, reasons, details } = {}) {
   const userId = getCurrentUserId();
 
@@ -782,8 +773,8 @@ async function addReport(targetType, targetId, { modelId, reasons, details } = {
     });
 
   if (error) {
-    // Contrainte unique (target_type, target_id, reporter_id) :
-    // déjà signalé.
+    // Unique constraint (target_type, target_id, reporter_id):
+    // already reported.
     if (error.code === "23505") {
       return { ok: false, reason: "already-reported" };
     }
@@ -809,34 +800,34 @@ async function removeReport(targetType, targetId) {
 }
 
 // =======================
-// 🔍 RECHERCHE AVANCÉE
-// Reste 100% synchrone (voir note en haut de fichier) — opère sur
-// des modèles déjà chargés en mémoire.
+// 🔍 ADVANCED SEARCH
+// Stays 100% synchronous (see the note at the top of the file) —
+// operates on models already loaded in memory.
 // =======================
 
 const synonymMap = {
-  camera: ["caméra", "cam", "gopro", "action cam", "dji action", "insta360"],
-  caméra: ["camera", "cam", "gopro", "action cam", "dji action", "insta360"],
-  gps: ["gnss", "beidou", "galileo", "module gps"],
-  antenne: ["antenna", "rx", "elrs", "crossfire", "tbs", "receiver", "récepteur"],
-  rx: ["receiver", "récepteur", "elrs", "crossfire", "antenne"],
-  vtx: ["video transmitter", "émetteur vidéo", "analogique", "walksnail", "hdzero", "dji"],
+  camera: ["cam", "gopro", "action cam", "dji action", "insta360"],
+  gps: ["gnss", "beidou", "galileo", "gps module"],
+  antenna: ["rx", "elrs", "crossfire", "tbs", "receiver"],
+  rx: ["receiver", "elrs", "crossfire", "antenna"],
+  vtx: ["video transmitter", "analog", "walksnail", "hdzero", "dji"],
   o3: ["dji o3", "air unit", "dji"],
   o4: ["dji o4", "air unit", "dji"],
-  tpu: ["flexible", "souple", "impression flexible"],
-  frame: ["châssis", "chassis", "structure"],
+  tpu: ["flexible", "soft", "flexible print"],
+  frame: ["chassis", "structure"],
   protection: ["guard", "bumper", "protector"],
-  support: ["mount", "holder", "fixation"],
-  batterie: ["battery", "lipo", "strap"],
-  gopro: ["camera", "caméra", "action cam"],
+  support: ["mount", "holder", "fixture"],
+  mount: ["support", "holder", "fixture"],
+  battery: ["lipo", "strap"],
+  gopro: ["camera", "action cam"],
   cinewhoop: ["whoop", "duct", "ducted"],
   longrange: ["long range", "lr", "gps"],
   "long range": ["longrange", "lr", "gps"]
 };
 
-// Regex construite dynamiquement (plutôt qu'un littéral \uXXXX)
-// pour matcher les marques diacritiques combinantes après une
-// normalisation NFD — sert à retirer les accents dans la recherche.
+// Dynamically built regex (rather than a literal \uXXXX) to match
+// combining diacritical marks after an NFD normalization — used to
+// strip accents in search.
 const COMBINING_MARKS_REGEX = new RegExp(
   "[" + String.fromCharCode(0x0300) + "-" + String.fromCharCode(0x036f) + "]",
   "g"
@@ -897,7 +888,7 @@ function getSearchScore(model, query) {
     if (text.creator.includes(term)) score += 2;
   });
 
-  // Bonus si tous les mots de la recherche sont trouvés quelque part
+  // Bonus if every search word is found somewhere
   const originalTerms = normalizeText(query)
     .split(/\s+/)
     .filter(term => term.length > 0);
@@ -918,8 +909,9 @@ function getSearchScore(model, query) {
     score += 15;
   }
 
-  // Bonus popularité — lu depuis le cache mémoire (primeModelLikes
-  // doit avoir été appelé avant, sinon vaut juste 0 partout).
+  // Popularity bonus — read from the in-memory cache
+  // (primeModelLikes must have been called first, otherwise this
+  // is just 0 everywhere).
   score += Math.min(getLikes(model.id), 10);
 
   return score;

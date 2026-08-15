@@ -1,7 +1,7 @@
 // =======================================================
-// 👤 profile.js — Page profil public
-// Les modèles vivent dans data.js (chargé avant ce fichier),
-// maintenant branché sur Supabase.
+// 👤 profile.js — Public profile page
+// Models live in data.js (loaded before this file), now backed
+// by Supabase.
 // =======================================================
 
 const params = new URLSearchParams(window.location.search);
@@ -13,7 +13,7 @@ function displayModels(list) {
   grid.innerHTML = "";
 
   if (list.length === 0) {
-    grid.innerHTML = "<p>Aucun modèle publié pour cet utilisateur.</p>";
+    grid.innerHTML = "<p>No models published by this user yet.</p>";
     return;
   }
 
@@ -44,14 +44,14 @@ function displayModels(list) {
 init();
 
 async function init() {
-  document.getElementById("profileName").textContent = username || "Utilisateur inconnu";
+  document.getElementById("profileName").textContent = username || "Unknown user";
 
   const models = await getAllModels();
 
   const userModels = models.filter(model => model.creator === username);
 
   document.getElementById("profileInfo").textContent =
-    `${userModels.length} modèle(s) publié(s)`;
+    `${userModels.length} model(s) published`;
 
   displayModels(userModels);
 }

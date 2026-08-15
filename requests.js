@@ -1,11 +1,11 @@
 // =======================================================
-// 💡 requests.js — Demandes communautaires
-// Les modèles, dossiers et demandes vivent dans data.js (chargé
-// avant ce fichier), maintenant branché sur Supabase.
+// 💡 requests.js — Community requests
+// Models, folders and requests live in data.js (loaded before
+// this file), now backed by Supabase.
 // =======================================================
 
 // =======================
-// 📦 ÉLÉMENTS HTML
+// 📦 HTML ELEMENTS
 // =======================
 
 const requestTitle = document.getElementById("requestTitle");
@@ -19,23 +19,20 @@ const requestBreadcrumb = document.getElementById("requestBreadcrumb");
 const requestFoldersGrid = document.getElementById("requestFoldersGrid");
 const selectedRequestPathText = document.getElementById("selectedRequestPathText");
 
-const newRequestFolderInput = document.getElementById("newRequestFolderInput");
-const addRequestFolderButton = document.getElementById("addRequestFolderButton");
-
 // =======================
-// 📁 CHEMIN ACTUEL
+// 📁 CURRENT PATH
 // =======================
 
 let currentPath = [];
 
 // =======================
-// 📦 DONNÉES
+// 📦 DATA
 // =======================
 
 let requests = [];
 
 // =======================
-// 📁 FOLDER PICKER DEMANDE
+// 📁 REQUEST FOLDER PICKER
 // =======================
 
 async function getSubfolders() {
@@ -52,7 +49,7 @@ async function renderRequestFolders() {
 
   if (folders.length === 0) {
     requestFoldersGrid.innerHTML =
-      "<p>Aucun sous-dossier ici. Tu peux en créer un.</p>";
+      "<p>No subfolders here yet. You can create one.</p>";
     return;
   }
 
@@ -64,7 +61,7 @@ async function renderRequestFolders() {
       <div class="folder-icon">📁</div>
       <div>
         <h3>${escapeHtml(folder)}</h3>
-        <p>Choisir ce dossier</p>
+        <p>Choose this folder</p>
       </div>
     `;
 
@@ -79,7 +76,7 @@ async function renderRequestFolders() {
 
 function renderSelectedPath() {
   selectedRequestPathText.textContent =
-    currentPath.length > 0 ? currentPath.join(" / ") : "Aucun";
+    currentPath.length > 0 ? currentPath.join(" / ") : "None";
 }
 
 async function renderFolderPicker() {
@@ -91,29 +88,6 @@ async function renderFolderPicker() {
   await renderRequestFolders();
   renderSelectedPath();
 }
-
-addRequestFolderButton.addEventListener("click", async () => {
-  const folderName = newRequestFolderInput.value.trim();
-
-  if (!folderName) return;
-
-  const newPath = [...currentPath, folderName];
-
-  // Idempotent côté données : si le dossier existe déjà, ce n'est
-  // pas une erreur (voir createCustomFolder dans data.js).
-  try {
-    await createCustomFolder(newPath);
-  } catch (error) {
-    requestMessage.textContent =
-      error.message || "Impossible de créer ce dossier. Réessaie.";
-    return;
-  }
-
-  currentPath = newPath;
-  newRequestFolderInput.value = "";
-
-  await renderFolderPicker();
-});
 
 // =======================
 // 👍 VOTES
@@ -127,7 +101,7 @@ async function voteRequest(id) {
 }
 
 // =======================
-// 🎨 AFFICHAGE DES DEMANDES
+// 🎨 REQUEST DISPLAY
 // =======================
 
 function displayRequests() {
@@ -138,7 +112,7 @@ function displayRequests() {
     .sort((a, b) => getRequestVotes(b.id) - getRequestVotes(a.id));
 
   if (openRequests.length === 0) {
-    requestsGrid.innerHTML = "<p>Aucune demande active pour le moment.</p>";
+    requestsGrid.innerHTML = "<p>No active requests right now.</p>";
     return;
   }
 
@@ -154,14 +128,14 @@ function displayRequests() {
 
         <p>${escapeHtml(request.description)}</p>
 
-        <p><strong>Demandé par :</strong> ${escapeHtml(request.creator || "Utilisateur inconnu")}</p>
+        <p><strong>Requested by:</strong> ${escapeHtml(request.creator || "Unknown user")}</p>
 
         <p class="folder-path">
-          📁 ${escapeHtml((request.path || ["Non classé"]).join(" / "))}
+          📁 ${escapeHtml((request.path || ["Uncategorized"]).join(" / "))}
         </p>
 
         <div class="tags">
-          <span class="tag">Demande</span>
+          <span class="tag">Request</span>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin:14px 0;">
@@ -170,7 +144,7 @@ function displayRequests() {
         </div>
 
         <button class="download-btn" data-request-id="${request.id}">
-          Répondre à cette demande
+          Answer this request
         </button>
       </div>
     `;
@@ -178,8 +152,8 @@ function displayRequests() {
     const voteButton = card.querySelector(".vote-btn");
 
     voteButton.textContent = hasUserVotedRequest(request.id)
-      ? "❌ Retirer vote"
-      : "👍 Voter";
+      ? "❌ Remove vote"
+      : "👍 Vote";
 
     voteButton.addEventListener("click", event => {
       event.stopPropagation();
@@ -198,7 +172,7 @@ function displayRequests() {
 }
 
 // =======================
-// ➕ CRÉATION DEMANDE
+// ➕ CREATE REQUEST
 // =======================
 
 createRequestButton.addEventListener("click", async () => {
@@ -210,7 +184,7 @@ createRequestButton.addEventListener("click", async () => {
 
   if (!title || !description || currentPath.length === 0) {
     requestMessage.textContent =
-      "Merci de remplir le titre, la description et de choisir un dossier.";
+      "Please fill in the title, the description and choose a folder.";
     return;
   }
 
@@ -226,7 +200,7 @@ createRequestButton.addEventListener("click", async () => {
     });
   } catch (error) {
     requestMessage.textContent =
-      error.message || "Échec de la création de la demande. Réessaie.";
+      error.message || "Failed to create the request. Please try again.";
     return;
   }
 
@@ -236,14 +210,14 @@ createRequestButton.addEventListener("click", async () => {
   requestDescription.value = "";
   currentPath = [];
 
-  requestMessage.textContent = "Demande créée avec succès ✅";
+  requestMessage.textContent = "Request created successfully ✅";
 
   await renderFolderPicker();
   displayRequests();
 });
 
 // =======================
-// 🚀 INITIALISATION
+// 🚀 INITIALIZATION
 // =======================
 
 init();

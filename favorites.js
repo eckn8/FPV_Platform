@@ -1,9 +1,9 @@
 // =======================================================
-// ❤️ favorites.js — Mes favoris
-// Les modèles et favoris vivent dans data.js, maintenant branché
-// sur Supabase. Voir favoris = il faut un compte, donc tout le
-// rendu attend authReady (contrairement aux pages de navigation,
-// qui ne doivent jamais attendre Supabase).
+// ❤️ favorites.js — My favorites
+// Models and favorites live in data.js, now backed by Supabase.
+// Seeing favorites requires an account, so all rendering waits
+// for authReady (unlike navigation pages, which must never wait
+// on Supabase).
 // =======================================================
 
 const grid = document.getElementById("favoritesGrid");
@@ -14,14 +14,14 @@ async function displayFavorites() {
   if (!getCurrentUser()) {
     grid.innerHTML = `
       <p>
-        Connecte-toi pour retrouver tes modèles sauvegardés.
-        <a href="login.html?redirect=favorites.html">Se connecter</a>
+        Log in to find your saved models.
+        <a href="login.html?redirect=favorites.html">Log in</a>
       </p>
     `;
     return;
   }
 
-  grid.innerHTML = "<p>Chargement...</p>";
+  grid.innerHTML = "<p>Loading...</p>";
 
   const [allModels] = await Promise.all([
     getAllModels(),
@@ -37,7 +37,7 @@ async function displayFavorites() {
   grid.innerHTML = "";
 
   if (favoriteModels.length === 0) {
-    grid.innerHTML = "<p>Tu n’as encore aucun modèle sauvegardé.</p>";
+    grid.innerHTML = "<p>You haven't saved any models yet.</p>";
     return;
   }
 
@@ -53,7 +53,7 @@ async function displayFavorites() {
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
         <p>${escapeHtml(model.description)}</p>
-        <p><strong>Créateur :</strong> ${escapeHtml(model.creator || "Utilisateur inconnu")}</p>
+        <p><strong>Creator:</strong> ${escapeHtml(model.creator || "Unknown user")}</p>
 
         <div class="tags">
           ${(model.tags || [])
@@ -61,7 +61,7 @@ async function displayFavorites() {
             .join("")}
         </div>
 
-        <button class="download-btn">Voir le modèle</button>
+        <button class="download-btn">View model</button>
       </div>
     `;
 
@@ -69,8 +69,8 @@ async function displayFavorites() {
   });
 }
 
-// On attend de connaître l'état de connexion avant d'afficher quoi
-// que ce soit : contrairement aux autres pages, il n'y a rien de
-// pertinent à montrer ici tant qu'on ne sait pas qui est connecté.
-grid.innerHTML = "<p>Chargement...</p>";
+// We wait to know the login state before displaying anything:
+// unlike other pages, there's nothing relevant to show here until
+// we know who's logged in.
+grid.innerHTML = "<p>Loading...</p>";
 authReady.then(displayFavorites);
