@@ -224,9 +224,24 @@ init();
 async function init() {
   await authReady;
 
-  models = await getAllModels();
+  // Loaded in parallel: the stats query is independent of the
+  // models grid, no reason to make one wait on the other.
+  const [loadedModels, stats] = await Promise.all([
+    getAllModels(),
+    getPlatformStats()
+  ]);
+
+  models = loadedModels;
 
   await primeModelLikes(models.map(model => model.id));
 
   displayModels(models);
+
+  renderStats(stats);
+}
+
+function renderStats(stats) {
+  document.getElementById("statModelsCount").textContent = stats.modelsCount;
+  document.getElementById("statCreatorsCount").textContent = stats.creatorsCount;
+  document.getElementById("statDownloadsCount").textContent = stats.downloadsCount;
 }

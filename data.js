@@ -942,6 +942,68 @@ async function removeReportedComment(commentId) {
 }
 
 // =======================
+// 📥 DOWNLOADS
+// Downloading never requires an account (see access rules), so
+// downloads can't always be deduped by a real user id the way
+// likes/favorites are — see supabase_downloads.sql for how
+// downloader_key covers both cases.
+// =======================
+
+function _getDownloadIdentityKey() {
+  const user = getCurrentUser();
+  if (user) return `user:${user.id}`;
+
+  let anonId = localStorage.getItem("fpv_anon_id");
+
+  if (!anonId) {
+    anonId = crypto.randomUUID();
+    localStorage.setItem("fpv_anon_id", anonId);
+  }
+
+  return `anon:${anonId}`;
+}
+
+// Fire-and-forget: called on click, right alongside the real
+// download link — never blocks or breaks the download itself. A
+// repeat download by the same identity silently no-ops (unique
+// constraint on model_id + downloader_key), which is exactly the
+// intended "don't double count" behavior, not an error.
+async function recordDownload(modelId) {
+  const { error } = await supabaseClient
+    .from("model_downloads")
+    .insert({ model_id: modelId, downloader_key: _getDownloadIdentityKey() });
+
+  if (error && error.code !== "23505") {
+    console.error("Error recording download:", error.message);
+  }
+}
+
+// =======================
+// 📊 PLATFORM STATS (home page)
+// creatorsCount is the number of distinct people who have actually
+// published a model — not every registered account, which would
+// count people who signed up but never posted anything as
+// "creators". Small enough scale that deduping the creator ids in
+// JS is simpler than a dedicated SQL view.
+// =======================
+
+async function getPlatformStats() {
+  const [modelsResult, creatorRowsResult, downloadsResult] = await Promise.all([
+    supabaseClient.from("models").select("id", { count: "exact", head: true }).is("deleted_at", null),
+    supabaseClient.from("models").select("creator_id").is("deleted_at", null),
+    supabaseClient.from("model_downloads").select("model_id", { count: "exact", head: true })
+  ]);
+
+  return {
+    modelsCount: modelsResult.count || 0,
+    creatorsCount: creatorRowsResult.data
+      ? new Set(creatorRowsResult.data.map(row => row.creator_id)).size
+      : 0,
+    downloadsCount: downloadsResult.count || 0
+  };
+}
+
+// =======================
 // 🔍 ADVANCED SEARCH
 // Stays 100% synchronous (see the note at the top of the file) —
 // operates on models already loaded in memory.

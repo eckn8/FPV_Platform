@@ -90,6 +90,9 @@ async function renderModelPage(model) {
 
   if (primaryFile && primaryFile.url) {
     downloadMainButton.href = primaryFile.url;
+    downloadMainButton.addEventListener("click", () => {
+      recordDownload(model.id);
+    });
   } else {
     downloadMainButton.href = "#";
     downloadMainButton.addEventListener("click", event => {
@@ -1068,6 +1071,17 @@ function renderVersions(model) {
     `;
 
     container.appendChild(entry);
+  });
+
+  // Same download tracking as the main button above — a download
+  // still counts once per identity per model regardless of which
+  // file/version was actually picked (see recordDownload() in
+  // data.js). The [href] selector skips the unavailable <span>s,
+  // which are never real download links.
+  container.querySelectorAll(".version-file-link[href]").forEach(link => {
+    link.addEventListener("click", () => {
+      recordDownload(model.id);
+    });
   });
 }
 
