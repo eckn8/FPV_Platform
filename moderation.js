@@ -8,19 +8,25 @@
 
 const reportsContainer = document.getElementById("reportsContainer");
 
+// The link carries the report along (modReportId/modType/
+// modCommentId) so model.js can show a small floating panel with
+// the same Dismiss/Remove actions right there, instead of forcing
+// a trip back to this page just to act on it.
 function formatReportedContent(report) {
   if (report.targetType === "model") {
     return {
       label: report.modelTitle || "Unknown model",
       detail: report.modelPath ? report.modelPath.join(" / ") : "",
-      link: `model.html?id=${report.targetId}`
+      link: `model.html?id=${report.targetId}&modReportId=${report.id}&modType=model`
     };
   }
 
   return {
     label: "Comment",
     detail: report.commentText || "(comment no longer exists)",
-    link: report.modelId ? `model.html?id=${report.modelId}` : null
+    link: report.modelId
+      ? `model.html?id=${report.modelId}&modReportId=${report.id}&modType=comment&modCommentId=${report.targetId}`
+      : null
   };
 }
 

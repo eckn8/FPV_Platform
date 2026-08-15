@@ -1097,3 +1097,57 @@ select option {
   background: #ff5c5c;
   color: white;
 }
+
+/* Floating panel shown on a model page when arriving from a
+   moderation link (see initModerationPanel() in model.js) — stays
+   fixed on screen while scrolling so the actions are always
+   reachable without a trip back to the moderation queue. */
+.mod-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  max-width: 280px;
+  background: #171b24;
+  border: 1px solid #ff5c5c;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 999;
+}
+
+.mod-panel p {
+  color: #ffcf70;
+  margin-bottom: 10px;
+}
+
+.mod-panel-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.mod-panel-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #333a48;
+  background: #191d27;
+  color: white;
+  cursor: pointer;
+}
+
+#modRemoveButton {
+  border-color: #ff5c5c;
+  color: #ff8a8a;
+}
+
+#modRemoveButton:hover {
+  background: #ff5c5c;
+  color: white;
+}
+
+/* Points a moderator straight at the reported comment among
+   possibly many others on the page. */
+.mod-highlighted-comment {
+  border-color: #ffb020 !important;
+  box-shadow: 0 0 0 2px rgba(255, 176, 32, 0.4);
+}

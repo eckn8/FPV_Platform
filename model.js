@@ -839,6 +839,7 @@ async function renderModelPage(model) {
       const bubble = document.createElement("div");
 
       bubble.className = "comment-bubble";
+      bubble.dataset.commentId = comment.id;
 
       const currentUser = getCurrentUser();
       const isOwnComment = !!currentUser && comment.userId === currentUser.id;
@@ -944,6 +945,76 @@ async function renderModelPage(model) {
   };
 
   displayComments();
+
+  initModerationPanel(model);
+}
+
+// =======================
+// 🛡️ MODERATION PANEL
+// Only rendered when arriving from moderation.html's "view" link
+// (see formatReportedContent() in moderation.js), which carries the
+// report along via query params — lets a moderator act on the
+// content right where they can actually see it, instead of having
+// to go back and forth with the moderation queue. The real
+// protection is still the RLS policies (see
+// supabase_moderation.sql), not this panel's presence.
+// =======================
+
+function initModerationPanel(model) {
+  const modReportId = params.get("modReportId");
+  const modType = params.get("modType");
+  const modCommentId = params.get("modCommentId");
+
+  if (!modReportId || !modType) return;
+  if (!isCurrentUserModerator()) return;
+
+  const panel = document.createElement("div");
+  panel.className = "mod-panel";
+
+  panel.innerHTML = `
+    <p>🛡️ Moderating this ${modType === "comment" ? "comment" : "model"}</p>
+    <div class="mod-panel-actions">
+      <button type="button" id="modDismissButton">Dismiss</button>
+      <button type="button" id="modRemoveButton">Remove content</button>
+    </div>
+  `;
+
+  document.body.appendChild(panel);
+
+  document.getElementById("modDismissButton").addEventListener("click", async () => {
+    await dismissReport(modReportId);
+    window.location.href = "moderation.html";
+  });
+
+  document.getElementById("modRemoveButton").addEventListener("click", async () => {
+    const confirmMessage = modType === "comment"
+      ? "Delete this comment? This cannot be undone."
+      : "Remove this model? It will be hidden from the site.";
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      if (modType === "comment") {
+        await removeReportedComment(modCommentId);
+      } else {
+        await removeReportedModel(model.id);
+      }
+    } catch (error) {
+      alert(error.message || "Failed. Please try again.");
+      return;
+    }
+
+    window.location.href = "moderation.html";
+  });
+
+  if (modType === "comment" && modCommentId) {
+    const bubble = document.querySelector(`[data-comment-id="${modCommentId}"]`);
+
+    if (bubble) {
+      bubble.classList.add("mod-highlighted-comment");
+      bubble.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
 }
 
 // =======================
