@@ -13,6 +13,14 @@ name = "fpv-platform"
 compatibility_date = "2026-08-14"
 main = "worker.js"
 
+# ---- Custom domain -------------------------------------------
+# custom_domain = true (not a plain route) so Wrangler provisions
+# the DNS record + SSL certificate itself — the zone already exists
+# since the domain was registered directly through Cloudflare.
+routes = [
+  { pattern = "fpv-base.com", custom_domain = true }
+]
+
 # ---- Static site (HTML/CSS/JS at the root) ---------------
 [assets]
 directory = "."
