@@ -1,5 +1,5 @@
 -- =======================================================
--- 🗄 supabase_setup.sql — Auth schema for FPV Print Hub
+-- 🗄 supabase_setup.sql — Auth schema for FPVBase
 --
 -- Run ONCE in Supabase: Project → SQL Editor →
 -- New query → paste this file → Run.

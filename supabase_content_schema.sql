@@ -1,5 +1,5 @@
 -- =======================================================
--- 🗄 supabase_content_schema.sql — Content schema for FPV Print Hub
+-- 🗄 supabase_content_schema.sql — Content schema for FPVBase
 --
 -- Run ONCE in Supabase: Project → SQL Editor →
 -- New query → paste this file → Run.
