@@ -21,6 +21,10 @@ routes = [
   { pattern = "fpv-base.com", custom_domain = true }
 ]
 
+# Adding `routes` disables the workers.dev URL by default — kept on
+# explicitly as a fallback/testing URL alongside the real domain.
+workers_dev = true
+
 # ---- Static site (HTML/CSS/JS at the root) ---------------
 [assets]
 directory = "."
