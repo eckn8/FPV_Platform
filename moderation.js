@@ -64,6 +64,13 @@ function renderReports(reports) {
 
       ${report.details ? `<p>${escapeHtml(report.details)}</p>` : ""}
 
+      <p class="folder-path">
+        Posted by:
+        ${report.authorUsername
+          ? `<a href="profile.html?user=${encodeURIComponent(report.authorUsername)}">${escapeHtml(report.authorUsername)}</a>`
+          : "Unknown user"}
+      </p>
+
       <p class="folder-path">Reported by: ${escapeHtml(report.reporterUsername)}</p>
 
       <div class="form-actions">

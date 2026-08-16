@@ -865,14 +865,19 @@ function isCurrentUserModerator() {
 }
 
 // Loads every report, most recent first, with the reporter's
-// username and (for model reports) the model's title/path already
-// embedded via PostgREST foreign-key joins. Comment reports have no
-// join available (target_id is polymorphic, not a real foreign
-// key), so their comment text is fetched separately and merged in.
+// username and (for model reports) the model's title/path/creator
+// already embedded via PostgREST foreign-key joins. Comment reports
+// have no join available (target_id is polymorphic, not a real
+// foreign key), so their text + author username are fetched
+// separately and merged in. authorUsername (who POSTED the
+// reported content) is deliberately kept distinct from
+// reporterUsername (who FLAGGED it) — a moderator needs both:
+// usernames themselves can be the actual problem even when the
+// report was filed over something else.
 async function getAllReports() {
   const { data, error } = await supabaseClient
     .from("reports")
-    .select("*, reporter:profiles(username), model:models(title, path)")
+    .select("*, reporter:profiles(username), model:models(title, path, creator_username)")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -889,7 +894,7 @@ async function getAllReports() {
   if (commentReportIds.length > 0) {
     const { data: comments, error: commentsError } = await supabaseClient
       .from("comments")
-      .select("id, text, model_id")
+      .select("id, text, model_id, username")
       .in("id", commentReportIds);
 
     if (!commentsError) {
@@ -910,7 +915,10 @@ async function getAllReports() {
     modelPath: row.model ? row.model.path : null,
     commentText: row.target_type === "comment" && commentsById[row.target_id]
       ? commentsById[row.target_id].text
-      : null
+      : null,
+    authorUsername: row.target_type === "model"
+      ? (row.model ? row.model.creator_username : null)
+      : (commentsById[row.target_id] ? commentsById[row.target_id].username : null)
   }));
 }
 
