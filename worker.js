@@ -313,19 +313,19 @@ async function handleDeleteAccount(request, env) {
       await fetch(`${env.SUPABASE_URL}/rest/v1/models?creator_id=eq.${user.id}`, {
         method: "PATCH",
         headers: secretHeaders,
-        body: JSON.stringify({ creator_id: null, creator_username: "Deleted user" })
+        body: JSON.stringify({ creator_id: null, creator_username: "Community" })
       });
 
       await fetch(`${env.SUPABASE_URL}/rest/v1/comments?user_id=eq.${user.id}`, {
         method: "PATCH",
         headers: secretHeaders,
-        body: JSON.stringify({ user_id: null, username: "Deleted user" })
+        body: JSON.stringify({ user_id: null, username: "Community" })
       });
 
       await fetch(`${env.SUPABASE_URL}/rest/v1/requests?creator_id=eq.${user.id}`, {
         method: "PATCH",
         headers: secretHeaders,
-        body: JSON.stringify({ creator_id: null, creator_username: "Deleted user" })
+        body: JSON.stringify({ creator_id: null, creator_username: "Community" })
       });
     } else {
       // Deleting their models also cascades to comments/likes/
