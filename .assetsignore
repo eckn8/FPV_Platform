@@ -13,6 +13,7 @@ supabase_downloads.sql
 supabase_user_restrictions.sql
 supabase_restriction_reasons.sql
 supabase_restriction_reasons_fix.sql
+supabase_banned_words.sql
 .gitignore
 .git
 .claude

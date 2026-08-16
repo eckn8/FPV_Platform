@@ -1014,6 +1014,52 @@ async function getRestrictedUsers() {
   return data;
 }
 
+// =======================
+// 🔤 BANNED WORDS
+// The list itself is moderator-only (RLS), and the real block on
+// publishing/commenting is a database trigger, not this — see
+// supabase_banned_words.sql. This is just CRUD for managing the
+// list from moderation.html.
+// =======================
+
+async function getBannedWords() {
+  const { data, error } = await supabaseClient
+    .from("banned_words")
+    .select("id, word")
+    .order("word", { ascending: true });
+
+  if (error) {
+    console.error("Error loading banned words:", error.message);
+    return [];
+  }
+
+  return data;
+}
+
+async function addBannedWord(word) {
+  const cleanWord = (word || "").trim().toLowerCase();
+
+  if (!cleanWord) throw new Error("Enter a word.");
+
+  const { error } = await supabaseClient
+    .from("banned_words")
+    .insert({ word: cleanWord });
+
+  if (error) {
+    if (error.code === "23505") throw new Error("This word is already on the list.");
+    throw new Error(error.message);
+  }
+}
+
+async function removeBannedWord(id) {
+  const { error } = await supabaseClient
+    .from("banned_words")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+}
+
 // Dismissing = "reviewed, no action needed". Doesn't touch the
 // reported content, just this one report.
 async function dismissReport(reportId) {

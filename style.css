@@ -1154,6 +1154,30 @@ select option {
   color: white;
 }
 
+/* Banned word chip (moderation.html) — a .tag with an inline
+   remove button, rather than the absolute-positioned overlay used
+   for removable image thumbnails (see .remove-image-btn), since a
+   word chip has no image to sit on top of. */
+.banned-word-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.remove-banned-word-btn {
+  background: none;
+  border: none;
+  color: #ff8a8a;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  line-height: 1;
+}
+
+.remove-banned-word-btn:hover {
+  color: #ff5c5c;
+}
+
 /* Floating panel shown on a model page when arriving from a
    moderation link (see initModerationPanel() in model.js) — stays
    fixed on screen while scrolling so the actions are always

@@ -32,12 +32,15 @@
          many pending reports, finding it meant a lot of scrolling.
          Tabs (same pattern as login.html) keep both a click away
          instead. -->
-    <div class="auth-tabs" style="max-width: 480px;">
+    <div class="auth-tabs" style="max-width: 640px;">
       <button type="button" id="tabReportsButton" class="auth-tab active">
         📋 Reports
       </button>
       <button type="button" id="tabRestrictedButton" class="auth-tab">
         🚫 Restricted users
+      </button>
+      <button type="button" id="tabBannedWordsButton" class="auth-tab">
+        🔤 Banned words
       </button>
     </div>
 
@@ -55,6 +58,23 @@
       </p>
 
       <div id="restrictedUsersContainer" style="margin-top: 24px;"></div>
+    </div>
+
+    <div id="bannedWordsPanel" style="display:none;">
+      <p>
+        Publishing a model or posting a comment containing any of
+        these words (as a whole word, not a substring) is blocked
+        automatically — enforced in the database, not just this
+        page.
+      </p>
+
+      <div class="upload-section" style="margin-top: 24px;">
+        <input type="text" id="newBannedWordInput" placeholder="Add a word...">
+        <button id="addBannedWordButton" class="download-btn">Add word</button>
+        <p id="bannedWordsMessage" class="folder-path"></p>
+      </div>
+
+      <div id="bannedWordsContainer" style="margin-top: 24px;"></div>
     </div>
   </main>
 

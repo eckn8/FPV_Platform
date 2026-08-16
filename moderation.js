@@ -8,35 +8,38 @@
 
 const reportsContainer = document.getElementById("reportsContainer");
 const restrictedUsersContainer = document.getElementById("restrictedUsersContainer");
+const bannedWordsContainer = document.getElementById("bannedWordsContainer");
+const newBannedWordInput = document.getElementById("newBannedWordInput");
+const addBannedWordButton = document.getElementById("addBannedWordButton");
+const bannedWordsMessage = document.getElementById("bannedWordsMessage");
 
 // =======================
 // 🔀 TABS
-// Restricted users used to live below the reports list — with many
-// pending reports, finding it meant a lot of scrolling. Same
-// tab pattern as login.html.
+// Restricted users (and now banned words) used to live below the
+// reports list — with many pending reports, finding them meant a
+// lot of scrolling. Same tab pattern as login.html.
 // =======================
 
 const tabReportsButton = document.getElementById("tabReportsButton");
 const tabRestrictedButton = document.getElementById("tabRestrictedButton");
+const tabBannedWordsButton = document.getElementById("tabBannedWordsButton");
 const reportsPanel = document.getElementById("reportsPanel");
 const restrictedPanel = document.getElementById("restrictedPanel");
+const bannedWordsPanel = document.getElementById("bannedWordsPanel");
 
-function showReportsTab() {
-  reportsPanel.style.display = "block";
-  restrictedPanel.style.display = "none";
-  tabReportsButton.classList.add("active");
-  tabRestrictedButton.classList.remove("active");
+function showTab(activeButton, activePanel) {
+  [reportsPanel, restrictedPanel, bannedWordsPanel].forEach(panel => {
+    panel.style.display = panel === activePanel ? "block" : "none";
+  });
+
+  [tabReportsButton, tabRestrictedButton, tabBannedWordsButton].forEach(button => {
+    button.classList.toggle("active", button === activeButton);
+  });
 }
 
-function showRestrictedTab() {
-  restrictedPanel.style.display = "block";
-  reportsPanel.style.display = "none";
-  tabRestrictedButton.classList.add("active");
-  tabReportsButton.classList.remove("active");
-}
-
-tabReportsButton.addEventListener("click", showReportsTab);
-tabRestrictedButton.addEventListener("click", showRestrictedTab);
+tabReportsButton.addEventListener("click", () => showTab(tabReportsButton, reportsPanel));
+tabRestrictedButton.addEventListener("click", () => showTab(tabRestrictedButton, restrictedPanel));
+tabBannedWordsButton.addEventListener("click", () => showTab(tabBannedWordsButton, bannedWordsPanel));
 
 // The link carries the report along (modReportId/modType/
 // modCommentId) so model.js can show a small floating panel with
@@ -329,10 +332,69 @@ async function loadAndRenderRestrictedUsers() {
   tabRestrictedButton.textContent = `🚫 Restricted users (${users.length})`;
 }
 
+function renderBannedWords(words) {
+  bannedWordsContainer.innerHTML = "";
+
+  if (words.length === 0) {
+    bannedWordsContainer.innerHTML = "<p>No banned words yet.</p>";
+    return;
+  }
+
+  const list = document.createElement("div");
+  list.className = "tags";
+
+  words.forEach(word => {
+    const chip = document.createElement("span");
+    chip.className = "tag banned-word-chip";
+
+    chip.innerHTML = `
+      ${escapeHtml(word.word)}
+      <button type="button" class="remove-banned-word-btn" title="Remove this word">✕</button>
+    `;
+
+    chip.querySelector(".remove-banned-word-btn").addEventListener("click", async () => {
+      try {
+        await removeBannedWord(word.id);
+      } catch (error) {
+        alert(error.message || "Failed. Please try again.");
+        return;
+      }
+
+      await loadAndRenderBannedWords();
+    });
+
+    list.appendChild(chip);
+  });
+
+  bannedWordsContainer.appendChild(list);
+}
+
+async function loadAndRenderBannedWords() {
+  bannedWordsContainer.innerHTML = "<p>Loading...</p>";
+  const words = await getBannedWords();
+  renderBannedWords(words);
+  tabBannedWordsButton.textContent = `🔤 Banned words (${words.length})`;
+}
+
+addBannedWordButton.addEventListener("click", async () => {
+  bannedWordsMessage.textContent = "";
+
+  try {
+    await addBannedWord(newBannedWordInput.value);
+  } catch (error) {
+    bannedWordsMessage.textContent = error.message || "Failed. Please try again.";
+    return;
+  }
+
+  newBannedWordInput.value = "";
+  await loadAndRenderBannedWords();
+});
+
 async function refreshModerationView() {
   await Promise.all([
     loadAndRenderReports(),
-    loadAndRenderRestrictedUsers()
+    loadAndRenderRestrictedUsers(),
+    loadAndRenderBannedWords()
   ]);
 }
 
