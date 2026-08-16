@@ -9,6 +9,35 @@
 const reportsContainer = document.getElementById("reportsContainer");
 const restrictedUsersContainer = document.getElementById("restrictedUsersContainer");
 
+// =======================
+// 🔀 TABS
+// Restricted users used to live below the reports list — with many
+// pending reports, finding it meant a lot of scrolling. Same
+// tab pattern as login.html.
+// =======================
+
+const tabReportsButton = document.getElementById("tabReportsButton");
+const tabRestrictedButton = document.getElementById("tabRestrictedButton");
+const reportsPanel = document.getElementById("reportsPanel");
+const restrictedPanel = document.getElementById("restrictedPanel");
+
+function showReportsTab() {
+  reportsPanel.style.display = "block";
+  restrictedPanel.style.display = "none";
+  tabReportsButton.classList.add("active");
+  tabRestrictedButton.classList.remove("active");
+}
+
+function showRestrictedTab() {
+  restrictedPanel.style.display = "block";
+  reportsPanel.style.display = "none";
+  tabRestrictedButton.classList.add("active");
+  tabReportsButton.classList.remove("active");
+}
+
+tabReportsButton.addEventListener("click", showReportsTab);
+tabRestrictedButton.addEventListener("click", showRestrictedTab);
+
 // The link carries the report along (modReportId/modType/
 // modCommentId) so model.js can show a small floating panel with
 // the same Dismiss/Remove actions right there, instead of forcing
@@ -231,6 +260,7 @@ async function loadAndRenderReports() {
   reportsContainer.innerHTML = "<p>Loading...</p>";
   const reports = await getAllReports();
   renderReports(reports);
+  tabReportsButton.textContent = `📋 Reports (${reports.length})`;
 }
 
 function formatTimeRemaining(restrictedUntil) {
@@ -296,6 +326,7 @@ async function loadAndRenderRestrictedUsers() {
   restrictedUsersContainer.innerHTML = "<p>Loading...</p>";
   const users = await getRestrictedUsers();
   renderRestrictedUsers(users);
+  tabRestrictedButton.textContent = `🚫 Restricted users (${users.length})`;
 }
 
 async function refreshModerationView() {

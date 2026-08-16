@@ -26,18 +26,36 @@
 
   <main style="padding: 40px 8%;">
     <h1>🛡️ Moderation</h1>
-    <p>Reports from the whole community — reviewed here, not visible to anyone else.</p>
 
-    <div id="reportsContainer" style="margin-top: 24px;"></div>
+    <!-- TABS
+         Restricted users used to live below the reports list — with
+         many pending reports, finding it meant a lot of scrolling.
+         Tabs (same pattern as login.html) keep both a click away
+         instead. -->
+    <div class="auth-tabs" style="max-width: 480px;">
+      <button type="button" id="tabReportsButton" class="auth-tab active">
+        📋 Reports
+      </button>
+      <button type="button" id="tabRestrictedButton" class="auth-tab">
+        🚫 Restricted users
+      </button>
+    </div>
 
-    <h2 style="margin-top: 50px;">🚫 Restricted / banned users</h2>
-    <p>
-      Everyone currently blocked from publishing or commenting —
-      stays here even after the report that led to it is dismissed
-      or acted on, so a restriction can always be found and lifted.
-    </p>
+    <div id="reportsPanel">
+      <p>Reports from the whole community — reviewed here, not visible to anyone else.</p>
 
-    <div id="restrictedUsersContainer" style="margin-top: 24px;"></div>
+      <div id="reportsContainer" style="margin-top: 24px;"></div>
+    </div>
+
+    <div id="restrictedPanel" style="display:none;">
+      <p>
+        Everyone currently blocked from publishing or commenting —
+        stays here even after the report that led to it is dismissed
+        or acted on, so a restriction can always be found and lifted.
+      </p>
+
+      <div id="restrictedUsersContainer" style="margin-top: 24px;"></div>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
