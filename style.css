@@ -1280,3 +1280,103 @@ select option {
   background: #ff5c5c;
   color: white;
 }
+
+/* =======================
+   SITE FOOTER
+   Same markup repeated on every page (no templating in this
+   project) — links to the legal/policy pages.
+======================= */
+
+.site-footer {
+  margin-top: 60px;
+  padding: 30px 8%;
+  border-top: 1px solid #2a2f3a;
+  text-align: center;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.footer-links a {
+  color: #9aa3b2;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.footer-links a:hover {
+  color: #00e0ff;
+}
+
+.footer-copyright {
+  color: #676f7d;
+  font-size: 12px;
+}
+
+/* =======================
+   LEGAL / POLICY PAGES
+   Shared prose styling for legal.html, privacy-policy.html,
+   terms.html, cookies.html, community-guidelines.html,
+   moderation-policy.html, appeals.html.
+======================= */
+
+.legal-content {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.legal-content h2 {
+  margin-top: 36px;
+  margin-bottom: 12px;
+}
+
+.legal-content h2:first-of-type {
+  margin-top: 24px;
+}
+
+.legal-content p {
+  color: #dce2ee;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.legal-content ul {
+  color: #dce2ee;
+  line-height: 1.6;
+  margin: 0 0 14px 20px;
+}
+
+.legal-content a {
+  color: #00e0ff;
+}
+
+.legal-updated {
+  color: #9aa3b2;
+  font-size: 13px;
+  margin-bottom: 30px;
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.legal-table th,
+.legal-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid #2a2f3a;
+  color: #dce2ee;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.legal-table th {
+  background: #191d27;
+  color: #f5f5f5;
+}

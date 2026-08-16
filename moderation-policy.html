@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moderation Policy - FPVBase</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="logo" onclick="window.location.href='index.html'">
+      FPVBase
+    </div>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
+      <span id="authStatus" class="auth-status"></span>
+    </nav>
+  </header>
+
+  <main style="padding: 40px 8%;">
+    <div class="legal-content">
+      <h1>Moderation Policy</h1>
+      <p class="legal-updated">Last updated: August 2026</p>
+
+      <p>This page explains how reporting and moderation work on FPVBase.</p>
+
+      <h2>Automated checks (before publication)</h2>
+      <p>
+        Every uploaded image is automatically screened for inappropriate
+        content before it's published. Titles, descriptions, print
+        notes, tags, and comments are checked against a list of
+        disallowed words before they're accepted. These checks happen
+        instantly and block publication outright if triggered — no human
+        review is involved at this stage. If you believe legitimate
+        content was blocked in error, contact
+        <a href="mailto:contact@fpv-base.com">contact@fpv-base.com</a>.
+      </p>
+
+      <h2>Reporting content</h2>
+      <p>
+        Any logged-in user can report a model or a comment using the
+        <strong>Report</strong> button, selecting one or more reasons
+        (off-topic, inappropriate content, spam, harassment, copyright
+        infringement, or other) and optional details. Reports are
+        private — visible only to you and to moderators, never publicly.
+        You can cancel your own report at any time before it's reviewed.
+      </p>
+
+      <h2>How reports are reviewed</h2>
+      <p>
+        Moderators review reports through a private queue. For each
+        report, a moderator can:
+      </p>
+      <ul>
+        <li><strong>Dismiss it</strong> — no violation found, the report is closed and the content stays as-is.</li>
+        <li><strong>Remove the content</strong> — the model is taken down (its files remain safely stored, but it's no longer visible or discoverable) or the comment is permanently deleted.</li>
+      </ul>
+
+      <h2>Account restrictions</h2>
+      <p>
+        Independently of a specific report, a moderator may restrict an
+        account from publishing new models and posting comments — either
+        temporarily (for a set number of days) or permanently. A
+        restricted account can still log in, browse, and download; only
+        publishing and commenting are blocked. Restrictions are always
+        tied to a recorded reason and can be lifted by a moderator at any
+        time.
+      </p>
+
+      <h2>Who moderates</h2>
+      <p>
+        FPVBase is currently moderated by its publisher. As the platform
+        grows, this may expand to additional trusted community
+        moderators, who would be bound by the same rules described here.
+      </p>
+
+      <h2>Disagree with a decision?</h2>
+      <p>
+        See our <a href="appeals.html">appeals and takedown
+        procedure</a> for how to contest a moderation decision or
+        request removal of content that infringes your rights.
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="legal.html">Legal Notice</a>
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="cookies.html">Cookie Policy</a>
+      <a href="community-guidelines.html">Community Guidelines</a>
+      <a href="moderation-policy.html">Moderation Policy</a>
+      <a href="appeals.html">Appeals &amp; Takedowns</a>
+    </div>
+    <p class="footer-copyright">FPVBase — built for the FPV community.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

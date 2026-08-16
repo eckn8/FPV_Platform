@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Policy - FPVBase</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="logo" onclick="window.location.href='index.html'">
+      FPVBase
+    </div>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="explore.html">Explore</a>
+      <a href="requests.html">Requests</a>
+      <a href="upload.html">Publish</a>
+      <a href="favorites.html">My Favorites</a>
+      <span id="authStatus" class="auth-status"></span>
+    </nav>
+  </header>
+
+  <main style="padding: 40px 8%;">
+    <div class="legal-content">
+      <h1>Cookie Policy</h1>
+      <p class="legal-updated">Last updated: August 2026</p>
+
+      <p>
+        This page explains what FPVBase stores in your browser, and why.
+        "Cookies and local storage" both mean the same thing here: small
+        pieces of data your browser keeps and sends back to us — the
+        distinction between the two technologies doesn't change what you
+        need to know about them.
+      </p>
+
+      <h2>What we use</h2>
+      <table class="legal-table">
+        <tr><th>Purpose</th><th>What it does</th><th>Type</th></tr>
+        <tr><td>Login session</td><td>Keeps you signed in between visits</td><td>Strictly necessary</td></tr>
+        <tr><td>Anonymous download counter (<code>fpv_anon_id</code>)</td><td>A random identifier so a download isn't counted twice by the same visitor, even without an account — not linked to your identity</td><td>Strictly necessary</td></tr>
+        <tr><td>Anti-bot verification (Cloudflare Turnstile)</td><td>Confirms you're not a bot when logging in or signing up</td><td>Strictly necessary</td></tr>
+        <tr><td>Cloudflare security/infrastructure</td><td>Set by our hosting provider as part of serving the site securely (e.g., protection against automated abuse)</td><td>Strictly necessary</td></tr>
+      </table>
+
+      <h2>What we don't use</h2>
+      <p>
+        No advertising cookies, no analytics/tracking cookies, no
+        third-party marketing pixels. If this ever changes, this page —
+        and this page alone — will be updated first, along with a proper
+        consent mechanism before any such cookie is set.
+      </p>
+
+      <h2>Do we ask for your consent?</h2>
+      <p>
+        No. Under EU law, cookies that are strictly necessary for the
+        service you've asked for (staying logged in, basic security,
+        accurate download counts) don't require consent — only optional
+        ones (advertising, analytics) do, and we don't use any of those
+        today.
+      </p>
+
+      <h2>Managing this storage</h2>
+      <p>
+        You can clear cookies and local storage at any time through your
+        browser settings. Doing so will log you out and reset your
+        anonymous download identifier — it won't affect your account or
+        published content.
+      </p>
+
+      <h2>Changes to this policy</h2>
+      <p>
+        We may update this policy if what we store changes — most
+        notably if advertising is ever introduced, which would also come
+        with a consent banner.
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="legal.html">Legal Notice</a>
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="cookies.html">Cookie Policy</a>
+      <a href="community-guidelines.html">Community Guidelines</a>
+      <a href="moderation-policy.html">Moderation Policy</a>
+      <a href="appeals.html">Appeals &amp; Takedowns</a>
+    </div>
+    <p class="footer-copyright">FPVBase — built for the FPV community.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>
