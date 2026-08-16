@@ -755,30 +755,46 @@ async function deleteComment(commentId) {
 
 // =======================
 // 🚩 REPORTS
-// No moderator role yet — everyone can currently only see (and
-// therefore only cancel) their own reports (see the RLS policies
-// in supabase_content_schema.sql), but they're now centralized in
-// the database instead of everyone's own localStorage.
+// Everyone can currently only see (and therefore only cancel) their
+// own reports client-side — moderators see everything, but through
+// moderation.html, not this cache (see the RLS policies in
+// supabase_content_schema.sql / supabase_moderation.sql).
+//
+// _reportedCache mirrors the vote/like cache pattern used elsewhere
+// in this file: primed once per page load so hasUserReported() can
+// be read synchronously, which lets model.js/comment rendering
+// blur out content the *current viewer* already reported (a purely
+// personal "hide until I un-report it" cue — nobody else's view is
+// affected) without an async check per comment on every render.
 // =======================
 
-async function hasUserReported(targetType, targetId) {
+let _reportedCache = null;
+
+async function primeReports() {
   const userId = getCurrentUserId();
-  if (!userId) return false;
+
+  if (!userId) {
+    _reportedCache = new Set();
+    return;
+  }
 
   const { data, error } = await supabaseClient
     .from("reports")
-    .select("id")
-    .eq("target_type", targetType)
-    .eq("target_id", targetId)
-    .eq("reporter_id", userId)
-    .maybeSingle();
+    .select("target_type, target_id")
+    .eq("reporter_id", userId);
 
   if (error) {
-    console.error("Error checking report status:", error.message);
-    return false;
+    console.error("Error loading reports:", error.message);
+    _reportedCache = new Set();
+    return;
   }
 
-  return !!data;
+  _reportedCache = new Set(data.map(row => `${row.target_type}:${row.target_id}`));
+}
+
+function hasUserReported(targetType, targetId) {
+  if (!_reportedCache) return false;
+  return _reportedCache.has(`${targetType}:${targetId}`);
 }
 
 // Never throws — returns { ok, reason } to keep usage simple in an
@@ -812,6 +828,8 @@ async function addReport(targetType, targetId, { modelId, reasons, details } = {
     return { ok: false, reason: error.message };
   }
 
+  if (_reportedCache) _reportedCache.add(`${targetType}:${targetId}`);
+
   return { ok: true };
 }
 
@@ -825,6 +843,10 @@ async function removeReport(targetType, targetId) {
     .eq("target_type", targetType)
     .eq("target_id", targetId)
     .eq("reporter_id", userId);
+
+  if (!error && _reportedCache) {
+    _reportedCache.delete(`${targetType}:${targetId}`);
+  }
 
   return !error;
 }

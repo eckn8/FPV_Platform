@@ -145,11 +145,12 @@ async function renderModelPage(model) {
 
   // =======================
   // ☁️ LOADING DEPENDENT DATA
-  // Everything below (likes, favorites, comments) needs Supabase
-  // to have been queried at least once. We do it in a single wave,
-  // in parallel, so the rest of the rendering can stay synchronous
-  // (reading from the caches filled by primeModelLikes()/
-  // primeFavorites()/primeCommentLikes()).
+  // Everything below (likes, favorites, comments, reports) needs
+  // Supabase to have been queried at least once. We do it in a
+  // single wave, in parallel, so the rest of the rendering can stay
+  // synchronous (reading from the caches filled by
+  // primeModelLikes()/primeFavorites()/primeCommentLikes()/
+  // primeReports()).
   // =======================
 
   // `let` (not const): reassigned on the fly when removing a
@@ -157,7 +158,8 @@ async function renderModelPage(model) {
   let [comments] = await Promise.all([
     getModelComments(model.id),
     primeModelLikes([model.id]),
-    primeFavorites()
+    primeFavorites(),
+    primeReports()
   ]);
 
   // =======================
@@ -314,6 +316,21 @@ async function renderModelPage(model) {
       alert("Report sent. Thank you for helping keep the platform healthy.");
     });
 
+  // Blurs the model's own content (image/title/description/tags)
+  // for the person who reported it — a personal "hide until I
+  // un-report it" cue, purely client-side, since nobody else needs
+  // to see it. The report button itself is deliberately left out of
+  // this list so it stays sharp and clickable — it's the only way
+  // to undo a mistaken report.
+  function updateReportedContentVisual(reported) {
+    [
+      modelImageContainer,
+      document.getElementById("title"),
+      document.getElementById("description"),
+      document.getElementById("tags")
+    ].forEach(el => el.classList.toggle("reported-by-you", reported));
+  }
+
   async function updateReportModelButton() {
     const reportModelButton = document.getElementById("reportModelButton");
     const reported = await hasUserReported("model", model.id);
@@ -323,6 +340,8 @@ async function renderModelPage(model) {
       : "🚩 Report";
 
     reportModelButton.classList.toggle("reported", reported);
+
+    updateReportedContentVisual(reported);
   }
 
   document
@@ -877,11 +896,26 @@ async function renderModelPage(model) {
         displayComments();
       });
 
-      bubble
-        .querySelector(".comment-report-btn")
-        .addEventListener("click", () => {
-          reportContent("comment", comment.id, "this comment", displayComments);
-        });
+      // Blurs the comment's own text for the person who reported it
+      // — same personal "hide until I un-report it" cue as on the
+      // model itself. The header (username) and action buttons stay
+      // sharp, including this same report button, which remains the
+      // way to undo a mistaken report.
+      const isCommentReported = hasUserReported("comment", comment.id);
+
+      bubble.querySelector(".comment-text").classList.toggle("reported-by-you", isCommentReported);
+
+      const commentReportButton = bubble.querySelector(".comment-report-btn");
+
+      commentReportButton.title = isCommentReported
+        ? "Reported — click to cancel"
+        : "Report this comment";
+
+      commentReportButton.classList.toggle("reported", isCommentReported);
+
+      commentReportButton.addEventListener("click", () => {
+        reportContent("comment", comment.id, "this comment", displayComments);
+      });
 
       if (isOwnComment) {
         bubble
