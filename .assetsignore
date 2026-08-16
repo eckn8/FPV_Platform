@@ -12,6 +12,7 @@ supabase_moderation.sql
 supabase_downloads.sql
 supabase_user_restrictions.sql
 supabase_restriction_reasons.sql
+supabase_restriction_reasons_fix.sql
 .gitignore
 .git
 .claude
