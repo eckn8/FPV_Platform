@@ -61,6 +61,7 @@
     </div>
 
     <div id="bannedWordsPanel" style="display:none;">
+      <h2>🔤 Banned words</h2>
       <p>
         Publishing a model or posting a comment containing any of
         these words (as a whole word, not a substring) is blocked
@@ -75,6 +76,22 @@
       </div>
 
       <div id="bannedWordsContainer" style="margin-top: 24px;"></div>
+
+      <h2 style="margin-top: 50px;">✅ Allowed phrases (exceptions)</h2>
+      <p>
+        Always allowed, even if they contain a banned word — for
+        hobby-specific terms that read as alarming out of context
+        (e.g. "kill switch", "dead cat" — a foam windscreen, not the
+        animal).
+      </p>
+
+      <div class="upload-section" style="margin-top: 24px;">
+        <input type="text" id="newAllowedPhraseInput" placeholder="Add a phrase...">
+        <button id="addAllowedPhraseButton" class="download-btn">Add phrase</button>
+        <p id="allowedPhrasesMessage" class="folder-path"></p>
+      </div>
+
+      <div id="allowedPhrasesContainer" style="margin-top: 24px;"></div>
     </div>
   </main>
 

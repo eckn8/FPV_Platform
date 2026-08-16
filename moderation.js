@@ -12,6 +12,10 @@ const bannedWordsContainer = document.getElementById("bannedWordsContainer");
 const newBannedWordInput = document.getElementById("newBannedWordInput");
 const addBannedWordButton = document.getElementById("addBannedWordButton");
 const bannedWordsMessage = document.getElementById("bannedWordsMessage");
+const allowedPhrasesContainer = document.getElementById("allowedPhrasesContainer");
+const newAllowedPhraseInput = document.getElementById("newAllowedPhraseInput");
+const addAllowedPhraseButton = document.getElementById("addAllowedPhraseButton");
+const allowedPhrasesMessage = document.getElementById("allowedPhrasesMessage");
 
 // =======================
 // 🔀 TABS
@@ -390,11 +394,69 @@ addBannedWordButton.addEventListener("click", async () => {
   await loadAndRenderBannedWords();
 });
 
+function renderAllowedPhrases(phrases) {
+  allowedPhrasesContainer.innerHTML = "";
+
+  if (phrases.length === 0) {
+    allowedPhrasesContainer.innerHTML = "<p>No exceptions yet.</p>";
+    return;
+  }
+
+  const list = document.createElement("div");
+  list.className = "tags";
+
+  phrases.forEach(phrase => {
+    const chip = document.createElement("span");
+    chip.className = "tag banned-word-chip";
+
+    chip.innerHTML = `
+      ${escapeHtml(phrase.phrase)}
+      <button type="button" class="remove-allowed-phrase-btn" title="Remove this exception">✕</button>
+    `;
+
+    chip.querySelector(".remove-allowed-phrase-btn").addEventListener("click", async () => {
+      try {
+        await removeAllowedPhrase(phrase.id);
+      } catch (error) {
+        alert(error.message || "Failed. Please try again.");
+        return;
+      }
+
+      await loadAndRenderAllowedPhrases();
+    });
+
+    list.appendChild(chip);
+  });
+
+  allowedPhrasesContainer.appendChild(list);
+}
+
+async function loadAndRenderAllowedPhrases() {
+  allowedPhrasesContainer.innerHTML = "<p>Loading...</p>";
+  const phrases = await getAllowedPhrases();
+  renderAllowedPhrases(phrases);
+}
+
+addAllowedPhraseButton.addEventListener("click", async () => {
+  allowedPhrasesMessage.textContent = "";
+
+  try {
+    await addAllowedPhrase(newAllowedPhraseInput.value);
+  } catch (error) {
+    allowedPhrasesMessage.textContent = error.message || "Failed. Please try again.";
+    return;
+  }
+
+  newAllowedPhraseInput.value = "";
+  await loadAndRenderAllowedPhrases();
+});
+
 async function refreshModerationView() {
   await Promise.all([
     loadAndRenderReports(),
     loadAndRenderRestrictedUsers(),
-    loadAndRenderBannedWords()
+    loadAndRenderBannedWords(),
+    loadAndRenderAllowedPhrases()
   ]);
 }
 

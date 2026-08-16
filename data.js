@@ -1060,6 +1060,52 @@ async function removeBannedWord(id) {
   if (error) throw new Error(error.message);
 }
 
+// =======================
+// ✅ ALLOWED PHRASES (banned-word exceptions)
+// Takes priority over banned_words — a phrase here is stripped out
+// of the text before the banned-word check runs, so a banned single
+// word inside it (e.g. "kill" inside "kill switch") never matches.
+// See supabase_banned_words.sql.
+// =======================
+
+async function getAllowedPhrases() {
+  const { data, error } = await supabaseClient
+    .from("allowed_phrases")
+    .select("id, phrase")
+    .order("phrase", { ascending: true });
+
+  if (error) {
+    console.error("Error loading allowed phrases:", error.message);
+    return [];
+  }
+
+  return data;
+}
+
+async function addAllowedPhrase(phrase) {
+  const cleanPhrase = (phrase || "").trim().toLowerCase();
+
+  if (!cleanPhrase) throw new Error("Enter a phrase.");
+
+  const { error } = await supabaseClient
+    .from("allowed_phrases")
+    .insert({ phrase: cleanPhrase });
+
+  if (error) {
+    if (error.code === "23505") throw new Error("This phrase is already on the list.");
+    throw new Error(error.message);
+  }
+}
+
+async function removeAllowedPhrase(id) {
+  const { error } = await supabaseClient
+    .from("allowed_phrases")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+}
+
 // Dismissing = "reviewed, no action needed". Doesn't touch the
 // reported content, just this one report.
 async function dismissReport(reportId) {

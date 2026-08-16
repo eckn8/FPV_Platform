@@ -29,16 +29,40 @@
 -- since (unlike a restriction) there's no client-side pre-check
 -- possible: the word list itself is moderator-only readable, so the
 -- browser can't know in advance what will get rejected.
+--
+-- FPV/drone vocabulary genuinely overlaps with words a generic
+-- banned-word list might reasonably include for other reasons —
+-- "kill switch" and "dead cat" (a foam windscreen, not the animal)
+-- are completely normal here even if "kill"/"dead" ever end up
+-- banned for, say, harassment ("I will kill you"). allowed_phrases
+-- takes priority: any phrase on it is stripped out of the text
+-- BEFORE the banned-word check runs, so a banned single word inside
+-- an allowed phrase never gets a chance to match. Seeded with the
+-- two examples above — add more FPV-specific terms as they come up
+-- ("crash", "burn", "smoke"... anything that reads as violent/
+-- alarming out of context but is everyday hobby talk here).
 -- =======================================================
 
--- ---- The list itself, moderator-managed -----------------------
+-- ---- The lists, moderator-managed -----------------------
 create table public.banned_words (
   id uuid primary key default gen_random_uuid(),
   word text not null unique,
   created_at timestamptz not null default now()
 );
 
+create table public.allowed_phrases (
+  id uuid primary key default gen_random_uuid(),
+  phrase text not null unique,
+  created_at timestamptz not null default now()
+);
+
+insert into public.allowed_phrases (phrase) values
+  ('dead cat'),
+  ('deadcat'),
+  ('kill switch');
+
 alter table public.banned_words enable row level security;
+alter table public.allowed_phrases enable row level security;
 
 create policy "Moderators can manage banned words"
   on public.banned_words for all
@@ -56,11 +80,27 @@ create policy "Moderators can manage banned words"
     )
   );
 
+create policy "Moderators can manage allowed phrases"
+  on public.allowed_phrases for all
+  to authenticated
+  using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and is_moderator
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and is_moderator
+    )
+  );
+
 -- ---- The check itself -------------------------------------------
--- security definer: runs with elevated read access to banned_words
+-- security definer: runs with elevated read access to both lists
 -- regardless of the calling (non-moderator) user's own row-level
--- access to that table — the list stays hidden from regular users
--- while still being enforceable against them.
+-- access to them — the lists stay hidden from regular users while
+-- still being enforceable against them.
 create or replace function public.contains_banned_words(input_text text)
 returns boolean
 language plpgsql
@@ -69,14 +109,25 @@ set search_path = public
 stable
 as $$
 declare
+  cleaned text;
   words text[];
   banned record;
+  allowed record;
 begin
   if input_text is null or input_text = '' then
     return false;
   end if;
 
-  words := regexp_split_to_array(lower(input_text), '[^a-z0-9]+');
+  cleaned := lower(input_text);
+
+  -- Literal substring replace (not regexp_replace) — moderator-
+  -- entered phrases may contain characters that would otherwise
+  -- need escaping in a regex.
+  for allowed in select phrase from public.allowed_phrases loop
+    cleaned := replace(cleaned, lower(allowed.phrase), ' ');
+  end loop;
+
+  words := regexp_split_to_array(cleaned, '[^a-z0-9]+');
 
   for banned in select word from public.banned_words loop
     if lower(banned.word) = any(words) then
