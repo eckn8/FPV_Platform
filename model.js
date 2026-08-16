@@ -327,7 +327,8 @@ async function renderModelPage(model) {
       modelImageContainer,
       document.getElementById("title"),
       document.getElementById("description"),
-      document.getElementById("tags")
+      document.getElementById("tags"),
+      document.getElementById("technicalInfoSection")
     ].forEach(el => el.classList.toggle("reported-by-you", reported));
   }
 

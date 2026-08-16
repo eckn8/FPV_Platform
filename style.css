@@ -515,8 +515,8 @@ select option {
    itself is deliberately excluded so it stays the easy way to
    undo a mistaken report. */
 .reported-by-you {
-  filter: blur(6px) grayscale(1);
-  opacity: 0.55;
+  filter: blur(16px) grayscale(1);
+  opacity: 0.4;
   transition: filter 0.2s, opacity 0.2s;
 }
 
