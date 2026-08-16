@@ -26,6 +26,51 @@
 
     <h2 style="margin-top:40px;">Published models</h2>
     <div class="models-grid" id="profileModels"></div>
+
+    <!-- Only shown when viewing your own profile — see profile.js -->
+    <div id="accountDeletionSection" class="danger-zone" style="display:none;">
+      <h2>⚠️ Danger zone</h2>
+
+      <button id="deleteAccountButton">
+        Delete my account
+      </button>
+
+      <div id="deleteAccountPanel" class="new-version-form" style="display:none;">
+        <p>
+          This permanently deletes your account. This cannot be
+          undone, and you will need to create a new account to use
+          FPVBase again.
+        </p>
+
+        <label style="display:flex; align-items:center; gap:8px; font-weight:normal;">
+          <input type="radio" name="deleteContentChoice" value="anonymize" checked style="width:auto;">
+          Keep my published models and comments, credited to "Deleted user"
+        </label>
+
+        <label style="display:flex; align-items:center; gap:8px; font-weight:normal; margin-top:8px;">
+          <input type="radio" name="deleteContentChoice" value="delete" style="width:auto;">
+          Delete everything I've published too
+        </label>
+
+        <p class="folder-path">
+          Keeping your content, credited to the community, means it
+          stays useful to other pilots — someone may have favorited
+          it, downloaded it, or built on your feedback. It would be
+          a shame to lose that, but the choice is yours.
+        </p>
+
+        <div class="form-actions">
+          <button type="button" id="confirmDeleteAccountButton">
+            Permanently delete my account
+          </button>
+          <button type="button" id="cancelDeleteAccountButton">
+            Cancel
+          </button>
+        </div>
+
+        <p id="deleteAccountMessage" class="folder-path"></p>
+      </div>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

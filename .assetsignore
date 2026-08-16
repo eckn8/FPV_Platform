@@ -14,6 +14,7 @@ supabase_user_restrictions.sql
 supabase_restriction_reasons.sql
 supabase_restriction_reasons_fix.sql
 supabase_banned_words.sql
+supabase_account_deletion.sql
 .gitignore
 .git
 .claude

@@ -6,7 +6,8 @@
 // this single file. By default (see [assets] in wrangler.toml),
 // Cloudflare serves static files (HTML/CSS/JS) directly when they
 // match the request, and only invokes this script for what doesn't
-// match any file — so in practice, only /api/upload.
+// match any file — so in practice, only /api/upload and
+// /api/delete-account.
 // =======================================================
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;   // 8 MB
@@ -18,6 +19,10 @@ export default {
 
     if (url.pathname === "/api/upload" && request.method === "POST") {
       return handleUpload(request, env);
+    }
+
+    if (url.pathname === "/api/delete-account" && request.method === "POST") {
+      return handleDeleteAccount(request, env);
     }
 
     // Everything else: static files (safety net — in practice
@@ -256,4 +261,132 @@ async function handleUpload(request, env) {
   const url = `${env.R2_PUBLIC_URL.replace(/\/$/, "")}/${key}`;
 
   return jsonResponse({ url, key, name: cleanName }, 200);
+}
+
+// =======================================================
+// 🗑 ACCOUNT DELETION
+// The only place in this whole project that uses the Supabase
+// secret key (SUPABASE_SECRET_KEY — Supabase's renamed
+// "service_role"), which bypasses RLS entirely. Kept to the
+// smallest possible surface: verify who's asking with their own
+// token first (never trust a user id passed in the request body),
+// then only ever act on THAT user's own id — this endpoint can
+// never be used to delete someone else's account.
+// =======================================================
+
+async function handleDeleteAccount(request, env) {
+  const user = await verifyUser(request, env);
+
+  if (!user) {
+    return jsonResponse({ error: "You must be logged in." }, 401);
+  }
+
+  let body;
+
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Invalid request." }, 400);
+  }
+
+  const contentChoice = body.contentChoice;
+
+  if (contentChoice !== "anonymize" && contentChoice !== "delete") {
+    return jsonResponse({ error: "Invalid content choice." }, 400);
+  }
+
+  const secretHeaders = {
+    "apikey": env.SUPABASE_SECRET_KEY,
+    "Authorization": `Bearer ${env.SUPABASE_SECRET_KEY}`,
+    "Content-Type": "application/json"
+  };
+
+  // ---- Content handling ---------------------------------------
+  // Must happen BEFORE the auth user (and its profiles row) is
+  // deleted — models/comments/requests still have a foreign key to
+  // profiles, so removing the profile first would either fail
+  // (blocked by that reference) or silently orphan rows, depending
+  // on the path. See supabase_account_deletion.sql for the schema
+  // changes that make this possible.
+  try {
+    if (contentChoice === "anonymize") {
+      await fetch(`${env.SUPABASE_URL}/rest/v1/models?creator_id=eq.${user.id}`, {
+        method: "PATCH",
+        headers: secretHeaders,
+        body: JSON.stringify({ creator_id: null, creator_username: "Deleted user" })
+      });
+
+      await fetch(`${env.SUPABASE_URL}/rest/v1/comments?user_id=eq.${user.id}`, {
+        method: "PATCH",
+        headers: secretHeaders,
+        body: JSON.stringify({ user_id: null, username: "Deleted user" })
+      });
+
+      await fetch(`${env.SUPABASE_URL}/rest/v1/requests?creator_id=eq.${user.id}`, {
+        method: "PATCH",
+        headers: secretHeaders,
+        body: JSON.stringify({ creator_id: null, creator_username: "Deleted user" })
+      });
+    } else {
+      // Deleting their models also cascades to comments/likes/
+      // favorites on those specific models (existing "on delete
+      // cascade" on comments.model_id etc.) — even ones written by
+      // other people, same as when a moderator removes a model.
+      await fetch(`${env.SUPABASE_URL}/rest/v1/comments?user_id=eq.${user.id}`, {
+        method: "DELETE",
+        headers: secretHeaders
+      });
+
+      await fetch(`${env.SUPABASE_URL}/rest/v1/models?creator_id=eq.${user.id}`, {
+        method: "DELETE",
+        headers: secretHeaders
+      });
+
+      await fetch(`${env.SUPABASE_URL}/rest/v1/requests?creator_id=eq.${user.id}`, {
+        method: "DELETE",
+        headers: secretHeaders
+      });
+    }
+
+    // Reports are moderator-only visibility, not public content —
+    // always anonymized regardless of the content choice above,
+    // there's no "keep it credited" question for these.
+    await fetch(`${env.SUPABASE_URL}/rest/v1/reports?reporter_id=eq.${user.id}`, {
+      method: "PATCH",
+      headers: secretHeaders,
+      body: JSON.stringify({ reporter_id: null })
+    });
+  } catch {
+    return jsonResponse(
+      { error: "Failed to remove your content. Please try again or contact support." },
+      500
+    );
+  }
+
+  // ---- Delete the account itself -------------------------------
+  // Cascades to profiles, model_likes, favorites, comment_likes,
+  // and request_votes — all already "on delete cascade" on their
+  // own user_id column.
+  let deleteResponse;
+
+  try {
+    deleteResponse = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
+      method: "DELETE",
+      headers: secretHeaders
+    });
+  } catch {
+    return jsonResponse(
+      { error: "Your content was removed, but the account itself could not be deleted. Please contact support." },
+      500
+    );
+  }
+
+  if (!deleteResponse.ok) {
+    return jsonResponse(
+      { error: "Your content was removed, but the account itself could not be deleted. Please contact support." },
+      500
+    );
+  }
+
+  return jsonResponse({ ok: true }, 200);
 }

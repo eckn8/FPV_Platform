@@ -45,6 +45,58 @@ function displayModels(list) {
   });
 }
 
+// =======================
+// 🗑 ACCOUNT DELETION
+// Only shown/wired when viewing your own profile — see init().
+// =======================
+
+function setupAccountDeletion() {
+  const section = document.getElementById("accountDeletionSection");
+  const deleteAccountButton = document.getElementById("deleteAccountButton");
+  const panel = document.getElementById("deleteAccountPanel");
+  const confirmButton = document.getElementById("confirmDeleteAccountButton");
+  const cancelButton = document.getElementById("cancelDeleteAccountButton");
+  const message = document.getElementById("deleteAccountMessage");
+
+  section.style.display = "block";
+
+  deleteAccountButton.addEventListener("click", () => {
+    message.textContent = "";
+    panel.style.display = panel.style.display === "none" ? "block" : "none";
+  });
+
+  cancelButton.addEventListener("click", () => {
+    panel.style.display = "none";
+  });
+
+  confirmButton.addEventListener("click", async () => {
+    const contentChoice = document.querySelector(
+      'input[name="deleteContentChoice"]:checked'
+    ).value;
+
+    const confirmMessage = contentChoice === "delete"
+      ? "This will permanently delete your account AND everything you've published. This cannot be undone. Continue?"
+      : "This will permanently delete your account. This cannot be undone. Continue?";
+
+    if (!confirm(confirmMessage)) return;
+
+    confirmButton.disabled = true;
+    message.textContent = "Deleting your account...";
+
+    try {
+      await deleteMyAccount(contentChoice);
+    } catch (error) {
+      message.textContent = error.message || "Failed to delete your account. Please try again.";
+      confirmButton.disabled = false;
+      return;
+    }
+
+    await signOut();
+
+    window.location.href = "index.html";
+  });
+}
+
 init();
 
 async function init() {
@@ -58,4 +110,12 @@ async function init() {
     `${userModels.length} model(s) published`;
 
   displayModels(userModels);
+
+  await authReady;
+
+  const currentUser = getCurrentUser();
+
+  if (currentUser && currentUser.username === username) {
+    setupAccountDeletion();
+  }
 }

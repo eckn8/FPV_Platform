@@ -1231,3 +1231,52 @@ select option {
   border-color: #ffb020 !important;
   box-shadow: 0 0 0 2px rgba(255, 176, 32, 0.4);
 }
+
+/* =======================
+   ACCOUNT DELETION — DANGER ZONE (profile.html)
+   Its own self-contained button styling rather than relying on
+   .creator-actions button — this section isn't nested inside
+   .creator-actions, unlike the .new-version-form pattern it reuses
+   for the confirmation panel's layout.
+======================= */
+
+.danger-zone {
+  margin-top: 50px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #ff5c5c;
+  background: rgba(255, 92, 92, 0.06);
+}
+
+.danger-zone > button {
+  padding: 11px 16px;
+  border-radius: 10px;
+  border: 1px solid #ff5c5c;
+  background: #191d27;
+  color: #ff8a8a;
+  cursor: pointer;
+}
+
+.danger-zone > button:hover {
+  background: #ff5c5c;
+  color: white;
+}
+
+.danger-zone .form-actions button {
+  padding: 11px;
+  border-radius: 10px;
+  border: 1px solid #333a48;
+  background: #171b24;
+  color: white;
+  cursor: pointer;
+}
+
+.danger-zone #confirmDeleteAccountButton {
+  border-color: #ff5c5c;
+  color: #ff8a8a;
+}
+
+.danger-zone #confirmDeleteAccountButton:hover {
+  background: #ff5c5c;
+  color: white;
+}

@@ -1351,3 +1351,42 @@ function advancedSearch(query, modelsList) {
     .sort((a, b) => b.score - a.score)
     .map(result => result.model);
 }
+
+// =======================
+// 🗑 ACCOUNT DELETION
+// The actual deletion needs the Supabase secret key, which only
+// ever lives server-side (see handleDeleteAccount() in worker.js) —
+// this just calls that endpoint with the current session's own
+// token. contentChoice: "anonymize" | "delete".
+// =======================
+
+async function deleteMyAccount(contentChoice) {
+  const token = getAccessToken();
+
+  if (!token) {
+    throw new Error("You must be logged in.");
+  }
+
+  let response;
+
+  try {
+    response = await fetch("/api/delete-account", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ contentChoice })
+    });
+  } catch {
+    throw new Error("Could not reach the server — check your connection.");
+  }
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(result.error || "Failed to delete your account.");
+  }
+
+  return true;
+}
