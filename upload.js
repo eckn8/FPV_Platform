@@ -524,9 +524,25 @@ init();
 async function init() {
   await authReady;
 
-  if (!getCurrentUser()) {
+  const user = getCurrentUser();
+
+  if (!user) {
     window.location.href =
       "login.html?redirect=" + encodeURIComponent("upload.html" + window.location.search);
+    return;
+  }
+
+  // Real enforcement is the "models" insert RLS policy (see
+  // supabase_user_restrictions.sql) — this is just clearer
+  // messaging than letting them fill out the whole form and hit a
+  // raw policy error on submit.
+  if (user.isRestricted) {
+    document.querySelector(".upload-section").innerHTML = `
+      <p>
+        Your account is currently restricted from publishing
+        ${user.restrictedUntil ? `until ${user.restrictedUntil.toLocaleString("en-US")}` : ""}.
+      </p>
+    `;
     return;
   }
 

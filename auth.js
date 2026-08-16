@@ -32,7 +32,7 @@ const authReady = new Promise(resolve => {
 async function _loadProfile(userId) {
   const { data, error } = await supabaseClient
     .from("profiles")
-    .select("username, is_moderator")
+    .select("username, is_moderator, is_banned, restricted_until")
     .eq("id", userId)
     .single();
 
@@ -53,11 +53,29 @@ async function _refreshCurrentUser(session) {
 
   const profile = await _loadProfile(session.user.id);
 
+  const isBanned = !!(profile && profile.is_banned);
+
+  // A past restricted_until means it already expired — treat it the
+  // same as never having been restricted, no action needed to
+  // "lift" it (see supabase_user_restrictions.sql).
+  const restrictedUntil = profile && profile.restricted_until
+    ? new Date(profile.restricted_until)
+    : null;
+
+  const isTemporarilyRestricted = !!(restrictedUntil && restrictedUntil > new Date());
+
   currentUser = {
     id: session.user.id,
     email: session.user.email,
     username: (profile && profile.username) || session.user.email,
-    isModerator: !!(profile && profile.is_moderator)
+    isModerator: !!(profile && profile.is_moderator),
+    isBanned,
+    // Publishing/commenting are blocked either way (see the RLS
+    // policies) — this flag is only for client-side messaging, so
+    // the UI doesn't need to separately handle "banned" vs
+    // "temporarily restricted" everywhere it's checked.
+    isRestricted: isBanned || isTemporarilyRestricted,
+    restrictedUntil: isTemporarilyRestricted ? restrictedUntil : null
   };
 
   currentAccessToken = session.access_token;

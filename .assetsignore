@@ -10,6 +10,7 @@ supabase_comments_delete_policy.sql
 supabase_root_lock_migration.sql
 supabase_moderation.sql
 supabase_downloads.sql
+supabase_user_restrictions.sql
 .gitignore
 .git
 .claude

@@ -1110,6 +1110,50 @@ select option {
   color: white;
 }
 
+/* Publish/comment restriction controls, shown under "Posted by" on
+   a report card (see formatUserRestrictionBox() in moderation.js).
+   Its own small box, distinct from Dismiss/Remove content below it
+   — those act on the reported content, this acts on the account. */
+.user-restriction-box {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #333a48;
+  background: #12151d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.user-restriction-box p {
+  flex: 1 1 100%;
+  color: #ffcf70;
+  margin: 0 0 4px;
+}
+
+.user-restriction-box select,
+.user-restriction-box button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #333a48;
+  background: #191d27;
+  color: white;
+  cursor: pointer;
+}
+
+.user-restriction-box .ban-user-btn,
+.user-restriction-box .lift-restriction-btn {
+  border-color: #ff5c5c;
+  color: #ff8a8a;
+}
+
+.user-restriction-box .ban-user-btn:hover,
+.user-restriction-box .lift-restriction-btn:hover {
+  background: #ff5c5c;
+  color: white;
+}
+
 /* Floating panel shown on a model page when arriving from a
    moderation link (see initModerationPanel() in model.js) — stays
    fixed on screen while scrolling so the actions are always

@@ -961,6 +961,17 @@ async function renderModelPage(model) {
     const user = requireAuth();
     if (!user) return;
 
+    // Real enforcement is the "comments" insert RLS policy (see
+    // supabase_user_restrictions.sql) — this is just clearer
+    // messaging than a raw policy error.
+    if (user.isRestricted) {
+      alert(
+        `Your account is currently restricted from commenting` +
+        (user.restrictedUntil ? ` until ${user.restrictedUntil.toLocaleString("en-US")}.` : ".")
+      );
+      return;
+    }
+
     const input =
       document.getElementById("commentInput");
 

@@ -868,16 +868,28 @@ function isCurrentUserModerator() {
 // username and (for model reports) the model's title/path/creator
 // already embedded via PostgREST foreign-key joins. Comment reports
 // have no join available (target_id is polymorphic, not a real
-// foreign key), so their text + author username are fetched
-// separately and merged in. authorUsername (who POSTED the
-// reported content) is deliberately kept distinct from
-// reporterUsername (who FLAGGED it) — a moderator needs both:
-// usernames themselves can be the actual problem even when the
-// report was filed over something else.
+// foreign key), so their text + author info are fetched separately
+// and merged in. authorUsername (who POSTED the reported content)
+// is deliberately kept distinct from reporterUsername (who FLAGGED
+// it) — a moderator needs both: usernames themselves can be the
+// actual problem even when the report was filed over something
+// else.
+//
+// The `!<constraint>` suffixes are required, not decorative:
+// models/comments each have more than one relationship to
+// `profiles` (creator vs. likers/favoriters/commenters), so
+// PostgREST can't infer which one to embed without it.
 async function getAllReports() {
   const { data, error } = await supabaseClient
     .from("reports")
-    .select("*, reporter:profiles(username), model:models(title, path, creator_username)")
+    .select(`
+      *,
+      reporter:profiles(username),
+      model:models(
+        title, path, creator_id, creator_username,
+        creator:profiles!models_creator_id_fkey(is_banned, restricted_until)
+      )
+    `)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -894,7 +906,10 @@ async function getAllReports() {
   if (commentReportIds.length > 0) {
     const { data: comments, error: commentsError } = await supabaseClient
       .from("comments")
-      .select("id, text, model_id, username")
+      .select(`
+        id, text, model_id, user_id, username,
+        author:profiles!comments_user_id_fkey(is_banned, restricted_until)
+      `)
       .in("id", commentReportIds);
 
     if (!commentsError) {
@@ -902,24 +917,71 @@ async function getAllReports() {
     }
   }
 
-  return data.map(row => ({
-    id: row.id,
-    targetType: row.target_type,
-    targetId: row.target_id,
-    modelId: row.model_id,
-    reasons: row.reasons || [],
-    details: row.details,
-    createdAt: row.created_at,
-    reporterUsername: row.reporter ? row.reporter.username : "Unknown user",
-    modelTitle: row.model ? row.model.title : null,
-    modelPath: row.model ? row.model.path : null,
-    commentText: row.target_type === "comment" && commentsById[row.target_id]
-      ? commentsById[row.target_id].text
-      : null,
-    authorUsername: row.target_type === "model"
-      ? (row.model ? row.model.creator_username : null)
-      : (commentsById[row.target_id] ? commentsById[row.target_id].username : null)
-  }));
+  return data.map(row => {
+    const isModelReport = row.target_type === "model";
+    const comment = commentsById[row.target_id];
+    const authorProfile = isModelReport
+      ? (row.model ? row.model.creator : null)
+      : (comment ? comment.author : null);
+
+    return {
+      id: row.id,
+      targetType: row.target_type,
+      targetId: row.target_id,
+      modelId: row.model_id,
+      reasons: row.reasons || [],
+      details: row.details,
+      createdAt: row.created_at,
+      reporterUsername: row.reporter ? row.reporter.username : "Unknown user",
+      modelTitle: row.model ? row.model.title : null,
+      modelPath: row.model ? row.model.path : null,
+      commentText: isModelReport ? null : (comment ? comment.text : null),
+      authorUsername: isModelReport
+        ? (row.model ? row.model.creator_username : null)
+        : (comment ? comment.username : null),
+      authorId: isModelReport
+        ? (row.model ? row.model.creator_id : null)
+        : (comment ? comment.user_id : null),
+      authorBanned: authorProfile ? authorProfile.is_banned : false,
+      authorRestrictedUntil: authorProfile ? authorProfile.restricted_until : null
+    };
+  });
+}
+
+// =======================
+// 🚫 USER RESTRICTIONS
+// Blocks publishing/commenting while restricted — real enforcement
+// is the RLS policies (see supabase_user_restrictions.sql), these
+// just perform the update; the account can still log in and browse.
+// =======================
+
+async function restrictUser(userId, days) {
+  const restrictedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({ restricted_until: restrictedUntil, is_banned: false })
+    .eq("id", userId);
+
+  if (error) throw new Error(error.message);
+}
+
+async function banUser(userId) {
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({ is_banned: true, restricted_until: null })
+    .eq("id", userId);
+
+  if (error) throw new Error(error.message);
+}
+
+async function liftUserRestriction(userId) {
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({ is_banned: false, restricted_until: null })
+    .eq("id", userId);
+
+  if (error) throw new Error(error.message);
 }
 
 // Dismissing = "reviewed, no action needed". Doesn't touch the
