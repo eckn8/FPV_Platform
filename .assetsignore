@@ -11,6 +11,7 @@ supabase_root_lock_migration.sql
 supabase_moderation.sql
 supabase_downloads.sql
 supabase_user_restrictions.sql
+supabase_restriction_reasons.sql
 .gitignore
 .git
 .claude

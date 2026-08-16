@@ -953,23 +953,36 @@ async function getAllReports() {
 // Blocks publishing/commenting while restricted — real enforcement
 // is the RLS policies (see supabase_user_restrictions.sql), these
 // just perform the update; the account can still log in and browse.
+//
+// `reason` is a free-text snapshot (what was reported + why) built
+// by the caller (see moderation.js) — kept so a restriction can
+// still be understood later, after the report that led to it has
+// been dismissed or acted on and is gone from the queue.
 // =======================
 
-async function restrictUser(userId, days) {
+async function restrictUser(userId, days, reason) {
   const restrictedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
   const { error } = await supabaseClient
     .from("profiles")
-    .update({ restricted_until: restrictedUntil, is_banned: false })
+    .update({
+      restricted_until: restrictedUntil,
+      is_banned: false,
+      restriction_reason: reason || null
+    })
     .eq("id", userId);
 
   if (error) throw new Error(error.message);
 }
 
-async function banUser(userId) {
+async function banUser(userId, reason) {
   const { error } = await supabaseClient
     .from("profiles")
-    .update({ is_banned: true, restricted_until: null })
+    .update({
+      is_banned: true,
+      restricted_until: null,
+      restriction_reason: reason || null
+    })
     .eq("id", userId);
 
   if (error) throw new Error(error.message);
@@ -978,10 +991,27 @@ async function banUser(userId) {
 async function liftUserRestriction(userId) {
   const { error } = await supabaseClient
     .from("profiles")
-    .update({ is_banned: false, restricted_until: null })
+    .update({ is_banned: false, restricted_until: null, restriction_reason: null })
     .eq("id", userId);
 
   if (error) throw new Error(error.message);
+}
+
+// restriction_reason (and is_banned/restricted_until, for
+// consistency) are only exposed through this security-definer
+// function, not a plain `.from("profiles").select(...)` — see
+// supabase_restriction_reasons.sql for why direct column access is
+// revoked. Returns [] for a non-moderator (the function re-checks
+// that itself server-side) rather than erroring.
+async function getRestrictedUsers() {
+  const { data, error } = await supabaseClient.rpc("get_restricted_users");
+
+  if (error) {
+    console.error("Error loading restricted users:", error.message);
+    return [];
+  }
+
+  return data;
 }
 
 // Dismissing = "reviewed, no action needed". Doesn't touch the

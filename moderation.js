@@ -7,6 +7,7 @@
 // =======================================================
 
 const reportsContainer = document.getElementById("reportsContainer");
+const restrictedUsersContainer = document.getElementById("restrictedUsersContainer");
 
 // The link carries the report along (modReportId/modType/
 // modCommentId) so model.js can show a small floating panel with
@@ -71,6 +72,19 @@ function formatUserRestrictionBox(report) {
   `;
 }
 
+// A snapshot of what led to the restriction — stored on the profile
+// (see restrictUser()/banUser() in data.js) so it's still readable
+// later in the "Restricted / banned users" section, after this
+// report itself has been dismissed or acted on and is gone from
+// the queue above.
+function buildRestrictionReason(report) {
+  const content = formatReportedContent(report);
+  const kind = report.targetType === "model" ? "Model" : "Comment";
+
+  return `${kind}: "${content.label}" — ${report.reasons.join(", ")}` +
+    (report.details ? ` (${report.details})` : "");
+}
+
 function wireUserRestrictionBox(card, report) {
   if (!report.authorId) return;
 
@@ -85,13 +99,13 @@ function wireUserRestrictionBox(card, report) {
       }
 
       try {
-        await restrictUser(report.authorId, days);
+        await restrictUser(report.authorId, days, buildRestrictionReason(report));
       } catch (error) {
         alert(error.message || "Failed. Please try again.");
         return;
       }
 
-      await loadAndRenderReports();
+      await refreshModerationView();
     });
   }
 
@@ -104,13 +118,13 @@ function wireUserRestrictionBox(card, report) {
       }
 
       try {
-        await banUser(report.authorId);
+        await banUser(report.authorId, buildRestrictionReason(report));
       } catch (error) {
         alert(error.message || "Failed. Please try again.");
         return;
       }
 
-      await loadAndRenderReports();
+      await refreshModerationView();
     });
   }
 
@@ -125,7 +139,7 @@ function wireUserRestrictionBox(card, report) {
         return;
       }
 
-      await loadAndRenderReports();
+      await refreshModerationView();
     });
   }
 }
@@ -219,6 +233,78 @@ async function loadAndRenderReports() {
   renderReports(reports);
 }
 
+function formatTimeRemaining(restrictedUntil) {
+  const diffMs = new Date(restrictedUntil) - new Date();
+
+  if (diffMs <= 0) return "expiring shortly";
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+  if (days > 0) return `${days}d ${hours}h remaining`;
+
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  return hours > 0 ? `${hours}h ${minutes}m remaining` : `${minutes}m remaining`;
+}
+
+function renderRestrictedUsers(users) {
+  restrictedUsersContainer.innerHTML = "";
+
+  if (users.length === 0) {
+    restrictedUsersContainer.innerHTML = "<p>No restricted or banned users right now.</p>";
+    return;
+  }
+
+  users.forEach(user => {
+    const card = document.createElement("div");
+    card.className = "report-card";
+
+    card.innerHTML = `
+      <h3>
+        <a href="profile.html?user=${encodeURIComponent(user.username)}">${escapeHtml(user.username)}</a>
+      </h3>
+
+      <p class="folder-path">
+        ${user.is_banned
+          ? "🚫 Permanently banned from publishing/commenting"
+          : `⏳ Restricted from publishing/commenting — ${formatTimeRemaining(user.restricted_until)} (until ${new Date(user.restricted_until).toLocaleString("en-US")})`}
+      </p>
+
+      ${user.restriction_reason ? `<p>${escapeHtml(user.restriction_reason)}</p>` : ""}
+
+      <div class="form-actions">
+        <button type="button" class="lift-restriction-btn">Lift restriction</button>
+      </div>
+    `;
+
+    card.querySelector(".lift-restriction-btn").addEventListener("click", async () => {
+      try {
+        await liftUserRestriction(user.id);
+      } catch (error) {
+        alert(error.message || "Failed. Please try again.");
+        return;
+      }
+
+      await refreshModerationView();
+    });
+
+    restrictedUsersContainer.appendChild(card);
+  });
+}
+
+async function loadAndRenderRestrictedUsers() {
+  restrictedUsersContainer.innerHTML = "<p>Loading...</p>";
+  const users = await getRestrictedUsers();
+  renderRestrictedUsers(users);
+}
+
+async function refreshModerationView() {
+  await Promise.all([
+    loadAndRenderReports(),
+    loadAndRenderRestrictedUsers()
+  ]);
+}
+
 init();
 
 async function init() {
@@ -229,5 +315,5 @@ async function init() {
     return;
   }
 
-  await loadAndRenderReports();
+  await refreshModerationView();
 }
