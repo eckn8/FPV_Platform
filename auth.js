@@ -239,7 +239,7 @@ function renderAuthStatus() {
 
     const link = document.createElement("a");
     link.href = `profile.html?user=${encodeURIComponent(currentUser.username)}`;
-    link.textContent = `👤 ${currentUser.username}`;
+    link.textContent = currentUser.username;
     container.appendChild(link);
 
     const logoutButton = document.createElement("button");

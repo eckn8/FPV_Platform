@@ -155,7 +155,7 @@ document.getElementById("signupButton").addEventListener("click", async () => {
 
   if (needsEmailConfirmation) {
     authMessage.textContent =
-      "Account created ✅ Check your email to confirm your address before logging in.";
+      "Account created. Check your email to confirm your address before logging in.";
     return;
   }
 

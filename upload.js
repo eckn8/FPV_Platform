@@ -240,7 +240,7 @@ uploadFile.addEventListener(
         "file-preview-item";
 
       item.textContent =
-        "📦 " + file.name;
+        file.name;
 
       filesPreview.appendChild(item);
     });
@@ -462,7 +462,7 @@ uploadButton.addEventListener(
     // =======================
 
     uploadMessage.textContent =
-      "Model published successfully ✅";
+      "Model published successfully.";
 
     // =======================
     // 🔄 RESET

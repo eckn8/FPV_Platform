@@ -1353,6 +1353,85 @@ function advancedSearch(query, modelsList) {
 }
 
 // =======================
+// 🎛 UI KIT — icons & seven-segment digits
+// Shared rendering helpers for the "Flight Deck" design system:
+// a hand-drawn placeholder icon for models/requests without a
+// photo, and a real seven-segment digit readout (built from on/off
+// segments, not a font) for purely numeric values — likes, votes,
+// download counts, stats.
+// =======================
+
+// Placeholder shown instead of a photo on a model card/detail page
+// when no image was uploaded.
+function droneIconMarkup() {
+  return `
+    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="thumb-icon">
+      <line x1="10" y1="10" x2="38" y2="38" stroke="var(--cream)" stroke-width="2"/>
+      <line x1="38" y1="10" x2="10" y2="38" stroke="var(--cream)" stroke-width="2"/>
+      <rect x="19" y="19" width="10" height="10" fill="var(--blue)" stroke="var(--cream)" stroke-width="1.5"/>
+      <circle cx="10" cy="10" r="5" fill="none" stroke="var(--scarlet)" stroke-width="2"/>
+      <circle cx="38" cy="10" r="5" fill="none" stroke="var(--scarlet)" stroke-width="2"/>
+      <circle cx="10" cy="38" r="5" fill="none" stroke="var(--scarlet)" stroke-width="2"/>
+      <circle cx="38" cy="38" r="5" fill="none" stroke="var(--scarlet)" stroke-width="2"/>
+    </svg>
+  `;
+}
+
+// Placeholder for a community request (nothing built yet) — a
+// dashed outline instead of the solid drone icon, so a request
+// card never reads as a real published model at a glance.
+function requestIconMarkup() {
+  return `
+    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="thumb-icon">
+      <rect x="9" y="9" width="30" height="30" fill="none" stroke="var(--lilac)" stroke-width="2" stroke-dasharray="4 3"/>
+      <line x1="24" y1="16" x2="24" y2="32" stroke="var(--lilac)" stroke-width="2"/>
+      <line x1="16" y1="24" x2="32" y2="24" stroke="var(--lilac)" stroke-width="2"/>
+    </svg>
+  `;
+}
+
+// Classic 7-segment encoding (which segments a-g are lit per digit).
+const SEVEN_SEG_MAP = {
+  "0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd",
+  "4": "fgbc", "5": "afgcd", "6": "afgecd", "7": "abc",
+  "8": "abcdefg", "9": "abcdfg"
+};
+
+// Renders `text` (digits, plus "," "." ":") as real on/off segments
+// inside the element with id `elementId` — including the faint
+// "ghost" of unlit segments, the same way an actual calculator/LCD
+// readout works. Give the container class="seven-seg" in the HTML.
+function renderSevenSegment(elementId, text) {
+  const container = document.getElementById(elementId);
+  if (!container) return;
+  container.innerHTML = "";
+
+  for (const ch of String(text)) {
+    if (ch === ":") {
+      const colon = document.createElement("span");
+      colon.className = "seg-colon";
+      container.appendChild(colon);
+      continue;
+    }
+    if (ch === "," || ch === ".") {
+      const dot = document.createElement("span");
+      dot.className = "seg-dot";
+      container.appendChild(dot);
+      continue;
+    }
+    const digit = document.createElement("span");
+    digit.className = "digit";
+    const litSegments = SEVEN_SEG_MAP[ch] || "";
+    ["a", "b", "c", "d", "e", "f", "g"].forEach(seg => {
+      const el = document.createElement("span");
+      el.className = `seg seg-${seg}${litSegments.includes(seg) ? " on" : ""}`;
+      digit.appendChild(el);
+    });
+    container.appendChild(digit);
+  }
+}
+
+// =======================
 // 🗑 ACCOUNT DELETION
 // The actual deletion needs the Supabase secret key, which only
 // ever lives server-side (see handleDeleteAccount() in worker.js) —

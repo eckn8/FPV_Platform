@@ -200,7 +200,7 @@ function renderModels() {
       ${
         model.image
           ? `<img class="model-img" src="${model.image}" alt="${escapeHtml(model.title)}">`
-          : `<div class="model-image">🛸</div>`
+          : `<div class="model-image">${droneIconMarkup()}</div>`
       }
 
       <div class="model-content">
@@ -221,7 +221,7 @@ function renderModels() {
         </div>
 
         <p style="margin-top:12px;">
-          👍 ${getLikes(model.id)} likes
+          ▲ ${getLikes(model.id)} likes
         </p>
 
         <button class="download-btn">

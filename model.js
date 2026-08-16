@@ -170,13 +170,12 @@ async function renderModelPage(model) {
     const likeButton =
       document.getElementById("likeButton");
 
-    document.getElementById("likeCount").textContent =
-      `${getLikes(model.id)} likes`;
+    renderSevenSegment("likeCount", String(getLikes(model.id)));
 
     likeButton.textContent =
       hasUserLikedModel(model.id)
-        ? "❌ Unlike"
-        : "👍 Like";
+        ? "Unlike"
+        : "Like";
   }
 
   document
@@ -201,8 +200,8 @@ async function renderModelPage(model) {
 
     saveButton.textContent =
       isModelSaved(model.id)
-        ? "❌ Remove from favorites"
-        : "❤️ Save";
+        ? "Remove from favorites"
+        : "Save";
   }
 
   document
@@ -337,8 +336,8 @@ async function renderModelPage(model) {
     const reported = await hasUserReported("model", model.id);
 
     reportModelButton.textContent = reported
-      ? "🚩 Reported (cancel)"
-      : "🚩 Report";
+      ? "Reported (cancel)"
+      : "Report";
 
     reportModelButton.classList.toggle("reported", reported);
 
@@ -378,8 +377,8 @@ async function renderModelPage(model) {
 
   function updateArchiveButton() {
     archiveButton.textContent = model.archived
-      ? "♻️ Unarchive this model"
-      : "📦 Archive this model";
+      ? "Unarchive this model"
+      : "Archive this model";
   }
 
   function updateCreatorActions() {
@@ -484,7 +483,7 @@ async function renderModelPage(model) {
     Array.from(newVersionFiles.files).forEach(file => {
       const item = document.createElement("div");
       item.className = "file-preview-item";
-      item.textContent = "📦 " + file.name;
+      item.textContent = file.name;
       newVersionFilesPreview.appendChild(item);
     });
   });
@@ -577,7 +576,7 @@ async function renderModelPage(model) {
         return;
       }
 
-      newVersionMessage.textContent = "Version published ✅";
+      newVersionMessage.textContent = "Version published.";
 
       window.location.reload();
     });
@@ -820,7 +819,7 @@ async function renderModelPage(model) {
       return;
     }
 
-    editMessage.textContent = "Changes saved ✅";
+    editMessage.textContent = "Changes saved.";
 
     window.location.reload();
   });
@@ -878,9 +877,9 @@ async function renderModelPage(model) {
 
         <div class="comment-actions">
           <button class="comment-like-btn"></button>
-          <button class="comment-report-btn" title="Report this comment">🚩</button>
+          <button class="comment-report-btn" title="Report this comment">△</button>
           ${isOwnComment
-            ? '<button class="comment-delete-btn" title="Delete this comment">🗑️</button>'
+            ? '<button class="comment-delete-btn" title="Delete this comment">✕</button>'
             : ""}
         </div>
       `;
@@ -888,7 +887,7 @@ async function renderModelPage(model) {
       const likeButton = bubble.querySelector(".comment-like-btn");
 
       likeButton.textContent =
-        `${hasUserLikedComment(comment.id) ? "❌ Unlike" : "👍 Like"} · ${getCommentLikes(comment.id)}`;
+        `${hasUserLikedComment(comment.id) ? "Unlike" : "Like"} · ${getCommentLikes(comment.id)}`;
 
       likeButton.addEventListener("click", async () => {
         if (!requireAuth()) return;
@@ -1092,10 +1091,10 @@ function renderVersions(model) {
     const filesHtml = (version.files || [])
       .map(file => {
         if (file.url) {
-          return `<a class="version-file-link" href="${escapeHtml(file.url)}">📦 ${escapeHtml(file.name)}</a>`;
+          return `<a class="version-file-link" href="${escapeHtml(file.url)}">${escapeHtml(file.name)}</a>`;
         }
 
-        return `<span class="version-file-link version-file-unavailable" title="Published before real file storage — unavailable">📦 ${escapeHtml(file.name)}</span>`;
+        return `<span class="version-file-link version-file-unavailable" title="Published before real file storage — unavailable">${escapeHtml(file.name)}</span>`;
       })
       .join("");
 
@@ -1143,7 +1142,7 @@ function renderGallery(container, images, title) {
   if (images.length === 0) {
     container.innerHTML = `
       <div class="model-detail-placeholder">
-        🛸
+        ${droneIconMarkup()}
       </div>
     `;
     return;

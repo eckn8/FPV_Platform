@@ -121,7 +121,7 @@ function displayRequests() {
     card.className = "model-card";
 
     card.innerHTML = `
-      <div class="model-image">💡</div>
+      <div class="model-image">${requestIconMarkup()}</div>
 
       <div class="model-content">
         <h3>${escapeHtml(request.title)}</h3>
@@ -152,8 +152,8 @@ function displayRequests() {
     const voteButton = card.querySelector(".vote-btn");
 
     voteButton.textContent = hasUserVotedRequest(request.id)
-      ? "❌ Remove vote"
-      : "👍 Vote";
+      ? "Remove vote"
+      : "Vote";
 
     voteButton.addEventListener("click", event => {
       event.stopPropagation();
@@ -161,7 +161,7 @@ function displayRequests() {
     });
 
     card.querySelector(".vote-count").textContent =
-      `${getRequestVotes(request.id)} votes`;
+      `▲ ${getRequestVotes(request.id)} votes`;
 
     card.querySelector(".download-btn").addEventListener("click", () => {
       window.location.href = `upload.html?requestId=${request.id}`;
@@ -210,7 +210,7 @@ createRequestButton.addEventListener("click", async () => {
   requestDescription.value = "";
   currentPath = [];
 
-  requestMessage.textContent = "Request created successfully ✅";
+  requestMessage.textContent = "Request created successfully.";
 
   await renderFolderPicker();
   displayRequests();

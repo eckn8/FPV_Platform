@@ -126,7 +126,7 @@ function displayModels(list) {
             >
           `
           : `
-            <div class="model-image">🛸</div>
+            <div class="model-image">${droneIconMarkup()}</div>
           `
       }
 
@@ -173,8 +173,8 @@ function displayModels(list) {
     const likeButton = card.querySelector(".like-btn");
 
     likeButton.textContent = hasUserLikedModel(model.id)
-      ? "❌ Unlike"
-      : "👍 Like";
+      ? "Unlike"
+      : "Like";
 
     likeButton.addEventListener("click", event => {
       event.stopPropagation();
@@ -182,7 +182,7 @@ function displayModels(list) {
     });
 
     card.querySelector(".like-count").textContent =
-      `${getLikes(model.id)} likes`;
+      `▲ ${getLikes(model.id)} likes`;
 
     grid.appendChild(card);
   });
@@ -241,7 +241,7 @@ async function init() {
 }
 
 function renderStats(stats) {
-  document.getElementById("statModelsCount").textContent = stats.modelsCount;
-  document.getElementById("statCreatorsCount").textContent = stats.creatorsCount;
-  document.getElementById("statDownloadsCount").textContent = stats.downloadsCount;
+  renderSevenSegment("statModelsCount", String(stats.modelsCount));
+  renderSevenSegment("statCreatorsCount", String(stats.creatorsCount));
+  renderSevenSegment("statDownloadsCount", String(stats.downloadsCount));
 }

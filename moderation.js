@@ -79,7 +79,7 @@ function formatUserRestrictionBox(report) {
   if (report.authorBanned) {
     return `
       <div class="user-restriction-box">
-        <p>🚫 This user is permanently banned from publishing/commenting.</p>
+        <p>⊘ This user is permanently banned from publishing/commenting.</p>
         <button type="button" class="lift-restriction-btn">Lift ban</button>
       </div>
     `;
@@ -88,7 +88,7 @@ function formatUserRestrictionBox(report) {
   if (isTemporarilyRestricted) {
     return `
       <div class="user-restriction-box">
-        <p>⏳ Restricted from publishing/commenting until ${new Date(report.authorRestrictedUntil).toLocaleString("en-US")}.</p>
+        <p>⊘ Restricted from publishing/commenting until ${new Date(report.authorRestrictedUntil).toLocaleString("en-US")}.</p>
         <button type="button" class="lift-restriction-btn">Lift restriction</button>
       </div>
     `;
@@ -184,7 +184,7 @@ function renderReports(reports) {
   reportsContainer.innerHTML = "";
 
   if (reports.length === 0) {
-    reportsContainer.innerHTML = "<p>No pending reports. 🎉</p>";
+    reportsContainer.innerHTML = "<p>No pending reports.</p>";
     return;
   }
 
@@ -196,7 +196,7 @@ function renderReports(reports) {
 
     card.innerHTML = `
       <div class="report-card-header">
-        <span class="tag">${report.targetType === "model" ? "📦 Model" : "💬 Comment"}</span>
+        <span class="tag">${report.targetType === "model" ? "■ Model" : "▤ Comment"}</span>
         <span class="report-date">${new Date(report.createdAt).toLocaleDateString("en-US")}</span>
       </div>
 
@@ -267,7 +267,7 @@ async function loadAndRenderReports() {
   reportsContainer.innerHTML = "<p>Loading...</p>";
   const reports = await getAllReports();
   renderReports(reports);
-  tabReportsButton.textContent = `📋 Reports (${reports.length})`;
+  tabReportsButton.textContent = `Reports (${reports.length})`;
 }
 
 function formatTimeRemaining(restrictedUntil) {
@@ -303,8 +303,8 @@ function renderRestrictedUsers(users) {
 
       <p class="folder-path">
         ${user.is_banned
-          ? "🚫 Permanently banned from publishing/commenting"
-          : `⏳ Restricted from publishing/commenting — ${formatTimeRemaining(user.restricted_until)} (until ${new Date(user.restricted_until).toLocaleString("en-US")})`}
+          ? "⊘ Permanently banned from publishing/commenting"
+          : `⊘ Restricted from publishing/commenting — ${formatTimeRemaining(user.restricted_until)} (until ${new Date(user.restricted_until).toLocaleString("en-US")})`}
       </p>
 
       ${user.restriction_reason ? `<p>${escapeHtml(user.restriction_reason)}</p>` : ""}
@@ -333,7 +333,7 @@ async function loadAndRenderRestrictedUsers() {
   restrictedUsersContainer.innerHTML = "<p>Loading...</p>";
   const users = await getRestrictedUsers();
   renderRestrictedUsers(users);
-  tabRestrictedButton.textContent = `🚫 Restricted users (${users.length})`;
+  tabRestrictedButton.textContent = `Restricted users (${users.length})`;
 }
 
 function renderBannedWords(words) {
@@ -377,7 +377,7 @@ async function loadAndRenderBannedWords() {
   bannedWordsContainer.innerHTML = "<p>Loading...</p>";
   const words = await getBannedWords();
   renderBannedWords(words);
-  tabBannedWordsButton.textContent = `🔤 Banned words (${words.length})`;
+  tabBannedWordsButton.textContent = `Banned words (${words.length})`;
 }
 
 addBannedWordButton.addEventListener("click", async () => {

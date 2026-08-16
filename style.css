@@ -1,127 +1,305 @@
+/* =======================================================
+   FPVBASE — "FLIGHT DECK" DESIGN SYSTEM
+   Mission-placard palette (French Blue / Scarlet Fire / Papaya
+   Whip / Onyx / Lilac), square corners throughout, bold uppercase
+   monospace for labels/controls, a two-tier blueprint grid behind
+   everything, and real seven-segment digits for numeric readouts.
+======================================================= */
+
+:root {
+  --onyx: #0f110c;
+  --panel: #1c1d17;
+  --panel-raised: #232420;
+  --panel-hover: #2a2c25;
+  --line: #38392f;
+  --line-bright: #52533f;
+  --cream: #ffecd1;
+  --cream-dim: #b8ac95;
+  --blue: #0b3d91;
+  --blue-bright: #1b53b8;
+  --scarlet: #fc3d21;
+  --lilac: #c297b8;
+
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Consolas, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-body {
-  font-family: Arial, sans-serif;
-  background: #0f1115;
-  color: #f5f5f5;
+html {
+  background: var(--onyx);
 }
 
-/* Header */
+body {
+  /* Two-tier blueprint grid: fine lines every 32px, a bolder rule
+     every 4th line (128px) — the fine/bold convention of real
+     engineering graph paper, tinted blue so it reads as
+     "blueprint," not static. Kept subtle: felt before it's read. */
+  background-color: var(--onyx);
+  background-image:
+    repeating-linear-gradient(to bottom, rgba(59, 120, 220, 0.06) 0 1px, transparent 1px 128px),
+    repeating-linear-gradient(to right, rgba(59, 120, 220, 0.06) 0 1px, transparent 1px 128px),
+    repeating-linear-gradient(to bottom, rgba(59, 120, 220, 0.028) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(to right, rgba(59, 120, 220, 0.028) 0 1px, transparent 1px 32px);
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  color: var(--cream);
+  line-height: 1.5;
+}
+
+/* ---- Typography ---- */
+
+h1 {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: clamp(26px, 3.4vw, 38px);
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+}
+
+h2 {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+h2::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: var(--line);
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Blocky mono label style — tabs, tags, buttons, captions. */
+.osd {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ---- Header ---- */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 18px 8%;
-  background: #151821;
-  border-bottom: 1px solid #2a2f3a;
+  background: var(--panel);
+  border-bottom: 2px solid var(--line);
 }
 
 .logo {
-  font-size: 22px;
-  font-weight: bold;
-  color: #00e0ff;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--cream);
+  cursor: pointer;
 }
 
 nav a {
-  color: #ddd;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cream-dim);
   text-decoration: none;
-  margin-left: 24px;
-  font-size: 15px;
+  margin-left: 22px;
 }
 
 nav a:hover {
-  color: #00e0ff;
+  color: var(--scarlet);
 }
 
-/* Hero */
+/* ---- Hero ---- */
 .hero {
   text-align: center;
-  padding: 70px 8% 45px;
+  padding: 64px 8% 40px;
 }
 
 .hero h1 {
-  font-size: 42px;
-  margin-bottom: 15px;
+  font-size: clamp(30px, 4.4vw, 46px);
+  margin-bottom: 14px;
 }
 
 .hero p {
-  color: #b7bdc9;
-  font-size: 18px;
-  margin-bottom: 30px;
+  color: var(--cream-dim);
+  font-size: 16px;
+  max-width: 56ch;
+  margin: 0 auto 28px;
 }
 
 #searchInput {
   width: 100%;
   max-width: 650px;
-  padding: 16px 18px;
-  border-radius: 12px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
-  font-size: 16px;
+  padding: 15px 18px;
+  border: 2px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: 15px;
   outline: none;
 }
 
-#searchInput:focus {
-  border-color: #00e0ff;
+#searchInput::placeholder {
+  color: var(--cream-dim);
 }
 
-/* Filters */
+#searchInput:focus {
+  border-color: var(--scarlet);
+}
+
+/* ---- Platform stats — seven-segment readout ---- */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  max-width: 720px;
+  margin: 36px auto 0;
+  background: var(--line);
+  border: 2px solid var(--line);
+}
+
+.stat-card {
+  background: var(--panel-raised);
+  padding: 20px 18px;
+  text-align: center;
+}
+
+.stat-card strong {
+  display: inline-flex;
+  justify-content: center;
+}
+
+.stat-card span {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--scarlet);
+}
+
+/* ---- Section titles ---- */
+.section-title {
+  padding: 0 8%;
+  margin-top: 50px;
+}
+
+.section-title p {
+  color: var(--cream-dim);
+  margin-top: 8px;
+  max-width: 60ch;
+}
+
+/* ---- Filters ---- */
 .filters {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 10px 8% 35px;
+  gap: 10px;
+  padding: 24px 8% 10px;
 }
 
 .filters button {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid #303746;
-  background: #191d27;
-  color: #ddd;
+  border: 2px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream-dim);
   cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
 }
 
 .filters button:hover {
-  background: #00e0ff;
-  color: #0f1115;
+  border-color: var(--blue-bright);
+  color: var(--cream);
+  background: var(--panel-hover);
 }
 
-/* Model cards */
+/* "Most popular" sort trigger, sitting alone above the grid. */
+body > button[onclick="sortByLikes()"] {
+  display: block;
+  margin: 4px auto 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 16px;
+  border: 2px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream-dim);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+body > button[onclick="sortByLikes()"]:hover {
+  border-color: var(--scarlet);
+  color: var(--cream);
+  background: var(--panel-hover);
+}
+
+/* ---- Model cards ---- */
 .models-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
-  padding: 0 8% 60px;
+  gap: 20px;
+  padding: 30px 8% 60px;
 }
 
 .model-card {
-  background: #171b24;
-  border: 1px solid #2a2f3a;
-  border-radius: 18px;
-  overflow: hidden;
-  transition: transform 0.2s, border-color 0.2s;
+  background: var(--panel-raised);
+  border: 2px solid var(--line);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
 }
 
 .model-card:hover {
-  transform: translateY(-4px);
-  border-color: #00e0ff;
+  border-color: var(--cream-dim);
+  background: var(--panel-hover);
+  transform: translateY(-2px);
+}
+
+.model-card:active {
+  transform: translateY(0);
 }
 
 .model-image {
   height: 170px;
-  background: linear-gradient(135deg, #232a36, #11141b);
+  background: linear-gradient(135deg, rgba(11, 61, 145, 0.35), var(--panel));
+  border-bottom: 2px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6f7a8c;
-  font-size: 42px;
+}
+
+.thumb-icon {
+  opacity: 0.9;
 }
 
 .model-content {
@@ -130,14 +308,14 @@ nav a:hover {
 
 .model-content h3 {
   margin-bottom: 8px;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .model-content p {
-  color: #b7bdc9;
+  color: var(--cream-dim);
   font-size: 14px;
-  margin-bottom: 14px;
-  line-height: 1.4;
+  margin-bottom: 12px;
+  line-height: 1.45;
 }
 
 .tags {
@@ -148,11 +326,16 @@ nav a:hover {
 }
 
 .tag {
-  font-size: 12px;
-  background: #242b38;
-  color: #cfd6e4;
-  padding: 5px 8px;
-  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--panel);
+  color: var(--cream-dim);
+  border: 1px solid var(--line-bright);
+  padding: 5px 9px;
+  cursor: default;
 }
 
 .download-btn {
@@ -164,105 +347,178 @@ nav a:hover {
   text-align: center;
   text-decoration: none;
   width: 100%;
-  padding: 11px;
-  border: none;
-  border-radius: 10px;
-  background: #00e0ff;
-  color: #0f1115;
-  font-weight: bold;
+  padding: 12px;
+  border: 2px solid var(--blue);
+  background: var(--blue);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
   box-sizing: border-box;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 
 .download-btn:hover {
-  background: #5cecff;
+  background: var(--blue-bright);
+  border-color: var(--blue-bright);
 }
 
-.upload-section {
+/* ---- Like / vote rows on cards ---- */
+.like-btn,
+.vote-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  border: 2px solid var(--line-bright);
+  background: var(--panel);
+  color: var(--cream);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.like-btn:hover,
+.vote-btn:hover {
+  border-color: var(--scarlet);
+  background: var(--panel-hover);
+}
+
+.like-count,
+.vote-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--scarlet);
+}
+
+/* ---- Publish call-to-action / request suggestion ---- */
+.publish-callout {
+  max-width: 680px;
+  margin: 40px auto;
+  padding: 28px;
+  text-align: center;
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+
+.publish-callout h2 {
+  justify-content: center;
+}
+
+.publish-callout h2::after {
+  display: none;
+}
+
+.publish-callout p {
+  color: var(--cream-dim);
+  margin: 12px 0 18px;
+}
+
+.publish-callout button {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 22px;
+  border: 2px solid var(--blue);
+  background: var(--blue);
+  color: var(--cream);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.publish-callout button:hover {
+  background: var(--blue-bright);
+  border-color: var(--blue-bright);
+}
+
+/* ---- Forms (upload/user/login/comment/moderation) ---- */
+.upload-section,
+.user-section {
   max-width: 700px;
   margin: 20px auto 50px;
-  padding: 24px;
-  background: #171b24;
-  border: 1px solid #2a2f3a;
-  border-radius: 18px;
+  padding: 26px;
+  background: var(--panel);
+  border: 2px solid var(--line);
 }
 
 .upload-section h2 {
   margin-bottom: 18px;
 }
 
-.upload-section input,
-.upload-section textarea,
-.upload-section select {
+input,
+textarea,
+select {
   width: 100%;
   margin-bottom: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
+  padding: 12px 14px;
+  border: 2px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: 15px;
 }
 
-.upload-section textarea {
+textarea {
   min-height: 100px;
   resize: vertical;
 }
 
-#uploadButton {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  background: #00e0ff;
-  color: #0f1115;
-  font-weight: bold;
+input::placeholder,
+textarea::placeholder {
+  color: var(--cream-dim);
+  opacity: 0.75;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--scarlet);
+}
+
+select {
   cursor: pointer;
 }
 
-#uploadMessage {
-  margin-top: 12px;
-  color: #b7bdc9;
+select option {
+  background-color: var(--panel-raised);
+  color: var(--cream);
 }
 
-.user-section {
-  max-width: 700px;
-  margin: 25px auto 0;
-  padding: 18px;
-  background: #171b24;
-  border: 1px solid #2a2f3a;
-  border-radius: 18px;
-}
-
-.user-section label {
-  display: block;
-  margin-bottom: 8px;
-  color: #b7bdc9;
-}
-
-.user-section input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
-  margin-bottom: 10px;
-}
-
+#uploadButton,
 .user-section button {
   width: 100%;
-  padding: 11px;
-  border: none;
-  border-radius: 10px;
-  background: #00e0ff;
-  color: #0f1115;
-  font-weight: bold;
+  padding: 13px;
+  border: 2px solid var(--blue);
+  background: var(--blue);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 
+#uploadButton:hover,
+.user-section button:hover {
+  background: var(--blue-bright);
+  border-color: var(--blue-bright);
+}
+
+#uploadMessage,
 #usernameMessage {
   margin-top: 10px;
-  color: #b7bdc9;
+  color: var(--cream-dim);
+  font-size: 13px;
 }
 
 .model-img {
@@ -270,19 +526,25 @@ nav a:hover {
   height: 170px;
   object-fit: cover;
   display: block;
+  border-bottom: 2px solid var(--line);
 }
 
 .upload-section label {
   display: block;
-  margin-top: 12px;
+  margin-top: 14px;
   margin-bottom: 6px;
-  color: #f5f5f5;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cream-dim);
 }
 
 .upload-hint {
   font-size: 13px;
-  color: #9aa3b2;
-  margin-bottom: 6px;
+  color: var(--cream-dim);
+  margin-bottom: 8px;
 }
 
 .image-preview {
@@ -291,44 +553,38 @@ nav a:hover {
   max-height: 260px;
   object-fit: cover;
   margin: 12px 0 18px;
-  border-radius: 14px;
-  border: 1px solid #333a48;
-}
-
-/* SELECT */
-select {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background-color: #191d27;
-  color: #ffffff;
-  font-size: 15px;
-  margin-bottom: 10px;
-}
-
-/* OPTIONS */
-select option {
-  background-color: #191d27;
-  color: #ffffff;
-  padding: 10px;
-}
-
-.upload-section select {
-  appearance: auto;
-  cursor: pointer;
+  border: 2px solid var(--line-bright);
 }
 
 .folder-path {
-  color: #9aa3b2;
+  color: var(--cream-dim);
   font-size: 13px;
   margin: 8px 0;
 }
 
-/* Explorer folders */
+/* ---- File list (STL uploads / new-version files) ---- */
+.files-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 4px;
+}
+
+.file-preview-item {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--cream-dim);
+  padding: 8px 10px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+}
+
+/* =======================
+   EXPLORER FOLDERS
+======================= */
 
 .breadcrumb {
-  margin: 24px 0;
+  margin: 22px 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -336,44 +592,52 @@ select option {
 }
 
 .breadcrumb button {
-  background: #191d27;
-  color: #00e0ff;
-  border: 1px solid #333a48;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--panel-raised);
+  color: var(--cream);
+  border: 2px solid var(--line-bright);
   padding: 8px 12px;
-  border-radius: 10px;
   cursor: pointer;
 }
 
+.breadcrumb button:hover {
+  border-color: var(--scarlet);
+}
+
 .breadcrumb span {
-  color: #9aa3b2;
+  color: var(--cream-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
 }
 
 .folders-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  gap: 16px;
   margin-top: 18px;
 }
 
 .folder-card {
-  background: #171b24;
-  border: 1px solid #2a2f3a;
-  border-radius: 18px;
+  background: var(--panel-raised);
+  border: 2px solid var(--line);
   padding: 18px;
   display: flex;
   align-items: center;
   gap: 14px;
   cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s;
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
 }
 
 .folder-card:hover {
-  transform: translateY(-3px);
-  border-color: #00e0ff;
+  border-color: var(--cream-dim);
+  background: var(--panel-hover);
+  transform: translateY(-2px);
 }
 
 .folder-icon {
-  font-size: 34px;
+  font-size: 30px;
 }
 
 .folder-card h3 {
@@ -381,7 +645,7 @@ select option {
 }
 
 .folder-card p {
-  color: #9aa3b2;
+  color: var(--cream-dim);
   font-size: 14px;
 }
 
@@ -389,123 +653,150 @@ select option {
   width: 100%;
   max-width: 600px;
   padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
+  border: 2px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream);
   font-size: 15px;
-  margin-bottom: 28px;
+  margin-bottom: 26px;
+}
+
+.folder-search::placeholder {
+  color: var(--cream-dim);
 }
 
 .folder-search:focus {
   outline: none;
-  border-color: #00e0ff;
+  border-color: var(--scarlet);
 }
 
 .selected-folder-box {
-  background: #171b24;
-  border: 1px solid #00e0ff40;
-  border-radius: 16px;
+  background: var(--panel-raised);
+  border: 2px solid var(--blue-bright);
   padding: 18px;
   margin: 20px 0;
 }
 
 .selected-folder-label {
-  color: #9aa3b2;
-  font-size: 13px;
+  color: var(--cream-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   margin-bottom: 8px;
 }
 
 .selected-folder-path {
-  color: #00e0ff;
+  color: var(--cream);
   font-size: 16px;
   font-weight: 600;
   word-break: break-word;
 }
 
 .active-folder {
-  border-color: #00e0ff !important;
-  background: #1b2433;
-  box-shadow: 0 0 18px rgba(0, 224, 255, 0.18);
-  transform: scale(1.02);
+  border-color: var(--scarlet) !important;
+  background: var(--panel-hover);
+  box-shadow: 0 0 0 1px var(--scarlet);
 }
 
 .active-folder .folder-icon {
-  font-size: 42px;
+  font-size: 36px;
 }
 
 .active-folder h3 {
-  color: #00e0ff;
+  color: var(--scarlet);
 }
 
 .current-folder-big {
-  margin-bottom: 24px;
+  margin-bottom: 22px;
   max-width: 420px;
 }
+
+/* =======================
+   MODEL DETAIL PAGE
+======================= */
 
 .model-page {
   padding: 40px 8%;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  gap: 28px;
 }
 
 .model-detail-image-wrapper,
 .model-detail-content,
 .model-info-panel,
 .comments-section {
-  background: #171b24;
-  border: 1px solid #2a2f3a;
-  border-radius: 18px;
-  padding: 24px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  padding: 26px;
 }
 
 .model-detail-image {
   width: 100%;
   max-height: 440px;
   object-fit: cover;
-  border-radius: 16px;
+  display: block;
 }
 
 .model-detail-placeholder {
   height: 360px;
-  background: linear-gradient(135deg, #232a36, #11141b);
+  background: linear-gradient(135deg, rgba(11, 61, 145, 0.35), var(--panel));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 72px;
-  border-radius: 16px;
+}
+
+.model-detail-placeholder .thumb-icon,
+.model-detail-placeholder svg {
+  width: 88px;
+  height: 88px;
 }
 
 .model-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  margin: 24px 0;
+  margin: 22px 0;
   flex-wrap: wrap;
 }
 
 .model-actions button {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 11px 15px;
+  border: 2px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream);
   cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.model-actions button:hover {
+  border-color: var(--cream);
+  background: var(--panel-hover);
+}
+
+.like-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Report: stays discreet by default, stands out on hover so it
    doesn't permanently draw the eye next to Like/Save. */
 .report-btn:hover {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
+  border-color: var(--scarlet);
+  color: var(--scarlet);
 }
 
 /* Content already reported by the user — same visual logic as
    the hover state, but permanent until it's cancelled. */
 .report-btn.reported {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
+  border-color: var(--scarlet);
+  color: var(--scarlet);
 }
 
 /* Content the current viewer has personally reported (see
@@ -527,13 +818,8 @@ select option {
 
 .comments-section textarea {
   width: 100%;
-  min-height: 110px;
+  min-height: 100px;
   margin: 16px 0;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
 }
 
 @media (max-width: 800px) {
@@ -549,98 +835,74 @@ select option {
 
 /* =======================
    COMMENTS - BUBBLES
-   Turns comments into readable cards/bubbles
 ======================= */
 
 .comment-bubble {
-  background: #191d27;
-  border: 1px solid #2a2f3a;
-  border-radius: 16px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
   padding: 16px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
-/* Top of the bubble: username */
 .comment-header {
-  color: #00e0ff;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--blue-bright);
   margin-bottom: 8px;
-  font-size: 14px;
 }
 
-/* Comment text */
 .comment-text {
-  color: #dce2ee;
+  color: var(--cream);
   line-height: 1.5;
   margin-bottom: 12px;
 }
 
-/* Comment like/unlike button */
-.comment-like-btn {
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid #333a48;
-  background: #171b24;
-  color: #f5f5f5;
-  cursor: pointer;
-}
-
-/* Hover effect on the like button */
-.comment-like-btn:hover {
-  border-color: #00e0ff;
-  color: #00e0ff;
-}
-
-/* Like + report row under each comment */
 .comment-actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.comment-report-btn {
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid #333a48;
-  background: #171b24;
-  color: #9aa3b2;
+.comment-like-btn,
+.comment-report-btn,
+.comment-delete-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 7px 11px;
+  border: 1px solid var(--line-bright);
+  background: var(--panel);
+  color: var(--cream-dim);
   cursor: pointer;
 }
 
-.comment-report-btn:hover {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
+.comment-like-btn:hover {
+  border-color: var(--blue-bright);
+  color: var(--blue-bright);
+}
+
+.comment-report-btn:hover,
+.comment-delete-btn:hover {
+  border-color: var(--scarlet);
+  color: var(--scarlet);
 }
 
 .comment-report-btn.reported {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
-}
-
-/* Delete your own comment — only visible to its author */
-.comment-delete-btn {
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid #333a48;
-  background: #171b24;
-  color: #9aa3b2;
-  cursor: pointer;
-}
-
-.comment-delete-btn:hover {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
+  border-color: var(--scarlet);
+  color: var(--scarlet);
 }
 
 /* =======================
    REPORT MODAL
-   Overlay window, reused for the model and for comments
-   (see #reportModal in model.html).
 ======================= */
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(15, 17, 12, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -649,32 +911,52 @@ select option {
 }
 
 .modal-card {
+  position: relative;
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
-  background: #171b24;
-  border: 1px solid #2a2f3a;
-  border-radius: 18px;
-  padding: 24px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  padding: 26px;
   text-align: left;
+}
+
+.modal-card::before,
+.modal-card::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+}
+
+.modal-card::before {
+  top: -2px;
+  left: -2px;
+  border-top: 3px solid var(--scarlet);
+  border-left: 3px solid var(--scarlet);
+}
+
+.modal-card::after {
+  bottom: -2px;
+  right: -2px;
+  border-bottom: 3px solid var(--scarlet);
+  border-right: 3px solid var(--scarlet);
 }
 
 .modal-card label {
   display: block;
   margin-top: 12px;
   margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cream-dim);
 }
 
 .modal-card textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
   min-height: 70px;
-  resize: vertical;
 }
 
 .modal-card .form-actions {
@@ -695,7 +977,10 @@ select option {
   align-items: center;
   gap: 8px;
   margin: 0 0 8px;
-  font-weight: normal;
+  text-transform: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--cream);
   cursor: pointer;
 }
 
@@ -704,44 +989,80 @@ select option {
   margin: 0;
 }
 
+.form-actions button {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 11px 15px;
+  border: 2px solid var(--blue);
+  background: var(--blue);
+  color: var(--cream);
+  cursor: pointer;
+  flex: 1;
+}
+
+.form-actions button:hover {
+  background: var(--blue-bright);
+  border-color: var(--blue-bright);
+}
+
+.form-actions button#cancelReportButton,
+.form-actions button#cancelEditButton,
+.form-actions button#cancelVersionButton,
+.form-actions button#cancelDeleteAccountButton {
+  background: transparent;
+  border-color: var(--line-bright);
+  color: var(--cream-dim);
+}
+
+.form-actions button#cancelReportButton:hover,
+.form-actions button#cancelEditButton:hover,
+.form-actions button#cancelVersionButton:hover,
+.form-actions button#cancelDeleteAccountButton:hover {
+  border-color: var(--cream);
+  color: var(--cream);
+}
+
 /* =======================
    COMMENTS - SHOW MORE
-   Button to show or hide additional comments
 ======================= */
 
 .show-more-comments-btn {
   margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
   padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: #00e0ff;
+  border: 2px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream-dim);
   cursor: pointer;
 }
 
 .show-more-comments-btn:hover {
-  border-color: #00e0ff;
+  border-color: var(--blue-bright);
+  color: var(--cream);
 }
 
 /* =======================
    UPLOAD - MULTI-IMAGE PREVIEW
-   Shows selected images before publishing
 ======================= */
 
 .images-preview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 12px;
+  gap: 10px;
   margin: 14px 0 20px;
 }
 
-/* Thumbnail for each uploaded image */
 .image-preview-thumb {
   width: 100%;
   height: 120px;
   object-fit: cover;
-  border-radius: 14px;
-  border: 1px solid #333a48;
+  border: 1px solid var(--line-bright);
 }
 
 /* Removable thumbnail (model.js edit form): wraps a thumbnail with
@@ -761,106 +1082,128 @@ select option {
   right: 6px;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(15, 17, 21, 0.85);
-  color: #ff8a8a;
+  border: 1px solid var(--scarlet);
+  background: rgba(15, 17, 12, 0.85);
+  color: var(--scarlet);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
 }
 
 .remove-image-btn:hover {
-  background: #ff5c5c;
-  color: white;
+  background: var(--scarlet);
+  color: var(--onyx);
 }
 
 /* =======================
    MODEL PAGE - IMAGE GALLERY
-   Large image + clickable thumbnails
 ======================= */
 
 .model-thumbnails {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-top: 14px;
   flex-wrap: wrap;
 }
 
-/* Thumbnail on the model page */
 .model-thumbnail {
-  width: 72px;
-  height: 72px;
+  width: 70px;
+  height: 70px;
   object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid #333a48;
+  border: 1px solid var(--line-bright);
   cursor: pointer;
-  opacity: 0.65;
+  opacity: 0.6;
 }
 
-/* Selected thumbnail */
 .active-thumbnail {
-  border-color: #00e0ff;
+  border-color: var(--scarlet);
   opacity: 1;
 }
 
 /* =======================
    MODEL PAGE - CREATOR ACTIONS
-   Area visible only to the model's creator
 ======================= */
 
 .creator-actions {
+  position: relative;
   margin-top: 22px;
-  padding: 18px;
-  border-radius: 16px;
-  border: 1px solid #333a48;
-  background: #191d27;
+  padding: 20px;
+  border: 2px solid var(--line);
+  background: var(--panel-raised);
+}
+
+.creator-actions::before,
+.creator-actions::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+}
+
+.creator-actions::before {
+  top: -2px;
+  left: -2px;
+  border-top: 3px solid var(--blue-bright);
+  border-left: 3px solid var(--blue-bright);
+}
+
+.creator-actions::after {
+  bottom: -2px;
+  right: -2px;
+  border-bottom: 3px solid var(--blue-bright);
+  border-right: 3px solid var(--blue-bright);
 }
 
 .creator-actions h3 {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .creator-actions button {
   display: block;
   width: 100%;
   margin-bottom: 10px;
-  padding: 11px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #171b24;
-  color: white;
+  padding: 12px;
+  border: 2px solid var(--line-bright);
+  background: var(--panel);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
 }
 
 .creator-actions button:hover {
-  border-color: #00e0ff;
-  color: #00e0ff;
+  border-color: var(--cream);
+  background: var(--panel-hover);
 }
 
 /* =======================
    "CURRENT VERSION" BADGE (top of page)
-   Shown only when a model has more than one version — for most
-   models (a single version), it would just be noise. The full
-   history stays further down the page.
 ======================= */
 
 .current-version-badge {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 6px 0 16px;
-  color: #9aa3b2;
+  margin: 4px 0 16px;
+  color: var(--cream-dim);
 }
 
 .current-version-badge strong {
-  color: #f5f5f5;
+  color: var(--cream);
+}
+
+#currentVersionLabel {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--blue-bright);
 }
 
 /* =======================
    VERSION HISTORY
-   Visible to everyone (not just the creator), in the
-   "Technical information" section of the model page.
 ======================= */
 
 .version-history {
@@ -868,8 +1211,8 @@ select option {
 }
 
 .version-entry {
-  padding: 10px 0;
-  border-bottom: 1px solid #2a2f3a;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .version-entry:last-child {
@@ -883,31 +1226,32 @@ select option {
 }
 
 .version-entry .version-number {
-  color: #00e0ff;
-  font-weight: bold;
+  font-family: var(--font-mono);
+  color: var(--blue-bright);
+  font-weight: 700;
 }
 
 .version-entry .version-date {
-  color: #9aa3b2;
+  color: var(--cream-dim);
   font-size: 13px;
 }
 
 .version-entry .version-changelog {
   margin-top: 4px;
-  color: #ccc;
+  color: var(--cream-dim);
 }
 
 .version-entry .version-files {
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 13px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px 14px;
 }
 
-/* One link per file — a version can contain several */
 .version-file-link {
-  color: #00e0ff;
+  font-family: var(--font-mono);
+  color: var(--blue-bright);
   text-decoration: none;
 }
 
@@ -918,24 +1262,20 @@ select option {
 /* File published before real storage: shown but not clickable,
    rather than silently disappearing. */
 .version-file-unavailable {
-  color: #9aa3b2;
+  color: var(--cream-dim);
   cursor: not-allowed;
 }
 
 /* =======================
-   "NEW VERSION" FORM
-   Nested inside .creator-actions: we deliberately cancel the
-   "width:100%" on buttons inherited from .creator-actions button
-   so Publish/Cancel stay side by side instead of stacking.
+   "NEW VERSION" FORM / EDIT FORM
 ======================= */
 
 .new-version-form {
   margin-top: 14px;
   margin-bottom: 10px;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #333a48;
-  background: #12151d;
+  padding: 18px;
+  border: 2px solid var(--line);
+  background: var(--panel);
   text-align: left;
 }
 
@@ -943,21 +1283,16 @@ select option {
   display: block;
   margin-top: 12px;
   margin-bottom: 6px;
-}
-
-.new-version-form input,
-.new-version-form textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cream-dim);
 }
 
 .new-version-form textarea {
   min-height: 80px;
-  resize: vertical;
 }
 
 .new-version-form .form-actions {
@@ -971,21 +1306,19 @@ select option {
   flex: 1;
 }
 
-/* Warning shown when a model is archived */
+/* Warning shown when a model is archived — scarlet is the one
+   alert color, reserved for exactly this kind of notice. */
 .archived-warning {
   margin-top: 18px;
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid #ffb020;
-  background: rgba(255, 176, 32, 0.12);
-  color: #ffcf70;
+  padding: 14px 16px;
+  border: 2px solid var(--scarlet);
+  background: rgba(252, 61, 33, 0.08);
+  color: var(--cream);
+  font-size: 14px;
 }
 
 /* =======================
    LOGIN STATUS (HEADER)
-   The "👤 username" link already inherits the "nav a" style;
-   only the logout button needs its own style, to stay discreet
-   next to the menu links.
 ======================= */
 
 .auth-status {
@@ -995,32 +1328,30 @@ select option {
      breaking the alignment with the other menu links. */
   display: inline-flex;
   align-items: center;
-  margin-left: 24px;
+  margin-left: 22px;
   gap: 12px;
   vertical-align: middle;
 }
 
 .auth-logout-btn {
-  background: none;
-  border: 1px solid #333a48;
-  border-radius: 8px;
-  color: #ddd;
-  font-size: 13px;
-  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--line-bright);
+  color: var(--cream-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 10px;
   cursor: pointer;
 }
 
 .auth-logout-btn:hover {
-  border-color: #00e0ff;
-  color: #00e0ff;
+  border-color: var(--scarlet);
+  color: var(--scarlet);
 }
 
 /* =======================
    LOGIN PAGE — CARD + TABS
-   .login-card frames the tabs/message/form at the same width as
-   .upload-section (700px centered), so the whole block stays
-   consistent instead of the tabs stretching across the full
-   screen width while the form below stays narrow.
 ======================= */
 
 .login-card {
@@ -1030,24 +1361,34 @@ select option {
 
 .auth-tabs {
   display: flex;
-  gap: 10px;
+  gap: 2px;
   margin-bottom: 18px;
+  background: var(--line);
+  border: 2px solid var(--line);
 }
 
 .auth-tab {
   flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #171b24;
-  color: #ddd;
+  padding: 13px;
+  border: none;
+  background: var(--panel-raised);
+  color: var(--cream-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  font-size: 15px;
+}
+
+.auth-tab:hover {
+  color: var(--cream);
 }
 
 .auth-tab.active {
-  border-color: #00e0ff;
-  color: #00e0ff;
+  background: var(--panel-hover);
+  color: var(--cream);
+  box-shadow: inset 0 -3px 0 var(--blue-bright);
 }
 
 /* Inline text link inside a message (e.g. suggestion to create
@@ -1055,7 +1396,7 @@ select option {
 .auth-inline-link {
   background: none;
   border: none;
-  color: #00e0ff;
+  color: var(--blue-bright);
   text-decoration: underline;
   cursor: pointer;
   font-size: inherit;
@@ -1067,23 +1408,23 @@ select option {
 ======================= */
 
 .report-card {
-  background: #191d27;
-  border: 1px solid #2a2f3a;
-  border-radius: 16px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
   padding: 18px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .report-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .report-date {
-  color: #9aa3b2;
-  font-size: 13px;
+  color: var(--cream-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
 }
 
 .report-card .form-actions {
@@ -1091,35 +1432,37 @@ select option {
 }
 
 .report-card .form-actions button {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #171b24;
-  color: white;
-  cursor: pointer;
-  flex: 1;
+  border-color: var(--line-bright);
+  background: var(--panel);
+}
+
+.report-card .form-actions button:hover {
+  border-color: var(--cream);
+  background: var(--panel-hover);
 }
 
 .report-card .remove-content-btn {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
+  border-color: var(--scarlet);
+  color: var(--scarlet);
+  background: transparent;
 }
 
 .report-card .remove-content-btn:hover {
-  background: #ff5c5c;
-  color: white;
+  background: var(--scarlet);
+  color: var(--onyx);
 }
 
 /* Publish/comment restriction controls, shown under "Posted by" on
    a report card (see formatUserRestrictionBox() in moderation.js).
    Its own small box, distinct from Dismiss/Remove content below it
-   — those act on the reported content, this acts on the account. */
+   — those act on the reported content, this acts on the account.
+   Lilac carries this notice, held back everywhere else so it stays
+   a legible "something to decide here" signal. */
 .user-restriction-box {
   margin-top: 10px;
   padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #12151d;
+  border: 1px solid var(--lilac);
+  background: rgba(194, 151, 184, 0.08);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1128,30 +1471,31 @@ select option {
 
 .user-restriction-box p {
   flex: 1 1 100%;
-  color: #ffcf70;
+  color: var(--lilac);
   margin: 0 0 4px;
 }
 
 .user-restriction-box select,
 .user-restriction-box button {
   padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
+  border: 1px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 12px;
   cursor: pointer;
 }
 
 .user-restriction-box .ban-user-btn,
 .user-restriction-box .lift-restriction-btn {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
+  border-color: var(--scarlet);
+  color: var(--scarlet);
 }
 
 .user-restriction-box .ban-user-btn:hover,
 .user-restriction-box .lift-restriction-btn:hover {
-  background: #ff5c5c;
-  color: white;
+  background: var(--scarlet);
+  color: var(--onyx);
 }
 
 /* Banned word chip (moderation.html) — a .tag with an inline
@@ -1164,18 +1508,20 @@ select option {
   gap: 6px;
 }
 
-.remove-banned-word-btn {
+.remove-banned-word-btn,
+.remove-allowed-phrase-btn {
   background: none;
   border: none;
-  color: #ff8a8a;
+  color: var(--scarlet);
   cursor: pointer;
   font-size: 12px;
   padding: 0;
   line-height: 1;
 }
 
-.remove-banned-word-btn:hover {
-  color: #ff5c5c;
+.remove-banned-word-btn:hover,
+.remove-allowed-phrase-btn:hover {
+  color: var(--cream);
 }
 
 /* Floating panel shown on a model page when arriving from a
@@ -1187,17 +1533,17 @@ select option {
   bottom: 20px;
   right: 20px;
   max-width: 280px;
-  background: #171b24;
-  border: 1px solid #ff5c5c;
-  border-radius: 14px;
+  background: var(--panel);
+  border: 2px solid var(--scarlet);
   padding: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   z-index: 999;
 }
 
 .mod-panel p {
-  color: #ffcf70;
+  color: var(--lilac);
   margin-bottom: 10px;
+  font-size: 14px;
 }
 
 .mod-panel-actions {
@@ -1208,89 +1554,102 @@ select option {
 .mod-panel-actions button {
   flex: 1;
   padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #333a48;
-  background: #191d27;
-  color: white;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--cream);
   cursor: pointer;
 }
 
 #modRemoveButton {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
+  border-color: var(--scarlet);
+  color: var(--scarlet);
 }
 
 #modRemoveButton:hover {
-  background: #ff5c5c;
-  color: white;
+  background: var(--scarlet);
+  color: var(--onyx);
 }
 
 /* Points a moderator straight at the reported comment among
    possibly many others on the page. */
 .mod-highlighted-comment {
-  border-color: #ffb020 !important;
-  box-shadow: 0 0 0 2px rgba(255, 176, 32, 0.4);
+  border-color: var(--lilac) !important;
+  box-shadow: 0 0 0 2px rgba(194, 151, 184, 0.35);
 }
 
 /* =======================
    ACCOUNT DELETION — DANGER ZONE (profile.html)
-   Its own self-contained button styling rather than relying on
-   .creator-actions button — this section isn't nested inside
-   .creator-actions, unlike the .new-version-form pattern it reuses
-   for the confirmation panel's layout.
 ======================= */
 
 .danger-zone {
+  position: relative;
   margin-top: 50px;
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid #ff5c5c;
-  background: rgba(255, 92, 92, 0.06);
+  padding: 22px;
+  border: 2px solid var(--scarlet);
+  background: rgba(252, 61, 33, 0.05);
+}
+
+.danger-zone h2 {
+  color: var(--scarlet);
+}
+
+.danger-zone h2::after {
+  background: var(--scarlet);
+  opacity: 0.4;
 }
 
 .danger-zone > button {
-  padding: 11px 16px;
-  border-radius: 10px;
-  border: 1px solid #ff5c5c;
-  background: #191d27;
-  color: #ff8a8a;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border: 2px solid var(--scarlet);
+  background: transparent;
+  color: var(--scarlet);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
 }
 
 .danger-zone > button:hover {
-  background: #ff5c5c;
-  color: white;
+  background: var(--scarlet);
+  color: var(--onyx);
 }
 
 .danger-zone .form-actions button {
-  padding: 11px;
-  border-radius: 10px;
-  border: 1px solid #333a48;
-  background: #171b24;
-  color: white;
-  cursor: pointer;
+  border-color: var(--line-bright);
+  background: var(--panel-raised);
+}
+
+.danger-zone .form-actions button:hover {
+  border-color: var(--cream);
+  background: var(--panel-hover);
 }
 
 .danger-zone #confirmDeleteAccountButton {
-  border-color: #ff5c5c;
-  color: #ff8a8a;
+  border-color: var(--scarlet);
+  color: var(--scarlet);
+  background: transparent;
 }
 
 .danger-zone #confirmDeleteAccountButton:hover {
-  background: #ff5c5c;
-  color: white;
+  background: var(--scarlet);
+  color: var(--onyx);
 }
 
 /* =======================
    SITE FOOTER
-   Same markup repeated on every page (no templating in this
-   project) — links to the legal/policy pages.
 ======================= */
 
 .site-footer {
   margin-top: 60px;
   padding: 30px 8%;
-  border-top: 1px solid #2a2f3a;
+  border-top: 2px solid var(--line);
   text-align: center;
 }
 
@@ -1303,25 +1662,28 @@ select option {
 }
 
 .footer-links a {
-  color: #9aa3b2;
+  font-family: var(--font-mono);
+  color: var(--cream-dim);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .footer-links a:hover {
-  color: #00e0ff;
+  color: var(--scarlet);
 }
 
 .footer-copyright {
-  color: #676f7d;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--cream-dim);
+  opacity: 0.7;
+  font-size: 11px;
+  letter-spacing: 0.03em;
 }
 
 /* =======================
    LEGAL / POLICY PAGES
-   Shared prose styling for legal.html, privacy-policy.html,
-   terms.html, cookies.html, community-guidelines.html,
-   moderation-policy.html, appeals.html.
 ======================= */
 
 .legal-content {
@@ -1339,24 +1701,25 @@ select option {
 }
 
 .legal-content p {
-  color: #dce2ee;
+  color: var(--cream-dim);
   line-height: 1.6;
   margin-bottom: 14px;
 }
 
 .legal-content ul {
-  color: #dce2ee;
+  color: var(--cream-dim);
   line-height: 1.6;
   margin: 0 0 14px 20px;
 }
 
 .legal-content a {
-  color: #00e0ff;
+  color: var(--blue-bright);
 }
 
 .legal-updated {
-  color: #9aa3b2;
-  font-size: 13px;
+  color: var(--cream-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
   margin-bottom: 30px;
 }
 
@@ -1370,13 +1733,122 @@ select option {
 .legal-table td {
   text-align: left;
   padding: 10px 12px;
-  border: 1px solid #2a2f3a;
-  color: #dce2ee;
+  border: 1px solid var(--line);
+  color: var(--cream-dim);
   font-size: 14px;
   line-height: 1.5;
 }
 
 .legal-table th {
-  background: #191d27;
-  color: #f5f5f5;
+  background: var(--panel-raised);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* =======================
+   SEVEN-SEGMENT DIGITS (calculator/LCD readout)
+   Built from real on/off segments (see renderSevenSegment() in
+   data.js), not a font — used only for purely numeric values:
+   likes, votes, download counts, platform stats.
+======================= */
+
+.seven-seg {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  --seg-color: var(--scarlet);
+}
+
+.seven-seg.blue {
+  --seg-color: var(--blue-bright);
+}
+
+.seven-seg.cream {
+  --seg-color: var(--cream);
+}
+
+.digit {
+  display: inline-block;
+  position: relative;
+  width: 15px;
+  height: 26px;
+}
+
+/* Ghost (off) segments kept faint enough to never be mistaken for
+   a lit one — "128" must never scan as "828" at a glance. */
+.seg {
+  position: absolute;
+  background: rgba(255, 236, 209, 0.03);
+}
+
+.seg.on {
+  background: var(--seg-color);
+  box-shadow: 0 0 6px var(--seg-color);
+}
+
+.seg-a, .seg-g, .seg-d {
+  left: 2px;
+  right: 2px;
+  height: 3px;
+  clip-path: polygon(14% 0, 86% 0, 100% 50%, 86% 100%, 14% 100%, 0 50%);
+}
+
+.seg-a { top: 0; }
+.seg-g { top: 11.5px; }
+.seg-d { bottom: 0; }
+
+.seg-f, .seg-b, .seg-e, .seg-c {
+  width: 3px;
+  height: 10px;
+  clip-path: polygon(0 14%, 50% 0, 100% 14%, 100% 86%, 50% 100%, 0 86%);
+}
+
+.seg-f { left: 0; top: 2px; }
+.seg-b { right: 0; top: 2px; }
+.seg-e { left: 0; bottom: 2px; }
+.seg-c { right: 0; bottom: 2px; }
+
+.seg-colon, .seg-dot {
+  display: inline-block;
+  width: 5px;
+  height: 26px;
+  position: relative;
+}
+
+.seg-colon::before, .seg-colon::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  width: 3px;
+  height: 3px;
+  background: var(--seg-color);
+  box-shadow: 0 0 4px var(--seg-color);
+}
+
+.seg-colon::before { top: 8px; }
+.seg-colon::after { bottom: 8px; }
+
+.seg-dot::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  bottom: 0;
+  width: 3px;
+  height: 3px;
+  background: var(--seg-color);
+  box-shadow: 0 0 4px var(--seg-color);
+}
+
+.stat-card .seven-seg .digit {
+  width: 20px;
+  height: 34px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

@@ -28,7 +28,7 @@ function displayModels(list) {
       ${
         model.image
           ? `<img class="model-img" src="${model.image}" alt="${escapeHtml(model.title)}">`
-          : `<div class="model-image">🛸</div>`
+          : `<div class="model-image">${droneIconMarkup()}</div>`
       }
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
