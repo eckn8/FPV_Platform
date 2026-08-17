@@ -44,14 +44,24 @@
 
     <!-- PLATFORM STATS
          Filled in by script.js from getPlatformStats() (data.js) —
-         real counts, not placeholders. Deliberately understated
-         (small, dim seven-segment digits) — ambient context under
-         the title, not a headline metric. -->
-    <div class="hero-stats">
-      <span><strong id="statModelsCount" class="seven-seg dim small"></strong>models</span>
-      <span><strong id="statCreatorsCount" class="seven-seg dim small"></strong>creators</span>
-      <span><strong id="statDownloadsCount" class="seven-seg dim small"></strong>downloads</span>
-    </div>
+         real counts, not placeholders. Same red/bordered readout as
+         before, just smaller and sitting right under the title. -->
+    <section class="stats-section small">
+      <div class="stat-card">
+        <strong id="statModelsCount" class="seven-seg"></strong>
+        <span>FPV models</span>
+      </div>
+
+      <div class="stat-card">
+        <strong id="statCreatorsCount" class="seven-seg"></strong>
+        <span>creators</span>
+      </div>
+
+      <div class="stat-card">
+        <strong id="statDownloadsCount" class="seven-seg"></strong>
+        <span>downloads</span>
+      </div>
+    </section>
 
     <p>
       Find, share and improve 3D models designed for FPV pilots.
