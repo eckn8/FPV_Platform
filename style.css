@@ -263,10 +263,18 @@ nav a:hover {
   background: var(--panel-hover);
 }
 
-/* "Most popular" sort trigger, sitting alone above the grid. */
-body > button[onclick="sortByPopularity()"] {
-  display: block;
-  margin: 4px auto 0;
+/* Sort controls (All / Popular / Recent), sitting above the grid.
+   Same square-pill shape as .filters button, but a distinct
+   active/direction treatment since this is a single-select toggle
+   group rather than a category filter. */
+.sort-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 0;
+}
+
+.sort-btn {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -280,10 +288,16 @@ body > button[onclick="sortByPopularity()"] {
   transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
 }
 
-body > button[onclick="sortByPopularity()"]:hover {
+.sort-btn:hover {
   border-color: var(--scarlet);
   color: var(--cream);
   background: var(--panel-hover);
+}
+
+.sort-btn.active {
+  border-color: var(--scarlet);
+  color: var(--scarlet);
+  background: rgba(252, 61, 33, 0.08);
 }
 
 /* ---- Model cards ---- */

@@ -90,12 +90,14 @@ function displayModels(list) {
 
   grid.innerHTML = "";
 
-  if (list.length === 0) {
+  const sorted = sortModels(list);
+
+  if (sorted.length === 0) {
     grid.innerHTML = "<p>No models yet.</p>";
     return;
   }
 
-  list.forEach(model => {
+  sorted.forEach(model => {
     const card = document.createElement("div");
 
     card.className = "model-card";
@@ -147,18 +149,89 @@ function goToModel(id) {
 }
 
 // =======================
-// ▲ SORT BY POPULARITY
-// Wired to the "Most popular" button (index.html). Save counts
-// must already be primed (see init()) — sorts whatever is
-// currently displayed, so it composes with an active search.
+// ▲ SORT CONTROLS (All / Popular / Recent)
+// "All" blends recency + popularity into one score, each
+// normalized to 0-1 first so neither dominates just because of its
+// raw scale (a handful of saves vs. milliseconds of age). Popular/
+// Recent sort on a single signal; clicking the same button again
+// flips the direction. Applied inside displayModels() itself, so
+// it composes automatically with an active search — no need to
+// re-sort by hand after every render.
 // =======================
 
-function sortByPopularity() {
-  const sorted = [...currentDisplayedModels].sort(
-    (a, b) => getSaveCount(b.id) - getSaveCount(a.id)
-  );
+let currentSort = "all"; // "all" | "popular" | "recent"
+let sortDirection = "desc"; // "desc" | "asc" — meaningless for "all"
 
-  displayModels(sorted);
+const sortButtons = {
+  all: document.getElementById("sortAllButton"),
+  popular: document.getElementById("sortPopularButton"),
+  recent: document.getElementById("sortRecentButton")
+};
+
+const sortLabels = { all: "All", popular: "Popular", recent: "Recent" };
+
+function updateSortButtons() {
+  Object.entries(sortButtons).forEach(([key, button]) => {
+    const isActive = key === currentSort;
+    button.classList.toggle("active", isActive);
+
+    const arrow = isActive && key !== "all"
+      ? (sortDirection === "asc" ? " ▲" : " ▼")
+      : "";
+
+    button.textContent = sortLabels[key] + arrow;
+  });
+}
+
+function setSort(sort) {
+  if (sort === currentSort && sort !== "all") {
+    sortDirection = sortDirection === "desc" ? "asc" : "desc";
+  } else {
+    currentSort = sort;
+    sortDirection = "desc";
+  }
+
+  updateSortButtons();
+  displayModels(currentDisplayedModels);
+}
+
+sortButtons.all.addEventListener("click", () => setSort("all"));
+sortButtons.popular.addEventListener("click", () => setSort("popular"));
+sortButtons.recent.addEventListener("click", () => setSort("recent"));
+
+function sortModels(list) {
+  if (list.length === 0) return list;
+
+  if (currentSort === "popular") {
+    const sorted = [...list].sort(
+      (a, b) => getSaveCount(b.id) - getSaveCount(a.id)
+    );
+    return sortDirection === "asc" ? sorted.reverse() : sorted;
+  }
+
+  if (currentSort === "recent") {
+    const sorted = [...list].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    return sortDirection === "asc" ? sorted.reverse() : sorted;
+  }
+
+  // "all" — a simple blended score, not a full "hotness" curve
+  // with time decay: this catalog is small enough that a plain
+  // sum of two normalized signals is plenty.
+  const maxSaves = Math.max(1, ...list.map(model => getSaveCount(model.id)));
+
+  const times = list.map(model => new Date(model.createdAt).getTime());
+  const oldest = Math.min(...times);
+  const span = Math.max(1, Math.max(...times) - oldest);
+
+  function score(model) {
+    const popularity = getSaveCount(model.id) / maxSaves;
+    const recency = (new Date(model.createdAt).getTime() - oldest) / span;
+    return popularity + recency;
+  }
+
+  return [...list].sort((a, b) => score(b) - score(a));
 }
 
 // =======================
@@ -203,6 +276,7 @@ async function init() {
     primeFavorites()
   ]);
 
+  updateSortButtons();
   displayModels(models);
 
   renderStats(stats);
