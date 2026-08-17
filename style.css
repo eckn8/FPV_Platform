@@ -344,14 +344,26 @@ nav a:hover {
 }
 
 .card-creator {
-  color: var(--cream-dim);
+  display: inline-block;
+  min-width: 0;
+  padding: 4px 9px;
+  border: 1px solid var(--blue-bright);
+  background: var(--blue);
+  color: var(--cream);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .card-downloads {
-  color: var(--scarlet);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--cream-dim);
+  flex-shrink: 0;
+}
+
+.card-downloads svg {
   flex-shrink: 0;
 }
 

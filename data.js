@@ -1499,7 +1499,13 @@ function cardMetaMarkup(model, { showCreator = true } = {}) {
       ${showCreator
         ? `<span class="card-creator">${escapeHtml(model.creator || "User")}</span>`
         : "<span></span>"}
-      <span class="card-downloads">${digits}${suffix} ${label}</span>
+      <span class="card-downloads" title="${count} ${label}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3v12m0 0l-5-5m5 5l5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 20h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+        ${digits}${suffix}
+      </span>
     </div>
   `;
 }
