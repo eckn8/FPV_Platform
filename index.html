@@ -41,6 +41,18 @@
   ======================== -->
   <section class="hero">
     <h1>The best STL files for FPV drones</h1>
+
+    <!-- PLATFORM STATS
+         Filled in by script.js from getPlatformStats() (data.js) —
+         real counts, not placeholders. Deliberately understated
+         (small, dim seven-segment digits) — ambient context under
+         the title, not a headline metric. -->
+    <div class="hero-stats">
+      <span><strong id="statModelsCount" class="seven-seg dim small"></strong>models</span>
+      <span><strong id="statCreatorsCount" class="seven-seg dim small"></strong>creators</span>
+      <span><strong id="statDownloadsCount" class="seven-seg dim small"></strong>downloads</span>
+    </div>
+
     <p>
       Find, share and improve 3D models designed for FPV pilots.
     </p>
@@ -51,29 +63,6 @@
       id="searchInput"
       placeholder="Search for a GoPro mount, antenna, Nazgul, TPU..."
     />
-  </section>
-
-
-  <!-- =======================
-       PLATFORM STATS
-       Filled in by script.js from getPlatformStats() (data.js) —
-       real counts, not placeholders.
-  ======================== -->
-  <section class="stats-section">
-    <div class="stat-card">
-      <strong id="statModelsCount" class="seven-seg"></strong>
-      <span>FPV models</span>
-    </div>
-
-    <div class="stat-card">
-      <strong id="statCreatorsCount" class="seven-seg"></strong>
-      <span>creators</span>
-    </div>
-
-    <div class="stat-card">
-      <strong id="statDownloadsCount" class="seven-seg"></strong>
-      <span>downloads</span>
-    </div>
   </section>
 
 

@@ -167,37 +167,26 @@ nav a:hover {
   border-color: var(--scarlet);
 }
 
-/* ---- Platform stats — seven-segment readout ---- */
-.stats-section {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  max-width: 720px;
-  margin: 36px auto 0;
-  background: var(--line);
-  border: 2px solid var(--line);
-}
-
-.stat-card {
-  background: var(--panel-raised);
-  padding: 20px 18px;
-  text-align: center;
-}
-
-.stat-card strong {
-  display: inline-flex;
+/* ---- Platform stats — small, dim readout under the hero title ---- */
+.hero-stats {
+  display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 20px;
+  margin: 12px 0 6px;
 }
 
-.stat-card span {
-  display: block;
-  margin-top: 8px;
+.hero-stats span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--scarlet);
+  color: var(--cream-dim);
 }
 
 /* ---- Section titles ---- */
@@ -1848,6 +1837,53 @@ select option {
   --seg-color: var(--lilac);
 }
 
+.seven-seg.dim {
+  --seg-color: var(--cream-dim);
+}
+
+/* Small variant: real scaled-down geometry (not transform:scale,
+   which would keep the original box's layout footprint) — used for
+   the understated hero-stats readout. */
+.seven-seg.small {
+  gap: 3px;
+}
+
+.seven-seg.small .digit {
+  width: 10px;
+  height: 17px;
+}
+
+.seven-seg.small .seg-a,
+.seven-seg.small .seg-g,
+.seven-seg.small .seg-d {
+  left: 1px;
+  right: 1px;
+  height: 2px;
+}
+
+.seven-seg.small .seg-a { top: 0; }
+.seven-seg.small .seg-g { top: 7.5px; }
+.seven-seg.small .seg-d { bottom: 0; }
+
+.seven-seg.small .seg-f,
+.seven-seg.small .seg-b,
+.seven-seg.small .seg-e,
+.seven-seg.small .seg-c {
+  width: 2px;
+  height: 6.5px;
+}
+
+.seven-seg.small .seg-f { left: 0; top: 1px; }
+.seven-seg.small .seg-b { right: 0; top: 1px; }
+.seven-seg.small .seg-e { left: 0; bottom: 1px; }
+.seven-seg.small .seg-c { right: 0; bottom: 1px; }
+
+.seven-seg.small .seg-colon,
+.seven-seg.small .seg-dot {
+  width: 4px;
+  height: 17px;
+}
+
 .digit {
   display: inline-block;
   position: relative;
@@ -1918,11 +1954,6 @@ select option {
   height: 3px;
   background: var(--seg-color);
   box-shadow: 0 0 4px var(--seg-color);
-}
-
-.stat-card .seven-seg .digit {
-  width: 20px;
-  height: 34px;
 }
 
 @media (prefers-reduced-motion: reduce) {
