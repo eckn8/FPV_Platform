@@ -220,12 +220,21 @@ nav a:hover {
 }
 
 .stats-section.small .seven-seg {
-  gap: 3px;
+  gap: 4px;
 }
 
 .stats-section.small .seven-seg .digit {
-  width: 11px;
-  height: 19px;
+  width: 12px;
+  height: 21px;
+}
+
+/* The glow (box-shadow) on lit segments was tuned for the ~15-20px
+   base digit — at this size it overwhelms 2px-thick segments and
+   bleeds across the tiny gaps between them, turning the whole
+   digit into an illegible blur. Toned down rather than removed, to
+   keep some of the "lit" feel without the smear. */
+.stats-section.small .seg.on {
+  box-shadow: 0 0 1px var(--seg-color);
 }
 
 .stats-section.small .seg-a,
@@ -237,7 +246,7 @@ nav a:hover {
 }
 
 .stats-section.small .seg-a { top: 0; }
-.stats-section.small .seg-g { top: 8.5px; }
+.stats-section.small .seg-g { top: 9.5px; }
 .stats-section.small .seg-d { bottom: 0; }
 
 .stats-section.small .seg-f,
@@ -248,15 +257,15 @@ nav a:hover {
   height: 7.5px;
 }
 
-.stats-section.small .seg-f { left: 0; top: 1px; }
-.stats-section.small .seg-b { right: 0; top: 1px; }
-.stats-section.small .seg-e { left: 0; bottom: 1px; }
-.stats-section.small .seg-c { right: 0; bottom: 1px; }
+.stats-section.small .seg-f { left: 0; top: 2px; }
+.stats-section.small .seg-b { right: 0; top: 2px; }
+.stats-section.small .seg-e { left: 0; bottom: 2px; }
+.stats-section.small .seg-c { right: 0; bottom: 2px; }
 
 .stats-section.small .seg-colon,
 .stats-section.small .seg-dot {
   width: 4px;
-  height: 19px;
+  height: 21px;
 }
 
 /* ---- Section titles ---- */
