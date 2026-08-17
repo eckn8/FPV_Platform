@@ -1752,11 +1752,12 @@ select option {
   margin: 0 auto;
 }
 
-/* Same width/centering as .login-card below it, so the intro text
-   starts at the same left edge as the tabs/form instead of the
-   page's own left edge — left-aligned text, just within a block
-   that's positioned/sized to match the card. */
-.login-intro {
+/* Shared by any page title that sits right above a 700px-wide
+   card/form (.login-card, .upload-section) — same width/centering
+   as that card, so the intro text starts at the same left edge
+   instead of the page's own left edge (left-aligned, just within a
+   block sized to match), with breathing room before the card below. */
+.page-intro {
   max-width: 700px;
   margin: 0 auto 24px;
   padding: 0;
