@@ -78,25 +78,22 @@
 
   <!-- =======================
        POPULAR MODELS
-       Visual only for now
+       Sort controls sit in the same row as the subtitle, forming
+       one header block. "Trending" blends recency + download count
+       into one score; Most Downloaded/Recent each sort
+       highest-first, no direction toggle — wired in script.js.
   ======================== -->
   <section class="section-title">
     <h2>Popular models</h2>
-    <p>The most viewed and downloaded files in the community.</p>
+    <div class="section-title-row">
+      <p>The most viewed and downloaded files in the community.</p>
+      <div class="sort-controls">
+        <button type="button" id="sortAllButton" class="sort-btn active">Trending</button>
+        <button type="button" id="sortPopularButton" class="sort-btn">Most Downloaded</button>
+        <button type="button" id="sortRecentButton" class="sort-btn">Recent</button>
+      </div>
+    </div>
   </section>
-
-
-  <!-- =======================
-       SORT CONTROLS
-       "Trending" blends recency + download count into one score;
-       Most Downloaded/Recent each sort highest-first, no direction
-       toggle — wired in script.js.
-  ======================== -->
-  <div class="sort-controls">
-    <button type="button" id="sortAllButton" class="sort-btn active">Trending</button>
-    <button type="button" id="sortPopularButton" class="sort-btn">Most Downloaded</button>
-    <button type="button" id="sortRecentButton" class="sort-btn">Recent</button>
-  </div>
 
   <!-- =======================
        MODEL LIST

@@ -234,13 +234,28 @@ nav a:hover {
   max-width: 60ch;
 }
 
-/* Sort controls (All / Popular / Recent), sitting above the grid,
-   right under the "Popular models" section title. */
+/* Puts the subtitle and an adjacent control group (see
+   .sort-controls) on the same row, forming one header block instead
+   of two stacked ones. */
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 8px;
+}
+
+.section-title-row p {
+  margin-top: 0;
+}
+
+/* Sort controls (Trending / Most Downloaded / Recent) — sits in
+   the same row as the "Popular models" subtitle. */
 .sort-controls {
   display: flex;
-  justify-content: center;
   gap: 8px;
-  margin: 20px 0 0;
+  flex-wrap: wrap;
 }
 
 .sort-btn {
