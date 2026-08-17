@@ -2146,7 +2146,13 @@ select option {
   color: var(--seg-color);
 }
 
-.stat-card .seven-seg-suffix {
+/* The base .digit size further down (15x26) is only right for a
+   tight inline readout (comment likes, vote counts). Any standalone
+   headline number reuses the exact .stat-card size instead — the
+   one geometry that survived the platform-stats debugging round
+   without breaking down into unrecognizable shapes. */
+.stat-card .seven-seg-suffix,
+.profile-stats-row .seven-seg-suffix {
   font-size: 18px;
 }
 
@@ -2222,7 +2228,9 @@ select option {
   box-shadow: 0 0 4px var(--seg-color);
 }
 
-.stat-card .seven-seg .digit {
+.stat-card .seven-seg .digit,
+.profile-stats-row .seven-seg .digit,
+.follower-readout .seven-seg .digit {
   width: 20px;
   height: 34px;
 }
