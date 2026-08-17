@@ -311,7 +311,7 @@ nav a:hover {
 }
 
 .model-image {
-  height: 170px;
+  aspect-ratio: 4 / 3;
   background: linear-gradient(135deg, rgba(11, 61, 145, 0.35), var(--panel));
   border-bottom: 2px solid var(--line);
   display: flex;
@@ -584,7 +584,7 @@ select option {
 
 .model-img {
   width: 100%;
-  height: 170px;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   display: block;
   border-bottom: 2px solid var(--line);
