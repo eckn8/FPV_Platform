@@ -148,15 +148,117 @@ nav a:hover {
   color: var(--scarlet);
 }
 
-/* Below the mobile breakpoint, nav stays fully visible — just
-   pushed onto its own full-width row under the logo (flex-basis:100%
-   forces the line break in the wrapping .header) instead of fighting
-   the logo for space on one line. No collapse/toggle. */
+/* Hamburger toggle — hidden by default (desktop keeps the plain nav
+   row above); shown below the mobile breakpoint, where nav becomes
+   a slide-in drawer instead (see the media query + .nav-backdrop
+   further down). Three hand-drawn bars, not a "☰" glyph — same
+   reasoning as every other icon in this design system. */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 2px solid var(--line-bright);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nav-toggle span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--cream);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.nav-toggle:hover {
+  border-color: var(--blue-bright);
+}
+
+/* Open state: the three bars redraw into an X. */
+.nav-toggle.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Dims the page behind the open drawer and gives a tap-anywhere way
+   to close it — created in JS (setupMobileNav() in auth.js) rather
+   than hand-placed on every page. */
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 12, 0.7);
+  z-index: 1090;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.nav-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 @media (max-width: 800px) {
+  /* Logo goes back to its original, pre-header-redesign size at
+     this width — 40px next to a slide-in drawer felt oversized. */
+  .logo {
+    font-size: 20px;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  /* Slides in from the right edge; links/auth actions stack top to
+     bottom instead of wrapping in a row. */
   .header nav {
-    flex-basis: 100%;
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(78vw, 300px);
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: flex-start;
-    padding-top: 4px;
+    gap: 6px;
+    background: var(--panel);
+    border-left: 2px solid var(--line);
+    padding: 84px 26px 26px;
+    transform: translateX(100%);
+    transition: transform 0.2s ease;
+    z-index: 1100;
+  }
+
+  .header nav.open {
+    transform: translateX(0);
+  }
+
+  .header nav a {
+    width: 100%;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .header nav .auth-status {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 8px;
   }
 }
 

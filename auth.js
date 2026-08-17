@@ -262,6 +262,42 @@ function renderAuthStatus() {
   }
 }
 
+// =======================
+// ☰ MOBILE NAV DRAWER
+// Below the header's mobile breakpoint (see style.css), nav becomes
+// a slide-in panel from the right instead of a plain row — this
+// wires the toggle button, plus a dimmed backdrop (created here,
+// not hand-placed in every page's HTML) that closes it on tap.
+// Doesn't touch auth state, so it runs immediately rather than
+// waiting on authReady.
+// =======================
+
+function setupMobileNav() {
+  const toggle = document.getElementById("navToggle");
+  const nav = document.querySelector(".header nav");
+
+  if (!toggle || !nav) return;
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "nav-backdrop";
+  document.body.appendChild(backdrop);
+
+  function setOpen(isOpen) {
+    nav.classList.toggle("open", isOpen);
+    toggle.classList.toggle("open", isOpen);
+    backdrop.classList.toggle("open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+  }
+
+  toggle.addEventListener("click", () => {
+    setOpen(!nav.classList.contains("open"));
+  });
+
+  backdrop.addEventListener("click", () => setOpen(false));
+}
+
+setupMobileNav();
+
 // Kicks off resolving the login state as soon as this file loads,
 // on every page — so no page script needs to think about it.
 initAuth();
