@@ -18,6 +18,7 @@ supabase_account_deletion.sql
 supabase_antennas_migration.sql
 supabase_merge_like_into_save.sql
 supabase_frame_taxonomy_update.sql
+supabase_3dframe_taxonomy_update.sql
 .gitignore
 .git
 .claude
