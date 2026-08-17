@@ -200,81 +200,26 @@ nav a:hover {
   color: var(--scarlet);
 }
 
-/* Smaller variant — same red/bordered look, scaled down to sit
-   under the hero title instead of below the search bar. Real
-   scaled-down digit geometry (not transform:scale, which would
-   keep the original box's layout footprint), same technique as
-   any other .small seven-segment readout. */
+/* Smaller variant — same red/bordered look, sitting under the hero
+   title instead of below the search bar. The digits themselves
+   stay at their normal (.stat-card) size — every attempt at
+   shrinking the hand-built segment geometry further fell apart
+   (glow bleed, then lost chevron points, then plain rectangles
+   that still didn't read as real digits at a glance). Only the
+   surrounding chrome (card padding, gaps, max-width, label size)
+   is more compact. */
 .stats-section.small {
-  max-width: 420px;
+  max-width: 480px;
   margin: 14px auto 6px;
 }
 
 .stats-section.small .stat-card {
-  padding: 10px 8px;
+  padding: 12px 10px;
 }
 
 .stats-section.small .stat-card span {
-  margin-top: 5px;
-  font-size: 9px;
-}
-
-.stats-section.small .seven-seg {
-  gap: 4px;
-}
-
-.stats-section.small .seven-seg .digit {
-  width: 14px;
-  height: 24px;
-}
-
-/* Two things break down at this scale and both get simplified
-   rather than just shrunk further:
-   - The chevron clip-path (pointed ends, meant to look like a real
-     LCD segment) loses its point entirely below ~3px of thickness
-     and instead just smears the edge — replaced with a plain
-     rectangle, which is what most real small LCD segments actually
-     are anyway.
-   - The glow (box-shadow), tuned for the ~15-20px base digit,
-     bleeds straight across 2px-thick segments and their 1px gaps —
-     removed here rather than merely toned down. */
-.stats-section.small .seg {
-  clip-path: none;
-}
-
-.stats-section.small .seg.on {
-  box-shadow: none;
-}
-
-.stats-section.small .seg-a,
-.stats-section.small .seg-g,
-.stats-section.small .seg-d {
-  left: 1px;
-  right: 1px;
-  height: 2px;
-}
-
-.stats-section.small .seg-a { top: 0; }
-.stats-section.small .seg-g { top: 11px; }
-.stats-section.small .seg-d { bottom: 0; }
-
-.stats-section.small .seg-f,
-.stats-section.small .seg-b,
-.stats-section.small .seg-e,
-.stats-section.small .seg-c {
-  width: 2px;
-  height: 9px;
-}
-
-.stats-section.small .seg-f { left: 0; top: 2px; }
-.stats-section.small .seg-b { right: 0; top: 2px; }
-.stats-section.small .seg-e { left: 0; bottom: 2px; }
-.stats-section.small .seg-c { right: 0; bottom: 2px; }
-
-.stats-section.small .seg-colon,
-.stats-section.small .seg-dot {
-  width: 4px;
-  height: 24px;
+  margin-top: 6px;
+  font-size: 10px;
 }
 
 /* ---- Section titles ---- */
