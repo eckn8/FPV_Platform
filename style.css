@@ -238,7 +238,7 @@ nav a:hover {
     right: 0;
     height: 100vh;
     height: 100dvh;
-    width: min(78vw, 300px);
+    width: min(62vw, 240px);
     overflow-y: auto;
     flex-direction: column;
     align-items: flex-start;
@@ -1707,9 +1707,18 @@ select option {
   /* text-align:center matters here: a <button> centers its content
      by default, but the "Log in" state is a plain <a> (left-aligned
      by default) — without it, Log in and Log out looked
-     inconsistently positioned inside the same-looking box. */
+     inconsistently positioned inside the same-looking box.
+     appearance:none strips the browser's native button chrome
+     (its own default border/background/line-height), which is what
+     made the border look off on hover — without it, our border sat
+     on top of the platform's own button skin instead of replacing
+     it outright. */
+  appearance: none;
+  -webkit-appearance: none;
   display: inline-block;
   text-align: center;
+  line-height: normal;
+  margin: 0;
   background: transparent;
   border: 1px solid var(--line-bright);
   color: var(--cream-dim);
