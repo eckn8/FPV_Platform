@@ -96,17 +96,19 @@ h3 {
 }
 
 /* ---- Header ---- */
-/* A fixed height (rather than letting padding + the tallest child
-   decide it) keeps the bar the same size it always was — a bigger
-   .logo just centers inside it via align-items instead of pushing
-   the whole header taller. 66px = the original height, back when
-   padding:18px + a 20px logo (1.5 line-height) auto-computed it. */
+/* min-height (not a hard height) keeps the bar at its usual size on
+   one line — a bigger .logo just centers inside it via
+   align-items — but still lets it grow when there isn't room for
+   logo + nav side by side (narrow phones): flex-wrap moves nav to
+   its own row instead of squeezing everything into a fixed box. */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 66px;
-  padding: 0 8%;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  min-height: 66px;
+  padding: 12px 8%;
   background: var(--panel);
   border-bottom: 2px solid var(--line);
 }
@@ -121,6 +123,17 @@ h3 {
   cursor: pointer;
 }
 
+/* nav itself wraps its links (rather than relying on plain inline
+   text-wrap, which reads unevenly) — gap gives consistent spacing
+   whether it's one row on desktop or several on a narrow phone. */
+nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 22px;
+}
+
 nav a {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -129,7 +142,6 @@ nav a {
   letter-spacing: 0.05em;
   color: var(--cream-dim);
   text-decoration: none;
-  margin-left: 22px;
 }
 
 nav a:hover {
@@ -1542,13 +1554,12 @@ select option {
 ======================= */
 
 .auth-status {
-  /* inline-flex, not flex: "nav" is not a flex container, its
-     children (the <a> tags) flow inline. A plain "flex" here
-     would blockify the <span> and push it onto its own line,
-     breaking the alignment with the other menu links. */
+  /* inline-flex so its own children (username link + logout
+     button, or just the login link) lay out in a row — spacing
+     against the other nav items comes from nav's own gap now, not
+     a margin here, so it stays even whether nav wraps or not. */
   display: inline-flex;
   align-items: center;
-  margin-left: 22px;
   gap: 12px;
   vertical-align: middle;
 }
