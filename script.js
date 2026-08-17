@@ -209,7 +209,7 @@ async function init() {
 }
 
 function renderStats(stats) {
-  renderSevenSegment("statModelsCount", String(stats.modelsCount));
-  renderSevenSegment("statCreatorsCount", String(stats.creatorsCount));
-  renderSevenSegment("statDownloadsCount", String(stats.downloadsCount));
+  renderCompactSevenSegment("statModelsCount", stats.modelsCount);
+  renderCompactSevenSegment("statCreatorsCount", stats.creatorsCount);
+  renderCompactSevenSegment("statDownloadsCount", stats.downloadsCount);
 }

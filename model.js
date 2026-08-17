@@ -178,7 +178,7 @@ async function renderModelPage(model) {
 
     saveButton.classList.toggle("saved", saved);
 
-    renderSevenSegment("saveCount", String(getSaveCount(model.id)));
+    renderCompactSevenSegment("saveCount", getSaveCount(model.id));
   }
 
   document

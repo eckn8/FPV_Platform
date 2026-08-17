@@ -1870,6 +1870,21 @@ select option {
   --seg-color: var(--lilac);
 }
 
+/* K/M suffix on a large value (see renderCompactSevenSegment() in
+   data.js) — real text, not segments (letters don't map cleanly to
+   seven segments), colored to match via the container's
+   --seg-color so it reads as part of the same readout. */
+.seven-seg-suffix {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--seg-color);
+}
+
+.stat-card .seven-seg-suffix {
+  font-size: 18px;
+}
+
 .digit {
   display: inline-block;
   position: relative;

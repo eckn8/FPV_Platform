@@ -1494,6 +1494,49 @@ function renderSevenSegment(elementId, text) {
   }
 }
 
+// Abbreviates large values the same way most stat readouts do
+// ("12.4K", "1.2M") — keeps the digit count bounded regardless of
+// how large the real number grows, so a seven-segment readout in a
+// fixed-width card can never overflow it, no matter how popular the
+// platform gets.
+function formatCompactValue(value) {
+  const n = Number(value) || 0;
+
+  if (n < 10000) {
+    return { digits: String(n), suffix: "" };
+  }
+
+  if (n < 1000000) {
+    return { digits: (n / 1000).toFixed(1), suffix: "K" };
+  }
+
+  return { digits: (n / 1000000).toFixed(1), suffix: "M" };
+}
+
+// Like renderSevenSegment(), but for a value that might grow
+// large: the numeric part still renders as real segments, and any
+// K/M suffix (see formatCompactValue()) is appended as plain text
+// inside the same container — letters don't have a clean
+// seven-segment representation (K and M especially), so they stay
+// real text rather than being forced into segments. Inherits
+// --seg-color from the container, so it matches whichever color
+// variant (.blue/.cream/.lilac/default) is in use.
+function renderCompactSevenSegment(elementId, value) {
+  const { digits, suffix } = formatCompactValue(value);
+
+  renderSevenSegment(elementId, digits);
+
+  if (!suffix) return;
+
+  const container = document.getElementById(elementId);
+  if (!container) return;
+
+  const suffixEl = document.createElement("span");
+  suffixEl.className = "seven-seg-suffix";
+  suffixEl.textContent = suffix;
+  container.appendChild(suffixEl);
+}
+
 // =======================
 // 🗑 ACCOUNT DELETION
 // The actual deletion needs the Supabase secret key, which only
