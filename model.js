@@ -170,10 +170,13 @@ async function renderModelPage(model) {
     const saveButton =
       document.getElementById("saveButton");
 
-    saveButton.textContent =
-      isModelSaved(model.id)
-        ? "Remove from favorites"
-        : "Save";
+    const saved = isModelSaved(model.id);
+
+    saveButton.textContent = saved
+      ? "Remove from favorites"
+      : "Save";
+
+    saveButton.classList.toggle("saved", saved);
 
     renderSevenSegment("saveCount", String(getSaveCount(model.id)));
   }

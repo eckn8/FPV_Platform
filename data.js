@@ -718,23 +718,30 @@ function getSaveCount(modelId) {
 function attachSaveButton(card, modelId, onToggled) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "card-save-btn";
-  button.title = "Save";
 
-  function updateIcon() {
+  // Two children rather than swapping textContent: not-saved shows
+  // a "Save" label on hover, saved shows the glyph alone — style.css
+  // toggles which one is visible via the .saved class, no JS needed
+  // for that part.
+  button.innerHTML = `
+    <span class="save-icon">◆</span>
+    <span class="save-label">Save</span>
+  `;
+
+  function updateState() {
     const saved = isModelSaved(modelId);
-    button.textContent = saved ? "◆" : "◇";
-    button.classList.toggle("saved", saved);
+    button.className = `card-save-btn${saved ? " saved" : ""}`;
+    button.title = saved ? "Remove from favorites" : "Save";
   }
 
-  updateIcon();
+  updateState();
 
   button.addEventListener("click", async event => {
     event.stopPropagation();
     if (!requireAuth()) return;
 
     await toggleSavedModel(modelId);
-    updateIcon();
+    updateState();
 
     if (onToggled) onToggled();
   });

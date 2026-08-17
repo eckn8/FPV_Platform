@@ -777,6 +777,15 @@ select option {
   background: var(--panel-hover);
 }
 
+#saveButton.saved {
+  border-color: var(--lilac);
+  color: var(--lilac);
+}
+
+#saveButton.saved:hover {
+  background: rgba(194, 151, 184, 0.1);
+}
+
 .save-readout {
   display: inline-flex;
   align-items: center;
@@ -784,43 +793,70 @@ select option {
 }
 
 /* ---- Card save (bookmark) button ----
-   Sits over the image corner, hidden until the card is hovered or
-   focused — except once a model IS saved, where the filled glyph
-   stays visible so "already saved" reads at a glance without
-   needing to hover every card to check. */
+   Not saved: invisible until the card is hovered/focused, and
+   reads as a labeled "Save" badge rather than a bare glyph. Once
+   saved: the glyph alone stays permanently visible (in Lilac, held
+   back everywhere else in the palette) so "already saved" reads at
+   a glance without needing to hover every card to check. */
 .card-save-btn {
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 34px;
+  min-width: 34px;
   height: 34px;
-  display: flex;
+  padding: 0 10px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   border: 2px solid var(--line-bright);
-  background: rgba(15, 17, 12, 0.75);
+  background: rgba(15, 17, 12, 0.85);
   color: var(--cream);
-  font-size: 16px;
-  line-height: 1;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
-.model-card:hover .card-save-btn,
-.model-card:focus-within .card-save-btn,
-.card-save-btn.saved {
+.card-save-btn .save-icon {
+  display: none;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.card-save-btn .save-label {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Not saved, card hovered/focused: reveal the "Save" label. */
+.model-card:hover .card-save-btn:not(.saved),
+.model-card:focus-within .card-save-btn:not(.saved) {
   opacity: 1;
 }
 
-.card-save-btn:hover {
-  border-color: var(--scarlet);
-  color: var(--scarlet);
+.model-card:hover .card-save-btn:not(.saved) .save-label,
+.model-card:focus-within .card-save-btn:not(.saved) .save-label {
+  display: inline;
 }
 
+/* Saved: glyph only, always visible, Lilac. */
 .card-save-btn.saved {
-  border-color: var(--scarlet);
-  color: var(--scarlet);
+  opacity: 1;
+  border-color: var(--lilac);
+  color: var(--lilac);
+}
+
+.card-save-btn.saved .save-icon {
+  display: inline;
+}
+
+.card-save-btn:hover {
+  border-color: var(--lilac);
+  color: var(--lilac);
 }
 
 /* Report: stays discreet by default, stands out on hover so it
@@ -1806,6 +1842,10 @@ select option {
 
 .seven-seg.cream {
   --seg-color: var(--cream);
+}
+
+.seven-seg.lilac {
+  --seg-color: var(--lilac);
 }
 
 .digit {
