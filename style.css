@@ -107,10 +107,10 @@ h3 {
 
 .logo {
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: var(--cream);
+  color: var(--blue-bright);
   cursor: pointer;
 }
 
