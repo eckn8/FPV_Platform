@@ -1704,7 +1704,12 @@ select option {
 }
 
 .auth-btn {
+  /* text-align:center matters here: a <button> centers its content
+     by default, but the "Log in" state is a plain <a> (left-aligned
+     by default) — without it, Log in and Log out looked
+     inconsistently positioned inside the same-looking box. */
   display: inline-block;
+  text-align: center;
   background: transparent;
   border: 1px solid var(--line-bright);
   color: var(--cream-dim);
