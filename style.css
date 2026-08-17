@@ -1483,6 +1483,16 @@ select option {
   margin: 0 auto;
 }
 
+/* Same width/centering as .login-card below it, so the intro text
+   lines up with the tabs/form instead of spanning from the page's
+   left edge while the card sits centered. */
+.login-intro {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0;
+  text-align: center;
+}
+
 .auth-tabs {
   display: flex;
   gap: 2px;
