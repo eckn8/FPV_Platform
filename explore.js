@@ -214,12 +214,6 @@ function renderModels() {
           📁 ${escapeHtml(getModelPath(model).join(" / "))}
         </p>
 
-        <div class="tags">
-          ${(model.tags || [])
-            .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`)
-            .join("")}
-        </div>
-
         <p style="margin-top:12px;">
           ▲ ${getLikes(model.id)} likes
         </p>

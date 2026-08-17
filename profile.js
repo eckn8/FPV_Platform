@@ -33,11 +33,6 @@ function displayModels(list) {
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
         <p>${escapeHtml(model.description)}</p>
-        <div class="tags">
-          ${(model.tags || [])
-            .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`)
-            .join("")}
-        </div>
       </div>
     `;
 

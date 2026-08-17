@@ -145,12 +145,6 @@ function displayModels(list) {
           📁 ${escapeHtml(getModelPath(model).join(" / "))}
         </p>
 
-        <div class="tags">
-          ${(model.tags || [])
-            .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`)
-            .join("")}
-        </div>
-
         <div
           style="
             display:flex;

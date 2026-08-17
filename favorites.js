@@ -59,12 +59,6 @@ async function displayFavorites() {
         <p>${escapeHtml(model.description)}</p>
         <p><strong>Creator:</strong> ${escapeHtml(model.creator || "Unknown user")}</p>
 
-        <div class="tags">
-          ${(model.tags || [])
-            .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`)
-            .join("")}
-        </div>
-
         <button class="download-btn">View model</button>
       </div>
     `;
