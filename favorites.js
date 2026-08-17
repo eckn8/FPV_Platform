@@ -56,12 +56,15 @@ async function displayFavorites() {
       }
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
-        <p>${escapeHtml(model.description)}</p>
-        <p><strong>Creator:</strong> ${escapeHtml(model.creator || "Unknown user")}</p>
 
         <button class="download-btn">View model</button>
       </div>
     `;
+
+    // Un-saving from this page removes the card immediately — the
+    // list is exactly "what's saved," so there's nothing else to
+    // show it as.
+    attachSaveButton(card, model.id, displayFavorites);
 
     grid.appendChild(card);
   });

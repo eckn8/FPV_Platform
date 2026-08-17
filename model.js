@@ -145,53 +145,25 @@ async function renderModelPage(model) {
 
   // =======================
   // ☁️ LOADING DEPENDENT DATA
-  // Everything below (likes, favorites, comments, reports) needs
-  // Supabase to have been queried at least once. We do it in a
-  // single wave, in parallel, so the rest of the rendering can stay
-  // synchronous (reading from the caches filled by
-  // primeModelLikes()/primeFavorites()/primeCommentLikes()/
-  // primeReports()).
+  // Everything below (saves, comments, reports) needs Supabase to
+  // have been queried at least once. We do it in a single wave, in
+  // parallel, so the rest of the rendering can stay synchronous
+  // (reading from the caches filled by primeModelSaves()/
+  // primeFavorites()/primeCommentLikes()/primeReports()).
   // =======================
 
   // `let` (not const): reassigned on the fly when removing a
   // deleted comment, see further below.
   let [comments] = await Promise.all([
     getModelComments(model.id),
-    primeModelLikes([model.id]),
+    primeModelSaves([model.id]),
     primeFavorites(),
     primeReports()
   ]);
 
   // =======================
-  // 👍 LIKES
-  // =======================
-
-  function updateLikeDisplay() {
-    const likeButton =
-      document.getElementById("likeButton");
-
-    renderSevenSegment("likeCount", String(getLikes(model.id)));
-
-    likeButton.textContent =
-      hasUserLikedModel(model.id)
-        ? "Unlike"
-        : "Like";
-  }
-
-  document
-    .getElementById("likeButton")
-    .addEventListener("click", async () => {
-
-      if (!requireAuth()) return;
-
-      await toggleModelLike(model.id);
-      updateLikeDisplay();
-    });
-
-  updateLikeDisplay();
-
-  // =======================
-  // ❤️ FAVORITES
+  // ❤️ SAVE (also the public popularity signal — see FAVORITES in
+  // data.js; there's no separate like button anymore)
   // =======================
 
   function updateSaveButton() {
@@ -202,6 +174,8 @@ async function renderModelPage(model) {
       isModelSaved(model.id)
         ? "Remove from favorites"
         : "Save";
+
+    renderSevenSegment("saveCount", String(getSaveCount(model.id)));
   }
 
   document

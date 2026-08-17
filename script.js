@@ -1,6 +1,6 @@
 // =======================================================
 // 🏠 script.js — Home page
-// Models, likes and advanced search live in data.js (loaded
+// Models, saves and advanced search live in data.js (loaded
 // before this file), now backed by Supabase.
 // =======================================================
 
@@ -14,19 +14,6 @@ let currentDisplayedModels = [];
 const grid = document.getElementById("modelsGrid");
 
 const searchInput = document.getElementById("searchInput");
-
-// =======================
-// 👍 LIKES
-// =======================
-
-async function likeModel(id) {
-  // Redirects to login.html if no one is logged in — liking
-  // requires an account, but browsing/searching doesn't.
-  if (!requireAuth()) return;
-
-  await toggleModelLike(id);
-  displayModels(currentDisplayedModels);
-}
 
 // =======================
 // 🔍 REQUEST SUGGESTION
@@ -134,28 +121,9 @@ function displayModels(list) {
 
         <h3>${escapeHtml(model.title)}</h3>
 
-        <p>${escapeHtml(model.description)}</p>
-
-        <p>
-          <strong>Creator:</strong>
-          ${escapeHtml(model.creator || "User")}
-        </p>
-
         <p class="folder-path">
           📁 ${escapeHtml(getModelPath(model).join(" / "))}
         </p>
-
-        <div
-          style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin:14px 0;
-          "
-        >
-          <button class="like-btn"></button>
-          <span class="like-count"></span>
-        </div>
 
         <button class="download-btn">
           View model
@@ -164,19 +132,7 @@ function displayModels(list) {
       </div>
     `;
 
-    const likeButton = card.querySelector(".like-btn");
-
-    likeButton.textContent = hasUserLikedModel(model.id)
-      ? "Unlike"
-      : "Like";
-
-    likeButton.addEventListener("click", event => {
-      event.stopPropagation();
-      likeModel(model.id);
-    });
-
-    card.querySelector(".like-count").textContent =
-      `▲ ${getLikes(model.id)} likes`;
+    attachSaveButton(card, model.id, () => displayModels(currentDisplayedModels));
 
     grid.appendChild(card);
   });
@@ -188,6 +144,21 @@ function displayModels(list) {
 
 function goToModel(id) {
   window.location.href = `model.html?id=${id}`;
+}
+
+// =======================
+// ▲ SORT BY POPULARITY
+// Wired to the "Most popular" button (index.html). Save counts
+// must already be primed (see init()) — sorts whatever is
+// currently displayed, so it composes with an active search.
+// =======================
+
+function sortByPopularity() {
+  const sorted = [...currentDisplayedModels].sort(
+    (a, b) => getSaveCount(b.id) - getSaveCount(a.id)
+  );
+
+  displayModels(sorted);
 }
 
 // =======================
@@ -227,7 +198,10 @@ async function init() {
 
   models = loadedModels;
 
-  await primeModelLikes(models.map(model => model.id));
+  await Promise.all([
+    primeModelSaves(models.map(model => model.id)),
+    primeFavorites()
+  ]);
 
   displayModels(models);
 

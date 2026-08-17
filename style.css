@@ -242,7 +242,7 @@ nav a:hover {
 }
 
 /* "Most popular" sort trigger, sitting alone above the grid. */
-body > button[onclick="sortByLikes()"] {
+body > button[onclick="sortByPopularity()"] {
   display: block;
   margin: 4px auto 0;
   font-family: var(--font-mono);
@@ -258,7 +258,7 @@ body > button[onclick="sortByLikes()"] {
   transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
 }
 
-body > button[onclick="sortByLikes()"]:hover {
+body > button[onclick="sortByPopularity()"]:hover {
   border-color: var(--scarlet);
   color: var(--cream);
   background: var(--panel-hover);
@@ -273,6 +273,7 @@ body > button[onclick="sortByLikes()"]:hover {
 }
 
 .model-card {
+  position: relative;
   background: var(--panel-raised);
   border: 2px solid var(--line);
   cursor: pointer;
@@ -366,8 +367,7 @@ body > button[onclick="sortByLikes()"]:hover {
   border-color: var(--blue-bright);
 }
 
-/* ---- Like / vote rows on cards ---- */
-.like-btn,
+/* ---- Vote row on request cards ---- */
 .vote-btn {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -382,13 +382,11 @@ body > button[onclick="sortByLikes()"]:hover {
   transition: border-color 0.12s ease, background 0.12s ease;
 }
 
-.like-btn:hover,
 .vote-btn:hover {
   border-color: var(--scarlet);
   background: var(--panel-hover);
 }
 
-.like-count,
 .vote-count {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -779,10 +777,50 @@ select option {
   background: var(--panel-hover);
 }
 
-.like-readout {
+.save-readout {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+/* ---- Card save (bookmark) button ----
+   Sits over the image corner, hidden until the card is hovered or
+   focused — except once a model IS saved, where the filled glyph
+   stays visible so "already saved" reads at a glance without
+   needing to hover every card to check. */
+.card-save-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--line-bright);
+  background: rgba(15, 17, 12, 0.75);
+  color: var(--cream);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.model-card:hover .card-save-btn,
+.model-card:focus-within .card-save-btn,
+.card-save-btn.saved {
+  opacity: 1;
+}
+
+.card-save-btn:hover {
+  border-color: var(--scarlet);
+  color: var(--scarlet);
+}
+
+.card-save-btn.saved {
+  border-color: var(--scarlet);
+  color: var(--scarlet);
 }
 
 /* Report: stays discreet by default, stands out on hover so it

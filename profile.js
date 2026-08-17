@@ -32,9 +32,10 @@ function displayModels(list) {
       }
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
-        <p>${escapeHtml(model.description)}</p>
       </div>
     `;
+
+    attachSaveButton(card, model.id, () => displayModels(list));
 
     grid.appendChild(card);
   });
@@ -104,9 +105,13 @@ async function init() {
   document.getElementById("profileInfo").textContent =
     `${userModels.length} model(s) published`;
 
-  displayModels(userModels);
-
+  // Waits for auth + favorites before the first render (unlike the
+  // home page) — each card's save button needs to know up front
+  // whether the viewer already saved that model.
   await authReady;
+  await primeFavorites();
+
+  displayModels(userModels);
 
   const currentUser = getCurrentUser();
 

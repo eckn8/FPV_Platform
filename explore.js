@@ -206,16 +206,8 @@ function renderModels() {
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
 
-        <p>${escapeHtml(model.description)}</p>
-
-        <p><strong>Creator:</strong> ${escapeHtml(model.creator || "User")}</p>
-
         <p class="folder-path">
           📁 ${escapeHtml(getModelPath(model).join(" / "))}
-        </p>
-
-        <p style="margin-top:12px;">
-          ▲ ${getLikes(model.id)} likes
         </p>
 
         <button class="download-btn">
@@ -223,6 +215,8 @@ function renderModels() {
         </button>
       </div>
     `;
+
+    attachSaveButton(card, model.id, renderModels);
 
     modelsGrid.appendChild(card);
   });
@@ -265,7 +259,10 @@ async function init() {
 
   models = await getAllModels();
 
-  await primeModelLikes(models.map(model => model.id));
+  await Promise.all([
+    primeModelSaves(models.map(model => model.id)),
+    primeFavorites()
+  ]);
 
   await renderExplorer();
 }

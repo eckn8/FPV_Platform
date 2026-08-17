@@ -364,9 +364,9 @@ async function handleDeleteAccount(request, env) {
   }
 
   // ---- Delete the account itself -------------------------------
-  // Cascades to profiles, model_likes, favorites, comment_likes,
-  // and request_votes — all already "on delete cascade" on their
-  // own user_id column.
+  // Cascades to profiles, favorites, comment_likes, and
+  // request_votes — all already "on delete cascade" on their own
+  // user_id column.
   let deleteResponse;
 
   try {

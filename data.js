@@ -17,9 +17,9 @@
 //
 // Important note: getSearchScore()/advancedSearch() MUST stay
 // synchronous (search has to respond on every keystroke with no
-// network latency) — the likes used for the popularity bonus are
-// therefore cached in memory via primeModelLikes() once per page
-// load, never fetched on the fly.
+// network latency) — the save counts used for the popularity bonus
+// are therefore cached in memory via primeModelSaves() once per
+// page load, never fetched on the fly.
 // =======================================================
 
 // =======================
@@ -463,10 +463,11 @@ function escapeHtml(value) {
 
 // =======================
 // 👍 GENERIC LIKES / VOTES
-// Common engine for: model likes, request votes, comment likes —
-// same table shape every time (item_id, user_id). Synchronous
-// reads from an in-memory cache filled by primeXxx(), direct
-// writes to Supabase.
+// Common engine for: model saves (favorites, doubling as the public
+// popularity signal — see FAVORITES below), request votes, comment
+// likes — same table shape every time (item_id, user_id).
+// Synchronous reads from an in-memory cache filled by primeXxx(),
+// direct writes to Supabase.
 // =======================
 
 const _voteCache = new Map(); // `${table}:${itemId}` -> { count, likedByMe }
@@ -560,24 +561,6 @@ async function _toggleVote(table, idColumn, itemId) {
   return true;
 }
 
-// ---- Model likes -------------------------------------
-
-async function primeModelLikes(modelIds) {
-  return _primeVotes("model_likes", "model_id", modelIds);
-}
-
-function getLikes(modelId) {
-  return _getVoteCount("model_likes", modelId);
-}
-
-function hasUserLikedModel(modelId) {
-  return _hasVoted("model_likes", modelId);
-}
-
-async function toggleModelLike(modelId) {
-  return _toggleVote("model_likes", "model_id", modelId);
-}
-
 // ---- Request votes --------------------------------------
 
 async function primeRequestVotes(requestIds) {
@@ -615,10 +598,21 @@ async function toggleCommentLike(commentId) {
 }
 
 // =======================
-// ❤️ FAVORITES
-// Always for the LOGGED-IN USER — there's no case in this app
-// where we need to read someone else's favorites, hence no public
-// RLS policy on this table (unlike likes).
+// ❤️ FAVORITES (saves)
+// Doubles as what used to be "likes": there's no separate like
+// button anymore, saving a model IS the public popularity signal
+// now (powers "Most popular" and the search ranking bonus), so the
+// table is publicly readable — see supabase_merge_like_into_save.sql.
+//
+// Two different access patterns on the same table, so two caches:
+// - _favoriteIdsCache: "which models has THE CURRENT USER saved" —
+//   discovered without knowing candidate ids upfront, needed to
+//   build the My Favorites page and to render each save button's
+//   initial saved/unsaved state.
+// - _voteCache (generic engine, further up): "how many people in
+//   total saved model X" — a public count, only computed for a
+//   known set of ids (primeModelSaves()).
+// toggleSavedModel() keeps both in sync.
 // =======================
 
 let _favoriteIdsCache = null;
@@ -654,7 +648,10 @@ function getSavedModelIds() {
   return _favoriteIdsCache ? Array.from(_favoriteIdsCache) : [];
 }
 
-// Returns false if no one is logged in (nothing is changed).
+// Returns false if no one is logged in (nothing is changed). Also
+// updates the public-count cache (_voteCache) if it was already
+// primed for this model, so a save count shown elsewhere on the
+// page stays correct without needing a re-prime.
 async function toggleSavedModel(modelId) {
   const userId = getCurrentUserId();
   if (!userId) return false;
@@ -662,6 +659,9 @@ async function toggleSavedModel(modelId) {
   if (!_favoriteIdsCache) {
     await primeFavorites();
   }
+
+  const countKey = _voteCacheKey("favorites", modelId);
+  const countEntry = _voteCache.get(countKey);
 
   if (_favoriteIdsCache.has(modelId)) {
     const { error } = await supabaseClient
@@ -673,6 +673,12 @@ async function toggleSavedModel(modelId) {
     if (error) return false;
 
     _favoriteIdsCache.delete(modelId);
+
+    if (countEntry) {
+      countEntry.likedByMe = false;
+      countEntry.count = Math.max(0, countEntry.count - 1);
+      _voteCache.set(countKey, countEntry);
+    }
   } else {
     const { error } = await supabaseClient
       .from("favorites")
@@ -681,9 +687,59 @@ async function toggleSavedModel(modelId) {
     if (error && error.code !== "23505") return false;
 
     _favoriteIdsCache.add(modelId);
+
+    if (countEntry) {
+      countEntry.likedByMe = true;
+      countEntry.count += 1;
+      _voteCache.set(countKey, countEntry);
+    }
   }
 
   return true;
+}
+
+// ---- Public save count (the old "likes" role) ----------------
+
+async function primeModelSaves(modelIds) {
+  return _primeVotes("favorites", "model_id", modelIds);
+}
+
+function getSaveCount(modelId) {
+  return _getVoteCount("favorites", modelId);
+}
+
+// Small hover-reveal bookmark button, positioned over a card's
+// image corner by style.css (.card-save-btn) — shared by every
+// page that renders model cards (home, explore, profile,
+// favorites). `card` must support .appendChild (plain element or
+// DocumentFragment). `onToggled`, if given, runs after a
+// successful toggle — used by favorites.html to drop the card
+// once it's been un-saved.
+function attachSaveButton(card, modelId, onToggled) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "card-save-btn";
+  button.title = "Save";
+
+  function updateIcon() {
+    const saved = isModelSaved(modelId);
+    button.textContent = saved ? "◆" : "◇";
+    button.classList.toggle("saved", saved);
+  }
+
+  updateIcon();
+
+  button.addEventListener("click", async event => {
+    event.stopPropagation();
+    if (!requireAuth()) return;
+
+    await toggleSavedModel(modelId);
+    updateIcon();
+
+    if (onToggled) onToggled();
+  });
+
+  card.appendChild(button);
 }
 
 // =======================
@@ -1328,9 +1384,9 @@ function getSearchScore(model, query) {
   }
 
   // Popularity bonus — read from the in-memory cache
-  // (primeModelLikes must have been called first, otherwise this
+  // (primeModelSaves must have been called first, otherwise this
   // is just 0 everywhere).
-  score += Math.min(getLikes(model.id), 10);
+  score += Math.min(getSaveCount(model.id), 10);
 
   return score;
 }
