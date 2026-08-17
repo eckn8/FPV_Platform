@@ -234,44 +234,13 @@ nav a:hover {
   max-width: 60ch;
 }
 
-/* ---- Filters ---- */
-.filters {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 24px 8% 10px;
-}
-
-.filters button {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 10px 16px;
-  border: 2px solid var(--line-bright);
-  background: var(--panel-raised);
-  color: var(--cream-dim);
-  cursor: pointer;
-  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
-}
-
-.filters button:hover {
-  border-color: var(--blue-bright);
-  color: var(--cream);
-  background: var(--panel-hover);
-}
-
-/* Sort controls (All / Popular / Recent), sitting above the grid.
-   Same square-pill shape as .filters button, but a distinct
-   active/direction treatment since this is a single-select toggle
-   group rather than a category filter. */
+/* Sort controls (All / Popular / Recent), sitting above the grid,
+   right under the "Popular models" section title. */
 .sort-controls {
   display: flex;
   justify-content: center;
   gap: 8px;
-  margin: 4px 0 0;
+  margin: 20px 0 0;
 }
 
 .sort-btn {
