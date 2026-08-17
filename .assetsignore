@@ -15,6 +15,7 @@ supabase_restriction_reasons.sql
 supabase_restriction_reasons_fix.sql
 supabase_banned_words.sql
 supabase_account_deletion.sql
+supabase_antennas_migration.sql
 .gitignore
 .git
 .claude
