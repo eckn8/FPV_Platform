@@ -224,17 +224,26 @@ nav a:hover {
 }
 
 .stats-section.small .seven-seg .digit {
-  width: 12px;
-  height: 21px;
+  width: 14px;
+  height: 24px;
 }
 
-/* The glow (box-shadow) on lit segments was tuned for the ~15-20px
-   base digit — at this size it overwhelms 2px-thick segments and
-   bleeds across the tiny gaps between them, turning the whole
-   digit into an illegible blur. Toned down rather than removed, to
-   keep some of the "lit" feel without the smear. */
+/* Two things break down at this scale and both get simplified
+   rather than just shrunk further:
+   - The chevron clip-path (pointed ends, meant to look like a real
+     LCD segment) loses its point entirely below ~3px of thickness
+     and instead just smears the edge — replaced with a plain
+     rectangle, which is what most real small LCD segments actually
+     are anyway.
+   - The glow (box-shadow), tuned for the ~15-20px base digit,
+     bleeds straight across 2px-thick segments and their 1px gaps —
+     removed here rather than merely toned down. */
+.stats-section.small .seg {
+  clip-path: none;
+}
+
 .stats-section.small .seg.on {
-  box-shadow: 0 0 1px var(--seg-color);
+  box-shadow: none;
 }
 
 .stats-section.small .seg-a,
@@ -246,7 +255,7 @@ nav a:hover {
 }
 
 .stats-section.small .seg-a { top: 0; }
-.stats-section.small .seg-g { top: 9.5px; }
+.stats-section.small .seg-g { top: 11px; }
 .stats-section.small .seg-d { bottom: 0; }
 
 .stats-section.small .seg-f,
@@ -254,7 +263,7 @@ nav a:hover {
 .stats-section.small .seg-e,
 .stats-section.small .seg-c {
   width: 2px;
-  height: 7.5px;
+  height: 9px;
 }
 
 .stats-section.small .seg-f { left: 0; top: 2px; }
@@ -265,7 +274,7 @@ nav a:hover {
 .stats-section.small .seg-colon,
 .stats-section.small .seg-dot {
   width: 4px;
-  height: 21px;
+  height: 24px;
 }
 
 /* ---- Section titles ---- */
