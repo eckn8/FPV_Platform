@@ -515,6 +515,28 @@ function escapeHtml(value) {
 }
 
 // =======================
+// 🔢 CHARACTER COUNTER
+// Wires a live "x / max" readout under any field that already has a
+// maxlength attribute — the browser enforces the actual limit on
+// its own, this is purely the visual feedback. Shared by every form
+// with free-text fields (publish, edit model, create request,
+// profile bio) instead of rebuilding the same few lines per page.
+// =======================
+
+function attachCharCounter(fieldEl, counterEl) {
+  const max = fieldEl.maxLength;
+
+  function update() {
+    const length = fieldEl.value.length;
+    counterEl.textContent = `${length} / ${max}`;
+    counterEl.classList.toggle("char-count-limit", length >= max);
+  }
+
+  fieldEl.addEventListener("input", update);
+  update();
+}
+
+// =======================
 // 👍 GENERIC LIKES / VOTES
 // Common engine for: model saves (favorites, doubling as the public
 // popularity signal — see FAVORITES below), request votes, comment

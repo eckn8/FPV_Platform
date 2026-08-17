@@ -19,6 +19,11 @@ const requestBreadcrumb = document.getElementById("requestBreadcrumb");
 const requestFoldersGrid = document.getElementById("requestFoldersGrid");
 const selectedRequestPathText = document.getElementById("selectedRequestPathText");
 
+// Purely visual — the real limit is each field's maxlength
+// attribute (see requests.html), already enforced by the browser.
+attachCharCounter(requestTitle, document.getElementById("requestTitleCount"));
+attachCharCounter(requestDescription, document.getElementById("requestDescriptionCount"));
+
 // =======================
 // 📁 CURRENT PATH
 // =======================

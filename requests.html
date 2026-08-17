@@ -54,13 +54,17 @@
         type="text"
         id="requestTitle"
         placeholder="E.g.: GPS mount for Nazgul5"
+        maxlength="100"
       >
+      <span id="requestTitleCount" class="char-count"></span>
 
       <!-- DESCRIPTION -->
       <textarea
         id="requestDescription"
         placeholder="Describe precisely what you're looking for..."
+        maxlength="2000"
       ></textarea>
+      <span id="requestDescriptionCount" class="char-count"></span>
 
       <!-- FOLDERS -->
       <label>

@@ -132,9 +132,15 @@ function setupBioEditing() {
 
   editButton.style.display = "inline-block";
 
+  // Wires the live "typing" counter once — attachCharCounter()
+  // itself never re-fires on a programmatic .value change, so
+  // openEditor() below re-syncs the text by hand right after
+  // resetting the field.
+  attachCharCounter(bioInput, bioCount);
+
   function openEditor() {
     bioInput.value = profile.bio || "";
-    bioCount.textContent = `${bioInput.value.length} / 200`;
+    bioCount.textContent = `${bioInput.value.length} / ${bioInput.maxLength}`;
     editPanel.style.display = "block";
     editButton.style.display = "none";
     bioText.style.display = "none";
@@ -149,10 +155,6 @@ function setupBioEditing() {
 
   editButton.addEventListener("click", openEditor);
   cancelButton.addEventListener("click", closeEditor);
-
-  bioInput.addEventListener("input", () => {
-    bioCount.textContent = `${bioInput.value.length} / 200`;
-  });
 
   saveButton.addEventListener("click", async () => {
     saveButton.disabled = true;

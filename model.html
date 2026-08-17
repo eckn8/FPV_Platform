@@ -105,14 +105,17 @@
   <div id="editForm" class="new-version-form" style="display:none;">
 
     <label for="editTitle"><strong>Model title</strong></label>
-    <input type="text" id="editTitle">
+    <input type="text" id="editTitle" maxlength="100">
+    <span id="editTitleCount" class="char-count"></span>
 
     <label for="editDescription"><strong>Description</strong></label>
-    <textarea id="editDescription"></textarea>
+    <textarea id="editDescription" maxlength="2000"></textarea>
+    <span id="editDescriptionCount" class="char-count"></span>
 
     <label for="editTags"><strong>Tags</strong></label>
     <p class="upload-hint">Separate tags with commas.</p>
-    <input type="text" id="editTags">
+    <input type="text" id="editTags" maxlength="150">
+    <span id="editTagsCount" class="char-count"></span>
 
     <label for="editTested"><strong>Flight tested?</strong></label>
     <select id="editTested">
@@ -122,7 +125,8 @@
     </select>
 
     <label for="editPrintNotes"><strong>Print notes</strong></label>
-    <textarea id="editPrintNotes"></textarea>
+    <textarea id="editPrintNotes" maxlength="1000"></textarea>
+    <span id="editPrintNotesCount" class="char-count"></span>
 
     <label><strong>Folder / category</strong></label>
     <p class="upload-hint">

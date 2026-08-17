@@ -559,6 +559,24 @@ select option {
   color: var(--cream);
 }
 
+/* Live "x / max" readout under a field with a maxlength — wired by
+   attachCharCounter() in data.js. Sits right under the field it
+   describes, so pull it up against the standard 12px input margin
+   rather than stacking a second full gap under it. */
+.char-count {
+  display: block;
+  margin-top: -8px;
+  margin-bottom: 12px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--cream-dim);
+}
+
+.char-count.char-count-limit {
+  color: var(--scarlet);
+}
+
 #uploadButton,
 .user-section button {
   width: 100%;
@@ -1968,15 +1986,6 @@ select option {
 .profile-bio-edit textarea {
   min-height: 70px;
   margin-bottom: 4px;
-}
-
-.profile-bio-count {
-  display: block;
-  margin-bottom: 12px;
-  text-align: right;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--cream-dim);
 }
 
 .profile-stats-row {

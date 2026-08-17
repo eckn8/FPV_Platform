@@ -580,6 +580,17 @@ async function renderModelPage(model) {
   const editImagesInput = document.getElementById("editImagesInput");
   const editMessage = document.getElementById("editMessage");
 
+  // Purely visual — the real limit is each field's maxlength
+  // attribute (see model.html), already enforced by the browser.
+  // Wired once here; the editButton handler below re-syncs the
+  // text by hand each time it fills the fields programmatically
+  // (a .value assignment doesn't fire the "input" event these
+  // listen for).
+  attachCharCounter(editTitle, document.getElementById("editTitleCount"));
+  attachCharCounter(editDescription, document.getElementById("editDescriptionCount"));
+  attachCharCounter(editTags, document.getElementById("editTagsCount"));
+  attachCharCounter(editPrintNotes, document.getElementById("editPrintNotesCount"));
+
   let editPath = [];
 
   // Each entry is { type: "existing", value: url } for images the
@@ -711,6 +722,11 @@ async function renderModelPage(model) {
     editTested.value = model.tested || "Not specified";
     editPrintNotes.value = model.printNotes || "";
     editMessage.textContent = "";
+
+    document.getElementById("editTitleCount").textContent = `${editTitle.value.length} / ${editTitle.maxLength}`;
+    document.getElementById("editDescriptionCount").textContent = `${editDescription.value.length} / ${editDescription.maxLength}`;
+    document.getElementById("editTagsCount").textContent = `${editTags.value.length} / ${editTags.maxLength}`;
+    document.getElementById("editPrintNotesCount").textContent = `${editPrintNotes.value.length} / ${editPrintNotes.maxLength}`;
 
     editPath = [...getModelPath(model)];
     editImages = (model.images && model.images.length > 0 ? model.images : model.image ? [model.image] : [])

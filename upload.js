@@ -49,6 +49,17 @@ const filesPreview =
   document.getElementById("filesPreview");
 
 // =======================
+// 🔢 CHARACTER COUNTERS
+// Purely visual — the real limit is each field's maxlength
+// attribute (see upload.html), already enforced by the browser.
+// =======================
+
+attachCharCounter(document.getElementById("uploadTitle"), document.getElementById("uploadTitleCount"));
+attachCharCounter(document.getElementById("uploadDescription"), document.getElementById("uploadDescriptionCount"));
+attachCharCounter(document.getElementById("uploadTags"), document.getElementById("uploadTagsCount"));
+attachCharCounter(document.getElementById("uploadPrintNotes"), document.getElementById("uploadPrintNotesCount"));
+
+// =======================
 // 🖼 COMPRESSED IMAGES
 // =======================
 
