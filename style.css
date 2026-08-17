@@ -720,20 +720,26 @@ select option {
   width: 100%;
   max-width: 600px;
   padding: 14px 16px;
-  border: 2px solid var(--line-bright);
-  background: var(--panel-raised);
+  border: 2px solid var(--blue-bright);
+  background: rgba(11, 61, 145, 0.12);
   color: var(--cream);
   font-size: 15px;
   margin-bottom: 26px;
+  transition: border-color 0.12s ease, background 0.12s ease;
 }
 
 .folder-search::placeholder {
   color: var(--cream-dim);
 }
 
+.folder-search:hover {
+  background: rgba(11, 61, 145, 0.18);
+}
+
 .folder-search:focus {
   outline: none;
   border-color: var(--scarlet);
+  background: rgba(11, 61, 145, 0.18);
 }
 
 .selected-folder-box {
