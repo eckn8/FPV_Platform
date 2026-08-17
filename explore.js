@@ -210,9 +210,7 @@ function renderModels() {
           📁 ${escapeHtml(getModelPath(model).join(" / "))}
         </p>
 
-        <button class="download-btn">
-          View model
-        </button>
+        ${cardMetaMarkup(model)}
       </div>
     `;
 
@@ -261,6 +259,7 @@ async function init() {
 
   await Promise.all([
     primeModelSaves(models.map(model => model.id)),
+    primeModelDownloads(models.map(model => model.id)),
     primeFavorites()
   ]);
 

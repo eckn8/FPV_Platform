@@ -324,6 +324,37 @@ nav a:hover {
   line-height: 1.45;
 }
 
+/* Bottom row of a model card — replaces the old "View model"
+   button (the whole card is already a click target). Creator name
+   on the left, download count on the right, with a divider above
+   to separate it from the folder path/description. */
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.card-creator {
+  color: var(--cream-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-downloads {
+  color: var(--scarlet);
+  flex-shrink: 0;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;

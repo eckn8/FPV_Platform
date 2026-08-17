@@ -32,6 +32,7 @@ function displayModels(list) {
       }
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
+        ${cardMetaMarkup(model, { showCreator: false })}
       </div>
     `;
 
@@ -109,7 +110,11 @@ async function init() {
   // home page) — each card's save button needs to know up front
   // whether the viewer already saved that model.
   await authReady;
-  await primeFavorites();
+
+  await Promise.all([
+    primeFavorites(),
+    primeModelDownloads(userModels.map(model => model.id))
+  ]);
 
   displayModels(userModels);
 

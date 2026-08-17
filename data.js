@@ -1484,6 +1484,26 @@ function requestIconMarkup() {
   `;
 }
 
+// Small meta row for the bottom of a model card — creator name on
+// the left (skip it where it'd be redundant, e.g. a profile page
+// already scoped to that one creator), download count on the
+// right. Needs primeModelDownloads() to have been called first,
+// same "prime once, read synchronously" pattern as everything else.
+function cardMetaMarkup(model, { showCreator = true } = {}) {
+  const count = getDownloadCount(model.id);
+  const { digits, suffix } = formatCompactValue(count);
+  const label = count === 1 ? "download" : "downloads";
+
+  return `
+    <div class="card-meta">
+      ${showCreator
+        ? `<span class="card-creator">${escapeHtml(model.creator || "User")}</span>`
+        : "<span></span>"}
+      <span class="card-downloads">${digits}${suffix} ${label}</span>
+    </div>
+  `;
+}
+
 // Classic 7-segment encoding (which segments a-g are lit per digit).
 const SEVEN_SEG_MAP = {
   "0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd",

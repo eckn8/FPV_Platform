@@ -127,9 +127,7 @@ function displayModels(list) {
           📁 ${escapeHtml(getModelPath(model).join(" / "))}
         </p>
 
-        <button class="download-btn">
-          View model
-        </button>
+        ${cardMetaMarkup(model)}
 
       </div>
     `;

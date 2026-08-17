@@ -34,6 +34,8 @@ async function displayFavorites() {
     userSavedIds.includes(String(model.id))
   );
 
+  await primeModelDownloads(favoriteModels.map(model => model.id));
+
   grid.innerHTML = "";
 
   if (favoriteModels.length === 0) {
@@ -57,7 +59,7 @@ async function displayFavorites() {
       <div class="model-content">
         <h3>${escapeHtml(model.title)}</h3>
 
-        <button class="download-btn">View model</button>
+        ${cardMetaMarkup(model)}
       </div>
     `;
 
