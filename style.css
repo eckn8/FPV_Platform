@@ -460,9 +460,16 @@ nav a:hover {
    them to fill the space instead. width:92% (rather than the old
    8% side padding) keeps the same side gutter below that width, and
    the max-width takes over once the viewport outgrows it. */
+/* auto-fill, not auto-fit: with only one card, auto-fit collapses
+   the unused column tracks to 0 width and lets that single 1fr
+   stretch to fill the whole row — auto-fill keeps those empty
+   tracks reserved instead, so one card stays card-sized (as if 3
+   more were about to sit next to it) rather than blowing up to full
+   width. Both behave identically once there's enough cards to fill
+   every column, this only changes the sparse case. */
 .models-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
   width: 92%;
   max-width: 1320px;
