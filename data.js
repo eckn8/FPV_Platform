@@ -39,6 +39,12 @@ function _normalizeModelRow(row) {
     printNotes: row.print_notes,
     creatorId: row.creator_id,
     creator: row.creator_username,
+    // Live-joined (not the denormalized creator_username) — null
+    // both for an account that never set an avatar AND for a model
+    // anonymized to "Community" (creator_id is null by then, so the
+    // join simply has nothing to match), which is exactly the
+    // placeholder-avatar case either way.
+    creatorAvatarUrl: row.creator ? row.creator.avatar_url : null,
     requestId: row.request_id,
     archived: row.archived,
     images: row.images || [],
@@ -58,7 +64,7 @@ async function getAllModels() {
 
   const { data, error } = await supabaseClient
     .from("models")
-    .select("*")
+    .select("*, creator:profiles!models_creator_id_fkey(avatar_url)")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -75,7 +81,7 @@ async function getAllModels() {
 async function findModelById(id) {
   const { data, error } = await supabaseClient
     .from("models")
-    .select("*")
+    .select("*, creator:profiles!models_creator_id_fkey(avatar_url)")
     .eq("id", id)
     .maybeSingle();
 
@@ -1629,20 +1635,30 @@ function requestIconMarkup() {
   `;
 }
 
-// Small meta row for the bottom of a model card — creator name on
-// the left (skip it where it'd be redundant, e.g. a profile page
-// already scoped to that one creator), download count on the
+// Small meta row for the bottom of a model card — creator avatar +
+// name on the left (skip it where it'd be redundant, e.g. a profile
+// page already scoped to that one creator), download count on the
 // right. Needs primeModelDownloads() to have been called first,
 // same "prime once, read synchronously" pattern as everything else.
 function cardMetaMarkup(model, { showCreator = true } = {}) {
   const count = getDownloadCount(model.id);
   const { digits, suffix } = formatCompactValue(count);
   const label = count === 1 ? "download" : "downloads";
+  const creatorName = model.creator || "User";
+
+  const avatarMarkup = model.creatorAvatarUrl
+    ? `<img class="card-creator-avatar" src="${model.creatorAvatarUrl}" alt="">`
+    : `<span class="card-creator-avatar card-creator-avatar-placeholder">${escapeHtml(creatorName.charAt(0).toUpperCase())}</span>`;
 
   return `
     <div class="card-meta">
       ${showCreator
-        ? `<span class="card-creator">${escapeHtml(model.creator || "User")}</span>`
+        ? `
+          <span class="card-creator-group">
+            ${avatarMarkup}
+            <span class="card-creator">${escapeHtml(creatorName)}</span>
+          </span>
+        `
         : "<span></span>"}
       <span class="card-downloads" title="${count} ${label}">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

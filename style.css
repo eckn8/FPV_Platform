@@ -364,6 +364,38 @@ nav a:hover {
   text-transform: uppercase;
 }
 
+/* Wraps the avatar + the name badge together so they read as one
+   unit and truncate together on a narrow card. */
+.card-creator-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Sized to match .card-creator's own rendered height (11px mono
+   text + 4px vertical padding + 1px border, both sides) so it sits
+   flush next to the name instead of looking mismatched. */
+.card-creator-avatar {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 1px solid var(--line-bright);
+  display: block;
+}
+
+.card-creator-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  color: var(--cream-dim);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 12px;
+}
+
 .card-creator {
   display: inline-block;
   min-width: 0;
