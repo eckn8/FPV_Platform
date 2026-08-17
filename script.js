@@ -153,14 +153,13 @@ function goToModel(id) {
 // "Trending" blends recency + download count into one score, each
 // normalized to 0-1 first so neither dominates just because of its
 // raw scale (a handful of downloads vs. milliseconds of age). Most
-// Downloaded/Recent sort on a single signal; clicking the same
-// button again flips the direction. Applied inside displayModels()
-// itself, so it composes automatically with an active search — no
-// need to re-sort by hand after every render.
+// Downloaded/Recent sort on a single signal, always highest-first —
+// no direction toggle. Applied inside displayModels() itself, so
+// it composes automatically with an active search — no need to
+// re-sort by hand after every render.
 // =======================
 
 let currentSort = "all"; // "all" | "popular" | "recent"
-let sortDirection = "desc"; // "desc" | "asc" — meaningless for "all"
 
 const sortButtons = {
   all: document.getElementById("sortAllButton"),
@@ -172,25 +171,13 @@ const sortLabels = { all: "Trending", popular: "Most Downloaded", recent: "Recen
 
 function updateSortButtons() {
   Object.entries(sortButtons).forEach(([key, button]) => {
-    const isActive = key === currentSort;
-    button.classList.toggle("active", isActive);
-
-    const arrow = isActive && key !== "all"
-      ? (sortDirection === "asc" ? " ▲" : " ▼")
-      : "";
-
-    button.textContent = sortLabels[key] + arrow;
+    button.classList.toggle("active", key === currentSort);
+    button.textContent = sortLabels[key];
   });
 }
 
 function setSort(sort) {
-  if (sort === currentSort && sort !== "all") {
-    sortDirection = sortDirection === "desc" ? "asc" : "desc";
-  } else {
-    currentSort = sort;
-    sortDirection = "desc";
-  }
-
+  currentSort = sort;
   updateSortButtons();
   displayModels(currentDisplayedModels);
 }
@@ -203,17 +190,15 @@ function sortModels(list) {
   if (list.length === 0) return list;
 
   if (currentSort === "popular") {
-    const sorted = [...list].sort(
+    return [...list].sort(
       (a, b) => getDownloadCount(b.id) - getDownloadCount(a.id)
     );
-    return sortDirection === "asc" ? sorted.reverse() : sorted;
   }
 
   if (currentSort === "recent") {
-    const sorted = [...list].sort(
+    return [...list].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
-    return sortDirection === "asc" ? sorted.reverse() : sorted;
   }
 
   // "all" (Trending) — a simple blended score, not a full "hotness"
