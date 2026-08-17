@@ -148,69 +148,15 @@ nav a:hover {
   color: var(--scarlet);
 }
 
-/* Hamburger toggle — hidden by default (desktop/tablet keep the
-   plain nav row above); only shown and wired up below the mobile
-   breakpoint (see the media query further down). Three hand-drawn
-   bars rather than a "☰" glyph, same reasoning as every other icon
-   in this design system. */
-.nav-toggle {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: 2px solid var(--line-bright);
-  background: transparent;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.nav-toggle span {
-  display: block;
-  width: 18px;
-  height: 2px;
-  background: var(--cream);
-  transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.nav-toggle:hover {
-  border-color: var(--blue-bright);
-}
-
-/* Open state: the three bars redraw into an X. */
-.nav-toggle.open span:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
-}
-
-.nav-toggle.open span:nth-child(2) {
-  opacity: 0;
-}
-
-.nav-toggle.open span:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
-}
-
+/* Below the mobile breakpoint, nav stays fully visible — just
+   pushed onto its own full-width row under the logo (flex-basis:100%
+   forces the line break in the wrapping .header) instead of fighting
+   the logo for space on one line. No collapse/toggle. */
 @media (max-width: 800px) {
-  .nav-toggle {
-    display: flex;
-  }
-
-  /* Collapsed by default; JS (setupMobileNav() in auth.js) toggles
-     .open on both the button and nav together. flex-basis:100%
-     forces nav onto its own full-width row below the logo/toggle
-     line instead of fighting them for space. */
   .header nav {
-    display: none;
     flex-basis: 100%;
     justify-content: flex-start;
     padding-top: 4px;
-  }
-
-  .header nav.open {
-    display: flex;
   }
 }
 

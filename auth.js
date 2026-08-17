@@ -262,31 +262,6 @@ function renderAuthStatus() {
   }
 }
 
-// =======================
-// ☰ MOBILE NAV TOGGLE
-// Below the header's mobile breakpoint (see the media query in
-// style.css), nav starts collapsed — this just flips the .open
-// class that shows it and turns the bars into an X. Doesn't touch
-// auth state, so it runs immediately rather than waiting on
-// authReady. Silently does nothing on a page without this markup
-// (there isn't one, but no reason to assume that stays true).
-// =======================
-
-function setupMobileNav() {
-  const toggle = document.getElementById("navToggle");
-  const nav = document.querySelector(".header nav");
-
-  if (!toggle || !nav) return;
-
-  toggle.addEventListener("click", () => {
-    const isOpen = nav.classList.toggle("open");
-    toggle.classList.toggle("open", isOpen);
-    toggle.setAttribute("aria-expanded", String(isOpen));
-  });
-}
-
-setupMobileNav();
-
 // Kicks off resolving the login state as soon as this file loads,
 // on every page — so no page script needs to think about it.
 initAuth();
