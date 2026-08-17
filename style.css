@@ -2128,6 +2128,18 @@ select option {
   letter-spacing: 0.03em;
 }
 
+/* Centered-and-wrapped reads as a ragged, uneven block once there's
+   only room for one or two words per row (7 links of very different
+   lengths) — a single stacked column scans much more cleanly below
+   that point. */
+@media (max-width: 800px) {
+  .footer-links {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
 /* =======================
    LEGAL / POLICY PAGES
 ======================= */
