@@ -149,14 +149,14 @@ function goToModel(id) {
 }
 
 // =======================
-// ▲ SORT CONTROLS (All / Popular / Recent)
-// "All" blends recency + popularity into one score, each
+// ▲ SORT CONTROLS (Trending / Most Downloaded / Recent)
+// "Trending" blends recency + download count into one score, each
 // normalized to 0-1 first so neither dominates just because of its
-// raw scale (a handful of saves vs. milliseconds of age). Popular/
-// Recent sort on a single signal; clicking the same button again
-// flips the direction. Applied inside displayModels() itself, so
-// it composes automatically with an active search — no need to
-// re-sort by hand after every render.
+// raw scale (a handful of downloads vs. milliseconds of age). Most
+// Downloaded/Recent sort on a single signal; clicking the same
+// button again flips the direction. Applied inside displayModels()
+// itself, so it composes automatically with an active search — no
+// need to re-sort by hand after every render.
 // =======================
 
 let currentSort = "all"; // "all" | "popular" | "recent"
@@ -168,7 +168,7 @@ const sortButtons = {
   recent: document.getElementById("sortRecentButton")
 };
 
-const sortLabels = { all: "All", popular: "Popular", recent: "Recent" };
+const sortLabels = { all: "Trending", popular: "Most Downloaded", recent: "Recent" };
 
 function updateSortButtons() {
   Object.entries(sortButtons).forEach(([key, button]) => {
@@ -204,7 +204,7 @@ function sortModels(list) {
 
   if (currentSort === "popular") {
     const sorted = [...list].sort(
-      (a, b) => getSaveCount(b.id) - getSaveCount(a.id)
+      (a, b) => getDownloadCount(b.id) - getDownloadCount(a.id)
     );
     return sortDirection === "asc" ? sorted.reverse() : sorted;
   }
@@ -216,17 +216,17 @@ function sortModels(list) {
     return sortDirection === "asc" ? sorted.reverse() : sorted;
   }
 
-  // "all" — a simple blended score, not a full "hotness" curve
-  // with time decay: this catalog is small enough that a plain
-  // sum of two normalized signals is plenty.
-  const maxSaves = Math.max(1, ...list.map(model => getSaveCount(model.id)));
+  // "all" (Trending) — a simple blended score, not a full "hotness"
+  // curve with time decay: this catalog is small enough that a
+  // plain sum of two normalized signals is plenty.
+  const maxDownloads = Math.max(1, ...list.map(model => getDownloadCount(model.id)));
 
   const times = list.map(model => new Date(model.createdAt).getTime());
   const oldest = Math.min(...times);
   const span = Math.max(1, Math.max(...times) - oldest);
 
   function score(model) {
-    const popularity = getSaveCount(model.id) / maxSaves;
+    const popularity = getDownloadCount(model.id) / maxDownloads;
     const recency = (new Date(model.createdAt).getTime() - oldest) / span;
     return popularity + recency;
   }
@@ -272,7 +272,7 @@ async function init() {
   models = loadedModels;
 
   await Promise.all([
-    primeModelSaves(models.map(model => model.id)),
+    primeModelDownloads(models.map(model => model.id)),
     primeFavorites()
   ]);
 

@@ -1255,6 +1255,37 @@ async function recordDownload(modelId) {
   }
 }
 
+// ---- Per-model download count (e.g. "Most downloaded" sort) ----
+// Doesn't reuse the generic vote engine (_primeVotes) further up:
+// that one keys on user_id and a per-user "did I vote" boolean,
+// neither of which applies here (downloads are keyed on
+// downloader_key, and there's no "did I download this" state to
+// track) — just a plain count per model.
+const _downloadCountCache = new Map();
+
+async function primeModelDownloads(modelIds) {
+  modelIds.forEach(id => _downloadCountCache.set(id, 0));
+  if (modelIds.length === 0) return;
+
+  const { data, error } = await supabaseClient
+    .from("model_downloads")
+    .select("model_id")
+    .in("model_id", modelIds);
+
+  if (error) {
+    console.error("Error loading download counts:", error.message);
+    return;
+  }
+
+  data.forEach(row => {
+    _downloadCountCache.set(row.model_id, (_downloadCountCache.get(row.model_id) || 0) + 1);
+  });
+}
+
+function getDownloadCount(modelId) {
+  return _downloadCountCache.get(modelId) || 0;
+}
+
 // =======================
 // 📊 PLATFORM STATS (home page)
 // creatorsCount is the number of distinct people who have actually
