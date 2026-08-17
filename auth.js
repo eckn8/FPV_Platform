@@ -244,7 +244,7 @@ function renderAuthStatus() {
 
     const logoutButton = document.createElement("button");
     logoutButton.type = "button";
-    logoutButton.className = "auth-logout-btn";
+    logoutButton.className = "auth-btn";
     logoutButton.textContent = "Log out";
 
     logoutButton.addEventListener("click", async () => {
@@ -256,6 +256,7 @@ function renderAuthStatus() {
   } else {
     const link = document.createElement("a");
     link.href = "login.html";
+    link.className = "auth-btn";
     link.textContent = "Log in";
     container.appendChild(link);
   }
