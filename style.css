@@ -223,12 +223,21 @@ nav a:hover {
   }
 
   /* Slides in from the right edge; links/auth actions stack top to
-     bottom instead of wrapping in a row. */
+     bottom instead of wrapping in a row. Height is set twice on
+     purpose: 100vh first as a fallback, then 100dvh — on a real
+     phone (unlike a resized desktop window) 100vh is measured
+     against the viewport with the browser's address bar hidden, so
+     it overshoots the space actually visible and cuts off whatever
+     sits lowest in the stack (the profile link, being one of the
+     last items) without any obvious way to tell it needs scrolling.
+     100dvh tracks the real visible height instead; overflow-y:auto
+     stays as a safety net regardless. */
   .header nav {
     position: fixed;
     top: 0;
     right: 0;
     height: 100vh;
+    height: 100dvh;
     width: min(78vw, 300px);
     overflow-y: auto;
     flex-direction: column;
@@ -237,7 +246,7 @@ nav a:hover {
     gap: 6px;
     background: var(--panel);
     border-left: 2px solid var(--line);
-    padding: 84px 26px 26px;
+    padding: 76px 26px 26px;
     transform: translateX(100%);
     transition: transform 0.2s ease;
     z-index: 1100;
