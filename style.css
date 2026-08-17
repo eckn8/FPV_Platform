@@ -1,7 +1,7 @@
 /* =======================================================
    FPVBASE — "FLIGHT DECK" DESIGN SYSTEM
-   Mission-placard palette (French Blue / Scarlet Fire / Papaya
-   Whip / Onyx / Lilac), square corners throughout, bold uppercase
+   Mission-placard palette (French Blue / Scarlet Fire / White /
+   Onyx / Lilac), square corners throughout, bold uppercase
    monospace for labels/controls, a two-tier blueprint grid behind
    everything, and real seven-segment digits for numeric readouts.
 ======================================================= */
@@ -13,7 +13,7 @@
   --panel-hover: #2b2b2b;
   --line: #3a3a3a;
   --line-bright: #545454;
-  --cream: #ffecd1;
+  --cream: #ffffff;
   --cream-dim: #a8a8a8;
   --blue: #0b3d91;
   --blue-bright: #1b53b8;
@@ -1781,7 +1781,7 @@ select option {
    a lit one — "128" must never scan as "828" at a glance. */
 .seg {
   position: absolute;
-  background: rgba(255, 236, 209, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .seg.on {
