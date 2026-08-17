@@ -8,13 +8,13 @@
 
 :root {
   --onyx: #0f110c;
-  --panel: #1c1d17;
-  --panel-raised: #232420;
-  --panel-hover: #2a2c25;
-  --line: #38392f;
-  --line-bright: #52533f;
+  --panel: #1c1c1c;
+  --panel-raised: #232323;
+  --panel-hover: #2b2b2b;
+  --line: #3a3a3a;
+  --line-bright: #545454;
   --cream: #ffecd1;
-  --cream-dim: #b8ac95;
+  --cream-dim: #a8a8a8;
   --blue: #0b3d91;
   --blue-bright: #1b53b8;
   --scarlet: #fc3d21;
