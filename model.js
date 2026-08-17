@@ -829,6 +829,13 @@ async function renderModelPage(model) {
   const commentsContainer =
     document.getElementById("comments");
 
+  // Purely visual — the real limit is the field's maxlength
+  // attribute (see model.html), already enforced by the browser.
+  attachCharCounter(
+    document.getElementById("commentInput"),
+    document.getElementById("commentInputCount")
+  );
+
   let showAllComments = false;
 
   await primeCommentLikes(comments.map(comment => comment.id));
@@ -981,6 +988,7 @@ async function renderModelPage(model) {
     comments.push(newComment);
 
     input.value = "";
+    document.getElementById("commentInputCount").textContent = `0 / ${input.maxLength}`;
 
     displayComments();
   };
