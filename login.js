@@ -81,7 +81,7 @@ document.getElementById("loginButton").addEventListener("click", async () => {
   }
 
   if (!turnstileToken) {
-    authMessage.textContent = "Please complete the anti-bot check.";
+    authMessage.textContent = "Still verifying you're not a bot — please wait a moment and try again.";
     return;
   }
 
@@ -133,7 +133,7 @@ document.getElementById("signupButton").addEventListener("click", async () => {
   }
 
   if (!turnstileToken) {
-    authMessage.textContent = "Please complete the anti-bot check.";
+    authMessage.textContent = "Still verifying you're not a bot — please wait a moment and try again.";
     return;
   }
 

@@ -57,13 +57,17 @@
       <!-- ANTI-BOT
            A single widget, shared between both tabs — the token
            obtained is passed to signIn() or signUp() depending on
-           which form is actually submitted. See login.js. -->
+           which form is actually submitted. See login.js.
+           data-appearance="interaction-only": invisible and takes
+           no space unless Cloudflare's risk engine actually needs a
+           manual challenge — the normal case stays a clean form. -->
       <div
         class="cf-turnstile"
         data-sitekey="0x4AAAAAAEQE4H-e_NFD6kSp"
         data-callback="onTurnstileSuccess"
         data-expired-callback="onTurnstileExpired"
         data-error-callback="onTurnstileExpired"
+        data-appearance="interaction-only"
         style="margin: 14px 0;"
       ></div>
 
