@@ -291,11 +291,21 @@ nav a:hover {
 }
 
 /* ---- Model cards ---- */
+/* auto-fit still shrinks down to 3/2/1 columns on narrower screens
+   on its own, same as before — the max-width is what stops it from
+   ever growing past 4: at 1320px, a 5th 260px column plus its gap
+   (1380px) no longer fits, so auto-fit settles on 4 and stretches
+   them to fill the space instead. width:92% (rather than the old
+   8% side padding) keeps the same side gutter below that width, and
+   the max-width takes over once the viewport outgrows it. */
 .models-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
-  padding: 30px 8% 60px;
+  width: 92%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 30px 0 60px;
 }
 
 .model-card {
