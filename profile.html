@@ -21,10 +21,73 @@
   </header>
 
   <main style="padding: 40px 8%;">
-    <h1 id="profileName"></h1>
-    <p id="profileInfo"></p>
 
-    <h2 style="margin-top:40px;">Published models</h2>
+    <!-- =======================
+         PROFILE HEADER
+         Avatar (square, upload-on-click for the owner only),
+         username + follower count + follow button, bio (editable
+         by the owner), models/downloads readout — filled in by
+         profile.js.
+    ======================== -->
+    <section class="profile-header">
+      <div class="profile-avatar-wrap" id="profileAvatarWrap">
+        <img id="profileAvatar" class="profile-avatar" alt="" style="display:none;">
+        <div id="profileAvatarPlaceholder" class="profile-avatar-placeholder"></div>
+
+        <button type="button" id="editAvatarButton" class="profile-avatar-edit" style="display:none;">
+          Change photo
+        </button>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+      </div>
+
+      <div class="profile-header-info">
+        <div class="profile-name-row">
+          <h1 id="profileName"></h1>
+
+          <span class="follower-readout">
+            <span id="followerCount" class="seven-seg blue"></span>
+            <span class="osd">followers</span>
+          </span>
+
+          <button type="button" id="followButton" class="follow-btn" style="display:none;">Follow</button>
+        </div>
+
+        <p id="profileBio" class="profile-bio"></p>
+
+        <div id="profileBioEdit" class="profile-bio-edit" style="display:none;">
+          <textarea id="profileBioInput" maxlength="200" placeholder="Tell other pilots about yourself (200 characters max)."></textarea>
+          <span id="profileBioCount" class="profile-bio-count">0 / 200</span>
+          <div class="form-actions">
+            <button type="button" id="saveBioButton">Save</button>
+            <button type="button" id="cancelBioButton">Cancel</button>
+          </div>
+        </div>
+
+        <button type="button" id="editBioButton" class="profile-edit-bio-btn" style="display:none;">Edit bio</button>
+
+        <div class="profile-stats-row">
+          <div class="profile-stat">
+            <strong id="profileModelsCount" class="seven-seg blue"></strong>
+            <span>models</span>
+          </div>
+          <div class="profile-stat">
+            <strong id="profileDownloadsCount" class="seven-seg blue"></strong>
+            <span>downloads received</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================
+         TABS
+         "Saved" only shown when viewing your own profile — see
+         profile.js.
+    ======================== -->
+    <div class="profile-tabs">
+      <button type="button" id="tabPublicationsButton" class="sort-btn active">Publications</button>
+      <button type="button" id="tabSavedButton" class="sort-btn" style="display:none;">Saved</button>
+    </div>
+
     <div class="models-grid" id="profileModels"></div>
 
     <!-- Only shown when viewing your own profile — see profile.js -->
@@ -90,6 +153,7 @@
   <script src="supabaseClient.js"></script>
   <script src="auth.js"></script>
   <script src="data.js"></script>
+  <script src="storage.js"></script>
   <script src="profile.js"></script>
 </body>
 </html>

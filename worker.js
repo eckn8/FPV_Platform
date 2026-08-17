@@ -189,7 +189,7 @@ async function handleUpload(request, env) {
   }
 
   const file = formData.get("file");
-  const kind = formData.get("kind"); // "image" | "stl"
+  const kind = formData.get("kind"); // "image" | "avatar" | "stl"
   const filenameOverride = formData.get("filename"); // optional
 
   if (!(file instanceof File)) {
@@ -197,7 +197,10 @@ async function handleUpload(request, env) {
   }
 
   // ---- Validation by type ------------------------------------
-  if (kind === "image") {
+  // "avatar" goes through the exact same rules as "image" (same
+  // size cap, same safety check) — it only gets its own R2 prefix
+  // below, so profile photos never mix into the model-image path.
+  if (kind === "image" || kind === "avatar") {
     if (!file.type.startsWith("image/")) {
       return jsonResponse({ error: "The file must be an image." }, 400);
     }

@@ -1805,6 +1805,205 @@ select option {
 }
 
 /* =======================
+   PROFILE HEADER (profile.html)
+======================= */
+
+.profile-header {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  padding-bottom: 32px;
+  border-bottom: 2px solid var(--line);
+}
+
+/* Square, not round — matches the square-corners rule that runs
+   through the whole design system. */
+.profile-avatar-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.profile-avatar,
+.profile-avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border: 2px solid var(--line-bright);
+}
+
+.profile-avatar {
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-raised);
+  font-family: var(--font-mono);
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--cream-dim);
+}
+
+/* Hover-reveal upload control — same interaction as the model card
+   save button (.card-save-btn): invisible until you're looking
+   right at it, only ever shown at all on your own profile. */
+.profile-avatar-edit {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px;
+  background: rgba(15, 17, 12, 0.82);
+  border: 2px solid var(--blue-bright);
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.profile-avatar-wrap:hover .profile-avatar-edit,
+.profile-avatar-wrap:focus-within .profile-avatar-edit {
+  opacity: 1;
+}
+
+.profile-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.profile-name-row h1 {
+  margin: 0;
+}
+
+.follower-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.follower-readout .osd {
+  font-size: 11px;
+  color: var(--cream-dim);
+}
+
+/* "Follow" (neutral blue) / "Following" (lilac, same "already did
+   this" convention as the saved-model glyph and the save readout). */
+.follow-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 9px 16px;
+  border: 2px solid var(--blue-bright);
+  background: transparent;
+  color: var(--cream);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.follow-btn:hover {
+  background: rgba(11, 61, 145, 0.18);
+}
+
+.follow-btn.following {
+  border-color: var(--lilac);
+  color: var(--lilac);
+  background: rgba(194, 151, 184, 0.08);
+}
+
+.follow-btn.following:hover {
+  background: rgba(194, 151, 184, 0.16);
+}
+
+.profile-bio {
+  margin-top: 14px;
+  max-width: 60ch;
+  color: var(--cream-dim);
+}
+
+.profile-edit-bio-btn {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 7px 12px;
+  border: 2px solid var(--line-bright);
+  background: transparent;
+  color: var(--cream-dim);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.profile-edit-bio-btn:hover {
+  border-color: var(--cream);
+  color: var(--cream);
+}
+
+.profile-bio-edit {
+  margin-top: 12px;
+  max-width: 60ch;
+}
+
+.profile-bio-edit textarea {
+  min-height: 70px;
+  margin-bottom: 4px;
+}
+
+.profile-bio-count {
+  display: block;
+  margin-bottom: 12px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--cream-dim);
+}
+
+.profile-stats-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 24px;
+}
+
+.profile-stat span {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+}
+
+.profile-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+/* =======================
    SITE FOOTER
 ======================= */
 

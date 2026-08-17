@@ -449,6 +449,59 @@ function getCurrentUserId() {
 }
 
 // =======================
+// 👤 PUBLIC PROFILES (profile.html)
+// bio/avatar_url already exist on public.profiles (see
+// supabase_setup.sql) — this is just the CRUD for reading someone
+// else's profile and editing your own.
+// =======================
+
+async function getProfileByUsername(username) {
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("id, username, bio, avatar_url, created_at")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error loading profile:", error.message);
+    return null;
+  }
+
+  return data ? {
+    id: data.id,
+    username: data.username,
+    bio: data.bio || "",
+    avatarUrl: data.avatar_url,
+    createdAt: data.created_at
+  } : null;
+}
+
+// The caller must already know this is the current user's own
+// profile — the real protection is the "update" RLS policy
+// (auth.uid() = id), not this client-side check. Only touches the
+// fields it's given (bio and/or avatarUrl), so the two edit flows
+// (bio panel, avatar upload) never clobber each other.
+async function updateMyProfile({ bio, avatarUrl } = {}) {
+  const userId = getCurrentUserId();
+  if (!userId) throw new Error("You must be logged in.");
+
+  const updates = {};
+  if (bio !== undefined) updates.bio = bio;
+  if (avatarUrl !== undefined) updates.avatar_url = avatarUrl;
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .update(updates)
+    .eq("id", userId)
+    .select("username, bio, avatar_url")
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return { username: data.username, bio: data.bio || "", avatarUrl: data.avatar_url };
+}
+
+// =======================
 // 🔒 HTML ESCAPING (anti-XSS)
 // Any data that comes from a user (title, description, tags,
 // comment, folder name, username...) must go through escapeHtml()
@@ -747,6 +800,76 @@ function attachSaveButton(card, modelId, onToggled) {
   });
 
   card.appendChild(button);
+}
+
+// =======================
+// 🧑‍🤝‍🦳 FOLLOWS (profile.html)
+// Unlike favorites/likes/downloads, a page only ever needs this for
+// ONE profile at a time (the one being viewed) — no bulk priming
+// pattern needed here, just two direct reads on load (follower
+// count + "do I already follow them") and a toggle, mirroring
+// _toggleVote()'s shape without reusing it directly (that engine
+// keys everything on a `user_id` column; follows has two different
+// people per row — follower_id and followed_id — so it needs its
+// own small set of functions).
+// =======================
+
+async function getFollowerCount(profileId) {
+  const { count, error } = await supabaseClient
+    .from("follows")
+    .select("follower_id", { count: "exact", head: true })
+    .eq("followed_id", profileId);
+
+  if (error) {
+    console.error("Error loading follower count:", error.message);
+    return 0;
+  }
+
+  return count || 0;
+}
+
+async function isFollowingUser(profileId) {
+  const userId = getCurrentUserId();
+  if (!userId) return false;
+
+  const { data, error } = await supabaseClient
+    .from("follows")
+    .select("follower_id")
+    .eq("follower_id", userId)
+    .eq("followed_id", profileId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error checking follow state:", error.message);
+    return false;
+  }
+
+  return !!data;
+}
+
+// Returns false if no one is logged in (nothing changed) — the
+// caller should go through requireAuth() first (see auth.js).
+async function toggleFollowUser(profileId, currentlyFollowing) {
+  const userId = getCurrentUserId();
+  if (!userId) return false;
+
+  if (currentlyFollowing) {
+    const { error } = await supabaseClient
+      .from("follows")
+      .delete()
+      .eq("follower_id", userId)
+      .eq("followed_id", profileId);
+
+    return !error;
+  }
+
+  const { error } = await supabaseClient
+    .from("follows")
+    .insert({ follower_id: userId, followed_id: profileId });
+
+  // 23505 = already following (fast double-click): not a real
+  // error, the intended state is already reached.
+  return !error || error.code === "23505";
 }
 
 // =======================

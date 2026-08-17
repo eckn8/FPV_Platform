@@ -88,6 +88,38 @@ function compressImage(file, maxWidth, quality, callback) {
   reader.readAsDataURL(file);
 }
 
+// Like compressImage(), but for profile avatars: center-crops the
+// source to a square before scaling it down to `size`x`size`
+// (same idea as CSS "object-fit: cover"), so a non-square photo
+// never gets squashed — avatars are always a real square, not just
+// displayed as one.
+function compressImageSquare(file, size, quality, callback) {
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const img = new Image();
+
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+
+      const side = Math.min(img.width, img.height);
+      const sx = (img.width - side) / 2;
+      const sy = (img.height - side) / 2;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+
+      callback(canvas.toDataURL("image/jpeg", quality));
+    };
+
+    img.src = event.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
 // Converts a base64 data URL (an image already compressed via
 // compressImage() above) into a Blob, so it can be sent as a real
 // file to /api/upload.
