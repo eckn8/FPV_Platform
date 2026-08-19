@@ -856,6 +856,112 @@ function attachSaveButton(card, modelId, onToggled) {
 }
 
 // =======================
+// 💬 CONFIRM / ALERT MODAL
+// Drop-in replacements for window.confirm()/alert() that match the
+// Flight Deck design system instead of looking like a stock browser
+// popup — same corner-bracket .modal-card already used for the
+// report modal. Built once (lazily, on first call) and reused, not
+// hand-placed in every page's HTML. Both are async (a real confirm()
+// blocks the page; a custom one can't, so callers `await` instead).
+// =======================
+
+let _confirmModalEls = null;
+
+function _getConfirmModal() {
+  if (_confirmModalEls) return _confirmModalEls;
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.style.display = "none";
+
+  overlay.innerHTML = `
+    <div class="modal-card confirm-modal-card">
+      <p class="confirm-modal-message"></p>
+      <div class="form-actions">
+        <button type="button" class="confirm-modal-confirm"></button>
+        <button type="button" class="confirm-modal-cancel">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  _confirmModalEls = {
+    overlay,
+    message: overlay.querySelector(".confirm-modal-message"),
+    confirmButton: overlay.querySelector(".confirm-modal-confirm"),
+    cancelButton: overlay.querySelector(".confirm-modal-cancel")
+  };
+
+  return _confirmModalEls;
+}
+
+// Resolves true/false, same meaning as window.confirm()'s return
+// value. `danger: true` renders the confirm button in scarlet
+// instead of the default blue, for anything consequential (e.g.
+// archiving) rather than routine.
+function showConfirm(message, { confirmLabel = "Confirm", danger = false } = {}) {
+  const { overlay, message: messageEl, confirmButton, cancelButton } = _getConfirmModal();
+
+  messageEl.textContent = message;
+  confirmButton.textContent = confirmLabel;
+  confirmButton.className = `confirm-modal-confirm${danger ? " danger" : ""}`;
+  cancelButton.style.display = "";
+
+  overlay.style.display = "flex";
+
+  return new Promise(resolve => {
+    function cleanup(result) {
+      overlay.style.display = "none";
+      confirmButton.removeEventListener("click", onConfirm);
+      cancelButton.removeEventListener("click", onCancel);
+      overlay.removeEventListener("click", onOverlayClick);
+      resolve(result);
+    }
+
+    function onConfirm() { cleanup(true); }
+    function onCancel() { cleanup(false); }
+    function onOverlayClick(event) {
+      if (event.target === overlay) cleanup(false);
+    }
+
+    confirmButton.addEventListener("click", onConfirm);
+    cancelButton.addEventListener("click", onCancel);
+    overlay.addEventListener("click", onOverlayClick);
+  });
+}
+
+// Resolves once acknowledged — same idea as window.alert(), just a
+// single OK button (the cancel button is hidden for this one).
+function showAlert(message) {
+  const { overlay, message: messageEl, confirmButton, cancelButton } = _getConfirmModal();
+
+  messageEl.textContent = message;
+  confirmButton.textContent = "OK";
+  confirmButton.className = "confirm-modal-confirm";
+  cancelButton.style.display = "none";
+
+  overlay.style.display = "flex";
+
+  return new Promise(resolve => {
+    function cleanup() {
+      overlay.style.display = "none";
+      confirmButton.removeEventListener("click", onConfirm);
+      overlay.removeEventListener("click", onOverlayClick);
+      resolve();
+    }
+
+    function onConfirm() { cleanup(); }
+    function onOverlayClick(event) {
+      if (event.target === overlay) cleanup();
+    }
+
+    confirmButton.addEventListener("click", onConfirm);
+    overlay.addEventListener("click", onOverlayClick);
+  });
+}
+
+// =======================
 // 🧑‍🤝‍🦳 FOLLOWS (profile.html)
 // Unlike favorites/likes/downloads, a page only ever needs this for
 // ONE profile at a time (the one being viewed) — no bulk priming

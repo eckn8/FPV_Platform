@@ -372,28 +372,35 @@ async function renderModelPage(model) {
 
   archiveButton.addEventListener("click", async () => {
     if (!isCreator()) {
-      alert("Only the creator can change this model's archive status.");
+      await showAlert("Only the creator can change this model's archive status.");
       return;
     }
 
     const newArchivedState = !model.archived;
 
+    // Archiving actually hides the model everywhere except your own
+    // profile now (see getAllModels()/getModelsByCreatorId() in
+    // data.js) — the old copy said "will remain viewable," which
+    // stopped being true once that changed.
     const confirmMessage = newArchivedState
-      ? "Archive this model? It will no longer be featured, but will remain viewable."
+      ? "Archive this model? It will no longer be visible to others, but you can still find and manage it from your own profile."
       : "Unarchive this model? It will be displayed normally again.";
 
-    const confirmArchive = confirm(confirmMessage);
+    const confirmArchive = await showConfirm(confirmMessage, {
+      confirmLabel: newArchivedState ? "Archive" : "Unarchive",
+      danger: newArchivedState
+    });
 
     if (!confirmArchive) return;
 
     try {
       await setModelArchived(model.id, newArchivedState);
     } catch (error) {
-      alert(error.message || "Update failed. Please try again.");
+      await showAlert(error.message || "Update failed. Please try again.");
       return;
     }
 
-    alert(
+    await showAlert(
       newArchivedState
         ? "Model archived."
         : "Model unarchived."

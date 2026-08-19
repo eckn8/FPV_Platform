@@ -1433,6 +1433,51 @@ select option {
 }
 
 /* =======================
+   CONFIRM / ALERT MODAL
+   In-DA-system replacement for window.confirm()/alert() — same
+   .modal-card corner-bracket panel as the report modal, built once
+   in JS (showConfirm()/showAlert() in data.js) and reused for every
+   call, not hand-placed per page. See .form-actions button above
+   for the shared blue base button style.
+======================= */
+
+.confirm-modal-card {
+  text-align: center;
+}
+
+.confirm-modal-message {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 4px;
+  white-space: pre-line;
+}
+
+.form-actions .confirm-modal-cancel {
+  background: transparent;
+  border-color: var(--line-bright);
+  color: var(--cream-dim);
+}
+
+.form-actions .confirm-modal-cancel:hover {
+  border-color: var(--cream);
+  color: var(--cream);
+}
+
+/* Only set on the confirm button when the action being confirmed
+   reduces visibility/is otherwise consequential (e.g. archiving) —
+   plain confirmations (unarchiving, generic OK) stay the default
+   blue above. */
+.form-actions .confirm-modal-confirm.danger {
+  background: var(--scarlet);
+  border-color: var(--scarlet);
+}
+
+.form-actions .confirm-modal-confirm.danger:hover {
+  background: var(--onyx);
+  color: var(--scarlet);
+}
+
+/* =======================
    COMMENTS - SHOW MORE
 ======================= */
 
