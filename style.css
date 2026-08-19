@@ -1322,6 +1322,7 @@ select option {
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
+  overflow-x: hidden;
   overflow-y: auto;
   background: var(--panel);
   border: 2px solid var(--line);
@@ -1329,6 +1330,12 @@ select option {
   text-align: left;
 }
 
+/* Sit flush with the card's own edges (not -2px past them, as this
+   used to be): a corner bracket bleeding outside the box counts as
+   real overflow content once the card has overflow-y:auto, which
+   was quietly forcing both a vertical AND a horizontal scrollbar
+   to appear — for basically every .modal-card, not just this one —
+   even though there was nothing worth scrolling to. */
 .modal-card::before,
 .modal-card::after {
   content: "";
@@ -1338,15 +1345,15 @@ select option {
 }
 
 .modal-card::before {
-  top: -2px;
-  left: -2px;
+  top: 0;
+  left: 0;
   border-top: 3px solid var(--scarlet);
   border-left: 3px solid var(--scarlet);
 }
 
 .modal-card::after {
-  bottom: -2px;
-  right: -2px;
+  bottom: 0;
+  right: 0;
   border-bottom: 3px solid var(--scarlet);
   border-right: 3px solid var(--scarlet);
 }
