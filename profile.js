@@ -30,12 +30,16 @@ function displayModels(list) {
 
   list.forEach(model => {
     const card = document.createElement("div");
-    card.className = "model-card";
+    // Archived only ever reaches this list on your own profile (see
+    // init()) — styled in scarlet so it stays obviously tellable
+    // apart from your live, publicly-visible models.
+    card.className = model.archived ? "model-card archived" : "model-card";
     card.onclick = () => {
       window.location.href = `model.html?id=${model.id}`;
     };
 
     card.innerHTML = `
+      ${model.archived ? '<span class="archived-badge">Archived</span>' : ""}
       ${
         model.image
           ? `<img class="model-img" src="${model.image}" alt="${escapeHtml(model.title)}">`
@@ -295,8 +299,16 @@ async function init() {
       : "This pilot hasn't written a bio yet."
   );
 
+  // getAllModels() already excludes archived models (needed either
+  // way, for savedModels — someone else's saves can span any
+  // creator). Your own Publications tab needs archived ones too, so
+  // it goes through the dedicated creator query instead of filtering
+  // the already-archived-excluded catalog.
   const models = await getAllModels();
-  userModels = models.filter(model => model.creator === username);
+
+  userModels = currentIsOwner
+    ? await getModelsByCreatorId(profile.id)
+    : models.filter(model => model.creator === username);
 
   await primeFavorites();
 

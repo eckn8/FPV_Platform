@@ -59,12 +59,16 @@ function _normalizeModelRow(row) {
 
 // In-memory cache (see note at the top of the file) — reset on
 // every page load, never stale across two different pages.
+// Archived models are excluded — they're only ever meant to still
+// be reachable by their creator (see getModelsByCreatorId() below),
+// not to keep showing up in the public catalog.
 async function getAllModels() {
   if (_modelsCache) return _modelsCache;
 
   const { data, error } = await supabaseClient
     .from("models")
     .select("*, creator:profiles!models_creator_id_fkey(avatar_url)")
+    .eq("archived", false)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -74,6 +78,27 @@ async function getAllModels() {
 
   _modelsCache = data.map(_normalizeModelRow);
   return _modelsCache;
+}
+
+// Own-profile only: unlike getAllModels(), this INCLUDES archived
+// models — a creator still needs to find and manage their own
+// archived work from their profile's Publications tab (see
+// profile.js, which styles them in scarlet to stay tellable at a
+// glance). Not cached: only ever called once per page, for a single
+// creator, never the whole catalog.
+async function getModelsByCreatorId(creatorId) {
+  const { data, error } = await supabaseClient
+    .from("models")
+    .select("*, creator:profiles!models_creator_id_fkey(avatar_url)")
+    .eq("creator_id", creatorId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading creator's models:", error.message);
+    return [];
+  }
+
+  return data.map(_normalizeModelRow);
 }
 
 // Targeted query (no need to load the whole catalog just to show
