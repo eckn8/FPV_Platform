@@ -21,6 +21,7 @@ supabase_frame_taxonomy_update.sql
 supabase_3dframe_taxonomy_update.sql
 supabase_follows.sql
 supabase_username_case_insensitive.sql
+supabase_banned_words_extend.sql
 .gitignore
 .git
 .claude
