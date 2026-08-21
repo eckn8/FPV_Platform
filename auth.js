@@ -298,6 +298,50 @@ function setupMobileNav() {
 
 setupMobileNav();
 
+// =======================
+// 🌓 THEME TOGGLE
+// Dark by default. The inline snippet at the top of every page's
+// <head> applies a saved "light" choice to <html data-theme> before
+// the stylesheet paints anything (avoids a flash of the wrong
+// theme on load) — this just wires the button and keeps
+// localStorage in sync afterward. Independent of auth state, runs
+// immediately rather than waiting on authReady.
+// =======================
+
+const THEME_STORAGE_KEY = "fpv_theme";
+
+function setupThemeToggle() {
+  const button = document.getElementById("themeToggle");
+  if (!button) return;
+
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  }
+
+  // Reads as the action you'd take, same convention as Log in/Log
+  // out — not the state you're currently in.
+  function updateLabel() {
+    button.textContent = currentTheme() === "light" ? "Dark mode" : "Light mode";
+  }
+
+  updateLabel();
+
+  button.addEventListener("click", () => {
+    const next = currentTheme() === "light" ? "dark" : "light";
+
+    if (next === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+    updateLabel();
+  });
+}
+
+setupThemeToggle();
+
 // Kicks off resolving the login state as soon as this file loads,
 // on every page — so no page script needs to think about it.
 initAuth();

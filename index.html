@@ -3,6 +3,15 @@
 <head>
   <!-- Basic page setup -->
   <meta charset="UTF-8" />
+  <!-- Applies a saved light-mode choice before first paint, so
+       there's no flash of the wrong theme on load. -->
+  <script>
+    (function () {
+      if (localStorage.getItem("fpv_theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Browser tab title -->
@@ -32,6 +41,7 @@
       <a href="requests.html">Requests</a>
       <a href="upload.html">Publish</a>
       <span id="authStatus" class="auth-status"></span>
+      <button type="button" id="themeToggle" class="auth-btn">Light mode</button>
     </nav>
   </header>
 
