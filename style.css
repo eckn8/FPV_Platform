@@ -113,14 +113,20 @@ h3 {
   border-bottom: 2px solid var(--line);
 }
 
+/* Now a real logo image (see logo/FPVBaseLogo.PNG) instead of the
+   placeholder mono text — .logo is just the clickable wrapper,
+   sizing lives on the img itself so its own aspect ratio is
+   preserved regardless of height. */
 .logo {
-  font-family: var(--font-mono);
-  font-size: 40px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  color: var(--blue-bright);
+  display: flex;
+  align-items: center;
   cursor: pointer;
+}
+
+.logo img {
+  display: block;
+  height: 40px;
+  width: auto;
 }
 
 /* nav itself wraps its links (rather than relying on plain inline
@@ -212,10 +218,10 @@ nav a:hover {
 }
 
 @media (max-width: 1000px) {
-  /* Logo goes back to its original, pre-header-redesign size at
-     this width — 40px next to a slide-in drawer felt oversized. */
-  .logo {
-    font-size: 20px;
+  /* Shrinks alongside a slide-in drawer — 40px felt oversized next
+     to it, same reasoning as when this was still text. */
+  .logo img {
+    height: 24px;
   }
 
   .nav-toggle {
