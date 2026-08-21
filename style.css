@@ -2331,7 +2331,7 @@ select option {
 .site-footer {
   margin-top: 60px;
   padding: 30px 8%;
-  border-top: 2px solid var(--line);
+  background: var(--panel);
   text-align: center;
 }
 
