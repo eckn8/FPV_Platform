@@ -110,7 +110,6 @@ h3 {
   min-height: 66px;
   padding: 12px 8%;
   background: var(--panel);
-  border-bottom: 2px solid var(--line);
 }
 
 /* Now a real logo image (see logo/FPVBaseLogo.PNG) instead of the
