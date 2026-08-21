@@ -188,7 +188,11 @@ h3 {
   width: auto;
 }
 
-.logo-light {
+/* .logo img (specificity 0,1,1) would otherwise beat a plain
+   .logo-light (0,1,0) and win the display:block/none conflict —
+   this needs .logo img.logo-light to actually out-rank it and stay
+   hidden by default. */
+.logo img.logo-light {
   display: none;
 }
 
