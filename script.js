@@ -221,23 +221,42 @@ function sortModels(list) {
 // =======================
 // 🔍 SEARCH
 // Below the header's mobile breakpoint (1000px), the "Popular
-// models" header (title/subtitle/sort buttons) hides itself while
-// there's an active search — screen space is tighter there, and the
-// search results matter more than the sort controls at that point.
-// Reappears the moment the search box is cleared, or the viewport
-// widens back past the breakpoint while still searching.
+// models" header (title/subtitle/sort buttons) hides itself the
+// moment you start typing in the search bar — screen space is
+// tighter there, and search results matter more than the sort
+// controls while you're actively typing. It reappears once you stop
+// typing for a beat, NOT tied to clearing the box — every keystroke
+// restarts the idle timer, so it only comes back once you actually
+// pause.
 // =======================
 
-function updatePopularModelsHeaderVisibility() {
+const POPULAR_HEADER_IDLE_DELAY = 900; // ms of no typing before it reappears
+let popularHeaderIdleTimer = null;
+
+function hidePopularModelsHeaderWhileTyping() {
   if (!popularModelsHeader) return;
 
-  const isNarrow = window.matchMedia("(max-width: 1000px)").matches;
-  const isSearching = searchInput.value.trim().length > 0;
+  clearTimeout(popularHeaderIdleTimer);
 
-  popularModelsHeader.style.display = (isNarrow && isSearching) ? "none" : "";
+  if (window.matchMedia("(max-width: 1000px)").matches) {
+    popularModelsHeader.style.display = "none";
+  }
+
+  popularHeaderIdleTimer = setTimeout(() => {
+    popularModelsHeader.style.display = "";
+  }, POPULAR_HEADER_IDLE_DELAY);
 }
 
-window.addEventListener("resize", updatePopularModelsHeaderVisibility);
+// Widening past the breakpoint mid-search should reveal it right
+// away, not wait out the idle timer.
+window.addEventListener("resize", () => {
+  if (!popularModelsHeader) return;
+
+  if (!window.matchMedia("(max-width: 1000px)").matches) {
+    clearTimeout(popularHeaderIdleTimer);
+    popularModelsHeader.style.display = "";
+  }
+});
 
 searchInput.addEventListener("input", async () => {
   const value = searchInput.value.trim();
@@ -245,7 +264,7 @@ searchInput.addEventListener("input", async () => {
   const results = advancedSearch(value, models);
 
   displayModels(results);
-  updatePopularModelsHeaderVisibility();
+  hidePopularModelsHeaderWhileTyping();
 
   await showRequestSuggestion(value, results.length);
 });
