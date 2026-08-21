@@ -60,10 +60,13 @@
    identical in both themes, so buttons/badges/links read as the
    same brand regardless of which theme is active. */
 :root[data-theme="light"] {
-  --onyx: #eef0f3;
+  /* Onyx (page background) noticeably darker than white panels/
+     cards on purpose — the contrast is what makes them read as
+     distinct "raised" surfaces instead of blending into the page. */
+  --onyx: #e2e6ec;
   --panel: #ffffff;
   --panel-raised: #f6f7f9;
-  --panel-hover: #e6e9ed;
+  --panel-hover: #dde1e7;
   --line: #dde1e6;
   --line-bright: #b6bcc5;
   --cream: #14161a;
