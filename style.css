@@ -491,10 +491,18 @@ nav a:hover {
   transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
 }
 
-.model-card:hover {
-  border-color: var(--cream-dim);
-  background: var(--panel-hover);
-  transform: translateY(-2px);
+/* (hover: hover) and (pointer: fine) — real mouse only, not touch:
+   on a phone, an element with :hover styles needs a first tap just
+   to "preview" the hover state and a second one to actually fire
+   the click, since the browser can't otherwise tell a hover from a
+   tap. Gating this on real-hover capability means the first tap on
+   a phone opens the model directly. */
+@media (hover: hover) and (pointer: fine) {
+  .model-card:hover {
+    border-color: var(--cream-dim);
+    background: var(--panel-hover);
+    transform: translateY(-2px);
+  }
 }
 
 .model-card:active {
@@ -1171,15 +1179,29 @@ select option {
   letter-spacing: 0.05em;
 }
 
-/* Not saved, card hovered/focused: reveal the "Save" label. */
-.model-card:hover .card-save-btn:not(.saved),
+/* Not saved, card focused (keyboard, or a tap that lands on the
+   button itself): reveal the "Save" label — works on touch too,
+   unlike the :hover variant below. */
 .model-card:focus-within .card-save-btn:not(.saved) {
   opacity: 1;
 }
 
-.model-card:hover .card-save-btn:not(.saved) .save-label,
 .model-card:focus-within .card-save-btn:not(.saved) .save-label {
   display: inline;
+}
+
+/* Same reveal, mouse-hover only (see the .model-card:hover media
+   query above for why touch is excluded) — a phone would otherwise
+   need a first tap just to reveal Save before a second one could
+   actually press it. */
+@media (hover: hover) and (pointer: fine) {
+  .model-card:hover .card-save-btn:not(.saved) {
+    opacity: 1;
+  }
+
+  .model-card:hover .card-save-btn:not(.saved) .save-label {
+    display: inline;
+  }
 }
 
 /* Saved: glyph only, always visible, Lilac. */
@@ -1193,9 +1215,11 @@ select option {
   display: inline;
 }
 
-.card-save-btn:hover {
-  border-color: var(--lilac);
-  color: var(--lilac);
+@media (hover: hover) and (pointer: fine) {
+  .card-save-btn:hover {
+    border-color: var(--lilac);
+    color: var(--lilac);
+  }
 }
 
 /* Report: stays discreet by default, stands out on hover so it
