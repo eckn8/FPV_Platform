@@ -71,7 +71,15 @@ function resetTurnstile() {
 // 🔓 LOGIN
 // =======================
 
-document.getElementById("loginButton").addEventListener("click", async () => {
+const loginButton = document.getElementById("loginButton");
+
+loginButton.addEventListener("click", async () => {
+  // Anti double-click: without this, a fast double-tap fires
+  // signIn() twice — the second call can come back with a
+  // confusing rate-limit error even though the first one already
+  // worked, overwriting the message the user actually needed to see.
+  if (loginButton.disabled) return;
+
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
 
@@ -85,11 +93,13 @@ document.getElementById("loginButton").addEventListener("click", async () => {
     return;
   }
 
+  loginButton.disabled = true;
   authMessage.textContent = "Logging in...";
 
   const { error } = await signIn({ email, password, captchaToken: turnstileToken });
 
   resetTurnstile();
+  loginButton.disabled = false;
 
   if (error) {
     // The message stays deliberately generic (Supabase never
@@ -117,7 +127,12 @@ document.getElementById("loginButton").addEventListener("click", async () => {
 // 🆕 SIGN UP
 // =======================
 
-document.getElementById("signupButton").addEventListener("click", async () => {
+const signupButton = document.getElementById("signupButton");
+
+signupButton.addEventListener("click", async () => {
+  // Anti double-click — see the identical guard on loginButton above.
+  if (signupButton.disabled) return;
+
   const username = document.getElementById("signupUsername").value.trim();
   const email = document.getElementById("signupEmail").value.trim();
   const password = document.getElementById("signupPassword").value;
@@ -137,6 +152,7 @@ document.getElementById("signupButton").addEventListener("click", async () => {
     return;
   }
 
+  signupButton.disabled = true;
   authMessage.textContent = "Creating account...";
 
   const { error, needsEmailConfirmation } = await signUp({
@@ -147,6 +163,7 @@ document.getElementById("signupButton").addEventListener("click", async () => {
   });
 
   resetTurnstile();
+  signupButton.disabled = false;
 
   if (error) {
     authMessage.textContent = error;

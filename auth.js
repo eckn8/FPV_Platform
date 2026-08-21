@@ -140,6 +140,15 @@ function _translateAuthError(error) {
     return "Missing or expired anti-bot verification, please try again.";
   }
 
+  // Supabase's own email rate limit ("For security purposes, you
+  // can only request this after N seconds") — surfaced as-is by
+  // default, it reads like a dead end instead of what it actually
+  // means: an email was already sent, this is just a cooldown
+  // before another one can go out.
+  if (message.toLowerCase().includes("security purposes") && message.toLowerCase().includes("seconds")) {
+    return "An email was already sent — check your inbox (and spam folder). If you don't see it in a minute, wait a bit before trying again.";
+  }
+
   return message || "Something went wrong.";
 }
 
