@@ -240,6 +240,11 @@ function renderAuthStatus() {
     const link = document.createElement("a");
     link.href = `profile.html?user=${encodeURIComponent(currentUser.username)}`;
     link.textContent = currentUser.username;
+    // Same blue badge used for a creator's name on model cards
+    // (.card-creator) — reused here so "this is a person's identity"
+    // reads the same way everywhere, distinct from the plain nav
+    // links (Home/Explore/...) sitting right next to it.
+    link.className = "auth-username";
     container.appendChild(link);
 
     const logoutButton = document.createElement("button");

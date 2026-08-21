@@ -1918,6 +1918,33 @@ select option {
   vertical-align: middle;
 }
 
+/* Same blue badge as .card-creator on model cards — "this is a
+   person's name" reads the same way everywhere on the site, and it
+   stands out from the plain uppercase nav links (Home/Explore/...)
+   sitting right next to it in the header. */
+.auth-username {
+  display: inline-block;
+  padding: 4px 9px;
+  border: 1px solid var(--blue-bright);
+  background: var(--blue);
+  color: var(--on-dark);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.auth-username:hover {
+  background: var(--blue-bright);
+}
+
 .auth-btn {
   /* text-align:center matters here: a <button> centers its content
      by default, but the "Log in" state is a plain <a> (left-aligned
