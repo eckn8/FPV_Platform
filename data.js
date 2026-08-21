@@ -1575,12 +1575,22 @@ function getDownloadCount(modelId) {
 // count people who signed up but never posted anything as
 // "creators". Small enough scale that deduping the creator ids in
 // JS is simpler than a dedicated SQL view.
+//
+// Both modelsCount and creatorsCount exclude archived models
+// (archived: false) on top of the existing deleted_at check —
+// archived ones aren't actually browsable by anyone but their
+// creator (see getAllModels()), so they shouldn't inflate a count
+// that's presented as "what's on the platform right now". A
+// creator whose only model is archived isn't counted either.
+// downloadsCount stays a straight historical total — a download
+// that already happened doesn't stop being true just because the
+// model was archived afterward.
 // =======================
 
 async function getPlatformStats() {
   const [modelsResult, creatorRowsResult, downloadsResult] = await Promise.all([
-    supabaseClient.from("models").select("id", { count: "exact", head: true }).is("deleted_at", null),
-    supabaseClient.from("models").select("creator_id").is("deleted_at", null),
+    supabaseClient.from("models").select("id", { count: "exact", head: true }).is("deleted_at", null).eq("archived", false),
+    supabaseClient.from("models").select("creator_id").is("deleted_at", null).eq("archived", false),
     supabaseClient.from("model_downloads").select("model_id", { count: "exact", head: true })
   ]);
 
