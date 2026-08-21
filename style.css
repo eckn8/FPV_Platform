@@ -20,6 +20,16 @@
   --scarlet: #fc3d21;
   --lilac: #c297b8;
 
+  /* Scarlet/lilac AS TEXT (not border/background fill) need their
+     own token: both are light/bright enough that white/near-white
+     panels in light mode drop them below readable contrast (scarlet
+     lands around 3.4:1, lilac worse at ~2.4:1 — both fail the 4.5:1
+     text minimum). Identical to --scarlet/--lilac here in dark mode
+     (already high-contrast against near-black), overridden to a
+     darker shade of the same hue in the light theme below. */
+  --scarlet-text: #fc3d21;
+  --lilac-text: #c297b8;
+
   /* Doesn't flip between themes: --blue/--blue-bright stay dark
      enough in both that anything sitting on top of them (button
      text, the save/avatar-edit overlays that are always a fixed
@@ -72,6 +82,14 @@
   --cream: #14161a;
   --cream-dim: #5c6169;
   --seg-ghost: rgba(15, 17, 12, 0.025);
+
+  /* Darker shades of the same scarlet/lilac hue — ~5:1 contrast
+     against white instead of --scarlet/--lilac's own ~3.4:1/~2.4:1.
+     --scarlet/--lilac themselves are untouched (still used for
+     borders and background fills, which don't need text-level
+     contrast and should stay the actual brand color). */
+  --scarlet-text: #c8331c;
+  --lilac-text: #8c4f74;
 }
 
 * {
@@ -205,7 +223,7 @@ nav a {
 }
 
 nav a:hover {
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 /* Hamburger toggle — hidden by default (desktop keeps the plain nav
@@ -422,7 +440,7 @@ nav a:hover {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 /* Smaller variant — same red/bordered look, sitting under the hero
@@ -509,7 +527,7 @@ nav a:hover {
 
 .sort-btn.active {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
   background: rgba(252, 61, 33, 0.08);
 }
 
@@ -590,7 +608,7 @@ nav a:hover {
   padding: 4px 8px;
   border: 1px solid var(--scarlet);
   background: rgba(15, 17, 12, 0.85);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 .model-image {
@@ -790,7 +808,7 @@ nav a:hover {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 /* ---- Publish call-to-action / request suggestion ---- */
@@ -904,7 +922,7 @@ select option {
 }
 
 .char-count.char-count-limit {
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 #uploadButton,
@@ -1124,7 +1142,7 @@ select option {
 }
 
 .active-folder h3 {
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 .current-folder-big {
@@ -1202,7 +1220,7 @@ select option {
 
 #saveButton.saved {
   border-color: var(--lilac);
-  color: var(--lilac);
+  color: var(--lilac-text);
 }
 
 #saveButton.saved:hover {
@@ -1284,7 +1302,7 @@ select option {
 .card-save-btn.saved {
   opacity: 1;
   border-color: var(--lilac);
-  color: var(--lilac);
+  color: var(--lilac-text);
 }
 
 .card-save-btn.saved .save-icon {
@@ -1294,7 +1312,7 @@ select option {
 @media (hover: hover) and (pointer: fine) {
   .card-save-btn:hover {
     border-color: var(--lilac);
-    color: var(--lilac);
+    color: var(--lilac-text);
   }
 }
 
@@ -1302,14 +1320,14 @@ select option {
    doesn't permanently draw the eye next to Like/Save. */
 .report-btn:hover {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 /* Content already reported by the user — same visual logic as
    the hover state, but permanent until it's cancelled. */
 .report-btn.reported {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 /* Content the current viewer has personally reported (see
@@ -1400,12 +1418,12 @@ select option {
 .comment-report-btn:hover,
 .comment-delete-btn:hover {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 .comment-report-btn.reported {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 /* =======================
@@ -1587,7 +1605,7 @@ select option {
 
 .form-actions .confirm-modal-confirm.danger:hover {
   background: var(--onyx);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 /* =======================
@@ -1649,7 +1667,7 @@ select option {
   height: 24px;
   border: 1px solid var(--scarlet);
   background: rgba(15, 17, 12, 0.85);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
   cursor: pointer;
   font-size: 13px;
   line-height: 1;
@@ -1930,7 +1948,7 @@ select option {
 
 .auth-btn:hover {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 /* =======================
@@ -2038,7 +2056,7 @@ select option {
 
 .report-card .remove-content-btn {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
   background: transparent;
 }
 
@@ -2066,7 +2084,7 @@ select option {
 
 .user-restriction-box p {
   flex: 1 1 100%;
-  color: var(--lilac);
+  color: var(--lilac-text);
   margin: 0 0 4px;
 }
 
@@ -2084,7 +2102,7 @@ select option {
 .user-restriction-box .ban-user-btn,
 .user-restriction-box .lift-restriction-btn {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 .user-restriction-box .ban-user-btn:hover,
@@ -2107,7 +2125,7 @@ select option {
 .remove-allowed-phrase-btn {
   background: none;
   border: none;
-  color: var(--scarlet);
+  color: var(--scarlet-text);
   cursor: pointer;
   font-size: 12px;
   padding: 0;
@@ -2136,7 +2154,7 @@ select option {
 }
 
 .mod-panel p {
-  color: var(--lilac);
+  color: var(--lilac-text);
   margin-bottom: 10px;
   font-size: 14px;
 }
@@ -2161,7 +2179,7 @@ select option {
 
 #modRemoveButton {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 #modRemoveButton:hover {
@@ -2189,7 +2207,7 @@ select option {
 }
 
 .danger-zone h2 {
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 .danger-zone h2::after {
@@ -2202,7 +2220,7 @@ select option {
   padding: 12px 16px;
   border: 2px solid var(--scarlet);
   background: transparent;
-  color: var(--scarlet);
+  color: var(--scarlet-text);
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
@@ -2228,7 +2246,7 @@ select option {
 
 .danger-zone #confirmDeleteAccountButton {
   border-color: var(--scarlet);
-  color: var(--scarlet);
+  color: var(--scarlet-text);
   background: transparent;
 }
 
@@ -2359,7 +2377,7 @@ select option {
 
 .follow-btn.following {
   border-color: var(--lilac);
-  color: var(--lilac);
+  color: var(--lilac-text);
   background: rgba(194, 151, 184, 0.08);
 }
 
@@ -2460,7 +2478,7 @@ select option {
 }
 
 .footer-links a:hover {
-  color: var(--scarlet);
+  color: var(--scarlet-text);
 }
 
 .footer-copyright {
@@ -2560,7 +2578,7 @@ select option {
   display: inline-flex;
   gap: 4px;
   align-items: center;
-  --seg-color: var(--scarlet);
+  --seg-color: var(--scarlet-text);
 }
 
 .seven-seg.blue {
@@ -2572,7 +2590,7 @@ select option {
 }
 
 .seven-seg.lilac {
-  --seg-color: var(--lilac);
+  --seg-color: var(--lilac-text);
 }
 
 /* K/M suffix on a large value (see renderCompactSevenSegment() in
