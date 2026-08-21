@@ -125,7 +125,7 @@ h3 {
 
 .logo img {
   display: block;
-  height: 40px;
+  height: 56px;
   width: auto;
 }
 
@@ -218,10 +218,11 @@ nav a:hover {
 }
 
 @media (max-width: 1000px) {
-  /* Shrinks alongside a slide-in drawer — 40px felt oversized next
-     to it, same reasoning as when this was still text. */
+  /* Shrinks alongside a slide-in drawer — the full 56px felt
+     oversized next to it, same reasoning as when this was still
+     text. */
   .logo img {
-    height: 24px;
+    height: 32px;
   }
 
   .nav-toggle {
