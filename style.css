@@ -2465,16 +2465,28 @@ select option {
   margin-bottom: 12px;
 }
 
-.footer-links a {
+/* #themeToggle (a <button>, everything else here is an <a>) reuses
+   this exact look — appearance:none/border:none/background:none
+   strip its native button chrome so it reads as just another plain
+   link in the row instead of standing out as a boxed control. */
+.footer-links a,
+.footer-links button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
   font-family: var(--font-mono);
   color: var(--cream-dim);
   text-decoration: none;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  cursor: pointer;
 }
 
-.footer-links a:hover {
+.footer-links a:hover,
+.footer-links button:hover {
   color: var(--scarlet-text);
 }
 
