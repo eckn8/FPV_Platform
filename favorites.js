@@ -57,7 +57,7 @@ async function displayFavorites() {
           : `<div class="model-image">${droneIconMarkup()}</div>`
       }
       <div class="model-content">
-        <h3>${escapeHtml(model.title)}</h3>
+        <h3><a href="model.html?id=${model.id}">${escapeHtml(model.title)}</a></h3>
 
         ${cardMetaMarkup(model)}
       </div>

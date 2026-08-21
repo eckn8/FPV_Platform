@@ -648,6 +648,14 @@ nav a:hover {
   overflow: hidden;
 }
 
+/* Real <a href> around the title now (search engines only follow
+   actual links, not the card's onclick) — styled to look exactly
+   like plain text, same as before this existed. */
+.model-content h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .model-content p {
   color: var(--cream-dim);
   font-size: 14px;

@@ -204,7 +204,7 @@ function renderModels() {
       }
 
       <div class="model-content">
-        <h3>${escapeHtml(model.title)}</h3>
+        <h3><a href="model.html?id=${model.id}">${escapeHtml(model.title)}</a></h3>
 
         <p class="folder-path">
           📁 ${escapeHtml(getModelPath(model).join(" / "))}
