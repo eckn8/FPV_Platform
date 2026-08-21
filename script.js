@@ -14,6 +14,7 @@ let currentDisplayedModels = [];
 const grid = document.getElementById("modelsGrid");
 
 const searchInput = document.getElementById("searchInput");
+const popularModelsHeader = document.getElementById("popularModelsHeader");
 
 // =======================
 // 🔍 REQUEST SUGGESTION
@@ -219,7 +220,24 @@ function sortModels(list) {
 
 // =======================
 // 🔍 SEARCH
+// Below the header's mobile breakpoint (1000px), the "Popular
+// models" header (title/subtitle/sort buttons) hides itself while
+// there's an active search — screen space is tighter there, and the
+// search results matter more than the sort controls at that point.
+// Reappears the moment the search box is cleared, or the viewport
+// widens back past the breakpoint while still searching.
 // =======================
+
+function updatePopularModelsHeaderVisibility() {
+  if (!popularModelsHeader) return;
+
+  const isNarrow = window.matchMedia("(max-width: 1000px)").matches;
+  const isSearching = searchInput.value.trim().length > 0;
+
+  popularModelsHeader.style.display = (isNarrow && isSearching) ? "none" : "";
+}
+
+window.addEventListener("resize", updatePopularModelsHeaderVisibility);
 
 searchInput.addEventListener("input", async () => {
   const value = searchInput.value.trim();
@@ -227,6 +245,7 @@ searchInput.addEventListener("input", async () => {
   const results = advancedSearch(value, models);
 
   displayModels(results);
+  updatePopularModelsHeaderVisibility();
 
   await showRequestSuggestion(value, results.length);
 });
