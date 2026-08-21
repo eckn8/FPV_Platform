@@ -230,7 +230,7 @@ function sortModels(list) {
 // pause.
 // =======================
 
-const POPULAR_HEADER_IDLE_DELAY = 900; // ms of no typing before it reappears
+const POPULAR_HEADER_IDLE_DELAY = 2000; // ms of no typing before it reappears
 let popularHeaderIdleTimer = null;
 
 function hidePopularModelsHeaderWhileTyping() {
