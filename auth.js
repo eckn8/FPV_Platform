@@ -318,13 +318,17 @@ function setupThemeToggle() {
     return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
   }
 
-  // Reads as the action you'd take, same convention as Log in/Log
-  // out — not the state you're currently in.
-  function updateLabel() {
-    button.textContent = currentTheme() === "light" ? "Dark mode" : "Light mode";
+  // The icon that's "lit" is pure CSS (:root[data-theme] in
+  // style.css) — this only needs to keep aria-label describing the
+  // action you'd take, same convention as Log in/Log out.
+  function updateAriaLabel() {
+    button.setAttribute(
+      "aria-label",
+      currentTheme() === "light" ? "Switch to dark theme" : "Switch to light theme"
+    );
   }
 
-  updateLabel();
+  updateAriaLabel();
 
   button.addEventListener("click", () => {
     const next = currentTheme() === "light" ? "dark" : "light";
@@ -336,7 +340,7 @@ function setupThemeToggle() {
     }
 
     localStorage.setItem(THEME_STORAGE_KEY, next);
-    updateLabel();
+    updateAriaLabel();
   });
 }
 

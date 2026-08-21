@@ -2465,28 +2465,65 @@ select option {
   margin-bottom: 12px;
 }
 
-/* #themeToggle (a <button>, everything else here is an <a>) reuses
-   this exact look — appearance:none/border:none/background:none
-   strip its native button chrome so it reads as just another plain
-   link in the row instead of standing out as a boxed control. */
-.footer-links a,
-.footer-links button {
-  appearance: none;
-  -webkit-appearance: none;
-  border: none;
-  background: none;
-  padding: 0;
+.footer-links a {
   font-family: var(--font-mono);
   color: var(--cream-dim);
   text-decoration: none;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.footer-links a:hover {
+  color: var(--scarlet-text);
+}
+
+/* Theme switch — deliberately boxed like the site's other buttons
+   (border, not plain text) so it reads as a real control sitting
+   among the footer's plain links, not one more of them. Both icons
+   stay in the DOM at all times; :root[data-theme] decides which one
+   is "lit" via CSS alone, no JS class-toggling needed for the
+   visual state (setupThemeToggle() in auth.js only flips the
+   attribute + localStorage). */
+#themeToggle {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line-bright);
+  background: transparent;
+  padding: 4px;
   cursor: pointer;
 }
 
-.footer-links a:hover,
-.footer-links button:hover {
+#themeToggle:hover {
+  border-color: var(--blue-bright);
+}
+
+.theme-switch-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 20px;
+  color: var(--cream-dim);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* Dark theme (default): moon lit. */
+.theme-switch-moon {
+  background: var(--panel-hover);
+  color: var(--blue-bright);
+}
+
+:root[data-theme="light"] .theme-switch-moon {
+  background: none;
+  color: var(--cream-dim);
+}
+
+:root[data-theme="light"] .theme-switch-sun {
+  background: var(--panel-hover);
   color: var(--scarlet-text);
 }
 
