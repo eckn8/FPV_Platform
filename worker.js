@@ -566,11 +566,11 @@ const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v9): added 29 specific-frame-model keywords, each
-// individually verified against the real API first — bumping forces
-// a fresh fetch instead of serving the smaller old result set for up
-// to an hour. Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v9";
+// Versioned (v10): filter extended (esp32/zerobot/boats/tabletop —
+// see EXCLUDED_TERMS_REGEX) — bumping forces a fresh, re-filtered
+// fetch instead of serving the old result set for up to an hour.
+// Bump again any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v10";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -598,7 +598,15 @@ const EXCLUDED_TERMS_REGEX = new RegExp(
     "foam(?:board)? plane", "airplane", "aeroplane", "\\baircraft",
     "fighter jet", "jet fighter",
     // Not a flying FPV drone at all — a different RC hobby entirely.
-    "\\bairsoft", "\\bturret", "\\brifle",
+    "\\bairsoft", "\\bturret", "\\brifle", "\\bboat\\b", "zerobot",
+    // Not FPV drone content at all — generic maker/tabletop-gaming
+    // fare that a broad keyword's fuzzy match occasionally pulls in
+    // (real example: a tabletop terrain piece, from "fpv drone").
+    "table\\s?top",
+    // ESP32-based builds are a DIY microcontroller hobby project, not
+    // an actual FPV racing/freestyle drone — excluded per feedback
+    // even though a couple are genuinely quadcopter-shaped.
+    "esp32",
     // War/military — keep this strictly a hobby platform.
     "ukrain", "russia", "military", "\\bwar\\b", "kamikaze", "combat",
     "grenade", "munition", "\\bweapon", "warhead", "\\bbomb\\b",
@@ -857,7 +865,7 @@ async function handleExternalModelDetail(slug, env, ctx) {
   // v2: now filtered (see isExcludedCultsItem) — a slug cached under
   // the old, unfiltered key before this change would otherwise keep
   // serving for up to an hour.
-  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v3-${encodeURIComponent(slug)}`);
+  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v4-${encodeURIComponent(slug)}`);
 
   const cached = await cache.match(cacheKey);
   if (cached) return noBrowserCache(cached);
@@ -953,7 +961,7 @@ async function handleExternalSearch(rawQuery, env, ctx) {
 
   const cache = caches.default;
   const cacheKey = new Request(
-    `https://fpv-base.com/__cache/external-search-v2-${encodeURIComponent(searchTerm.toLowerCase())}`
+    `https://fpv-base.com/__cache/external-search-v3-${encodeURIComponent(searchTerm.toLowerCase())}`
   );
 
   const cached = await cache.match(cacheKey);
