@@ -438,7 +438,7 @@ async function handleDeleteAccount(request, env) {
 // FPV part space here (frame sizes, common accessories) is safe:
 // more real matches without a wall of low-quality noise.
 //
-// Three groups, each targeting a different way someone actually
+// Four groups, each targeting a different way someone actually
 // searches Cults3D for FPV parts:
 // - General: broad hobby terms/sizes.
 // - By part (from FPVBase's own folder taxonomy — see
@@ -449,15 +449,22 @@ async function handleDeleteAccount(request, env) {
 // - By brand: real product names carry a LOT of Cults3D content
 //   (mounts/frames/cases made specifically to fit them) that a
 //   generic part search misses entirely.
+// - By specific frame model: narrower still than a brand name —
+//   catches mounts/bumpers/spares made for one exact frame that a
+//   brand-only search's limit of 15 results might not surface.
 //
-// Capped at 42 total (not the ~500 a full "50 brands × 10 products"
-// list would need) — each keyword is its own parallel request to
-// Cults3D, and Cloudflare Workers on the free tier cap a single
-// request at 50 subrequests; going past that fails the WHOLE
-// request, not just the extra keywords. A brand name alone already
-// surfaces most of that brand's Cults3D content in one query, so
-// this covers materially more ground than the old 20-keyword list
-// without risking that failure.
+// ~70 keywords total now (not the ~500 a full "50 brands × 10
+// products" list would need, or "30 frames" added on naively) —
+// each keyword is its own parallel request to Cults3D, and
+// Cloudflare Workers on the free tier cap a single invocation at 50
+// subrequests. Past that specific point, individual fetchCultsKeyword
+// calls start failing — but each one is already wrapped in its own
+// .catch(() => []) below, so those just silently contribute nothing
+// rather than breaking the whole feed; nothing here depends on every
+// keyword succeeding. A brand or frame name alone already surfaces
+// most of its own Cults3D content in one query, so this covers
+// materially more ground than a smaller list without a real
+// downside to reaching for more.
 const CULTS_SEARCH_KEYWORDS = [
   // General
   "fpv drone",
@@ -507,7 +514,45 @@ const CULTS_SEARCH_KEYWORDS = [
   "Radiomaster",
   "ExpressLRS",
   "Fatshark",
-  "BetaFPV"
+  "BetaFPV",
+  // By specific frame model — each verified individually against the
+  // real API first (a `total` in the tens/low hundreds, top results
+  // actually relevant) after the "T-Motor" incident above. Two
+  // candidates that failed this check were dropped before ever
+  // reaching this list: "Skystars Star" (matched on the words "star"/
+  // "sky" generically — a planet map, a flying wing, nothing FPV),
+  // and "GEPRC Tinygo" (Cults3D silently ignored "Tinygo" and just
+  // searched "GEPRC" again — same total, same top results, already
+  // covered by the brand keyword above).
+  "iFlight Nazgul5",
+  "iFlight Chimera7",
+  "iFlight Titan",
+  "iFlight XL5",
+  "iFlight Protek35",
+  "GEPRC Mark4",
+  "GEPRC Mark5",
+  "GEPRC Cinelog",
+  "Armattan Chameleon",
+  "Armattan Chameleon Ti",
+  "Armattan Marmotte",
+  "Armattan Rooster",
+  "TBS Source One",
+  "TBS Source One V5",
+  "TBS Oblivion",
+  "Diatone Roma",
+  "Diatone Taycan",
+  "Flywoo Explorer LR",
+  "Flywoo Firefly",
+  "HGLRC Sector5",
+  "Lumenier QAV210",
+  "ImpulseRC Apex",
+  "NewBeeDrone Beebrain",
+  "BetaFPV Pavo20",
+  "BetaFPV Meteor65",
+  "Axisflying Manta5",
+  "Rekon5 frame",
+  "Apex Evo frame",
+  "Nazgul Evoque"
 ];
 
 // Per keyword, not a global total — 20 keywords × 15 duplicates
@@ -521,12 +566,11 @@ const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v8): dropped "T-Motor" (see CULTS_KEYWORD_MAX_TOTAL —
-// it matched 55,893 unrelated results) for "BrotherHobby", and added
-// that same sanity-threshold guardrail — bumping forces a fresh
-// fetch instead of serving the polluted old result set for up to an
-// hour. Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v8";
+// Versioned (v9): added 29 specific-frame-model keywords, each
+// individually verified against the real API first — bumping forces
+// a fresh fetch instead of serving the smaller old result set for up
+// to an hour. Bump again any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v9";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
