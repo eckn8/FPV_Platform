@@ -539,12 +539,16 @@ const CULTS_KEYWORD_BATCH_SIZE = 10;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v12): keyword count actually cut back to 46 (see
-// CULTS_SEARCH_KEYWORDS) after v11's batching alone turned out not
-// to fix "Too many subrequests" — bumping forces a fresh fetch
-// instead of continuing to serve the empty catalog v11 cached for up
-// to an hour. Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v12";
+// Versioned (v13): the actual root cause behind "Too many
+// subrequests" turned out to be a non-ok Cults3D response never
+// having its body read (fetchCultsKeyword and friends now always
+// drain it, ok or not) — Cloudflare's own deadlock prevention starts
+// canceling OTHER in-flight requests once too many unread bodies
+// pile up, which is what was really emptying the catalog, not the
+// keyword count on its own. Bumping forces a fresh fetch instead of
+// continuing to serve the empty catalog v12 cached for up to an
+// hour. Bump again any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v13";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -708,7 +712,16 @@ async function fetchCultsKeyword(keyword, env) {
     body: JSON.stringify({ query })
   });
 
-  if (!response.ok) return [];
+  // Always drain the body, even on failure — an unread Response
+  // left dangling (real culprit behind a live "Too many subrequests"
+  // failure: Cloudflare's own deadlock-prevention starts canceling
+  // OTHER in-flight requests once too many unread bodies pile up,
+  // which is what actually emptied the catalog, not the keyword
+  // count itself) rather than just letting the request count grow.
+  if (!response.ok) {
+    await response.text().catch(() => {});
+    return [];
+  }
 
   const body = await response.json();
   const batch = body.data && body.data.creationsSearchBatch;
@@ -843,7 +856,12 @@ async function fetchCultsCreationDetail(slug, env) {
     body: JSON.stringify({ query })
   });
 
-  if (!response.ok) return null;
+  // See the matching comment in fetchCultsKeyword — always drain the
+  // body, even on failure.
+  if (!response.ok) {
+    await response.text().catch(() => {});
+    return null;
+  }
 
   const body = await response.json();
   return (body.data && body.data.creation) || null;
@@ -861,7 +879,7 @@ async function handleExternalModelDetail(slug, env, ctx) {
   // Cloudflare's concurrent-subrequest limit (see EXTERNAL_MODELS_
   // CACHE_KEY) — unrelated code, but real Cults3D items got cached
   // as "not found" during that window.
-  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v5-${encodeURIComponent(slug)}`);
+  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v6-${encodeURIComponent(slug)}`);
 
   const cached = await cache.match(cacheKey);
   if (cached) return noBrowserCache(cached);
@@ -936,7 +954,12 @@ async function fetchCultsSearchQuery(searchTerm, env) {
     body: JSON.stringify({ query })
   });
 
-  if (!response.ok) return [];
+  // See the matching comment in fetchCultsKeyword — always drain the
+  // body, even on failure.
+  if (!response.ok) {
+    await response.text().catch(() => {});
+    return [];
+  }
 
   const body = await response.json();
   const results = body.data && body.data.creationsSearchBatch && body.data.creationsSearchBatch.results;
