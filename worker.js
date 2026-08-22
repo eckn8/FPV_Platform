@@ -461,11 +461,10 @@ const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v4): fewer fields per item now (description/tags/full
-// image list moved to the on-demand detail endpoint below) — bumping
-// forces a fresh, leaner entry instead of serving the old shape.
-// Bump again any time the shape changes.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v4";
+// Versioned (v5): now filtered (see isExcludedCultsItem) — bumping
+// forces a fresh, filtered entry instead of serving an unfiltered
+// one for up to an hour. Bump again any time the filter changes.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v5";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -473,11 +472,40 @@ const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-
 // expects only images.
 const IMAGE_URL_REGEX = /\.(png|jpe?g|gif|webp)$/i;
 
+// FPVBase is a hobby FPV multirotor platform — broad keywords like
+// "fpv drone" also pull in fixed-wing RC planes/gliders (a different
+// hobby entirely) and, since "FPV" is now widely used for
+// war-context loitering munitions, the occasional combat-drone
+// design (real example hit during testing: an otherwise-normal-
+// looking frame tagged "kamikaze"). Checked against title + tags +
+// (when available, on the detail endpoint) description — keeps the
+// discovery feed to what it's actually for: hobby FPV drone parts,
+// unrelated to any conflict.
+const EXCLUDED_TERMS_REGEX = new RegExp(
+  [
+    // Fixed-wing / RC plane — not a multirotor FPV drone.
+    "flying wing", "fixed[- ]wing", "delta wing", "r\\/?c plane",
+    "r\\/?c airplane", "glider", "warbird", "biplane", "sailplane",
+    "foam(?:board)? plane", "airplane", "aeroplane",
+    // War/military — keep this strictly a hobby platform.
+    "ukrain", "russia", "military", "\\bwar\\b", "kamikaze", "combat",
+    "grenade", "munition", "\\bweapon", "warhead", "\\bbomb\\b",
+    "explosive", "\\bied\\b", "artillery"
+  ].join("|"),
+  "i"
+);
+
+function isExcludedCultsItem(item) {
+  const haystack = `${item.name || ""} ${(item.tags || []).join(" ")} ${item.description || ""}`;
+  return EXCLUDED_TERMS_REGEX.test(haystack);
+}
+
 // Shared by the list (lean fields only, see fetchCultsKeyword) and
 // the single-item detail fetch (full fields, see
-// fetchCultsCreationDetail) — a list item run through this just
-// ends up with empty description/tags/images, which is exactly what
-// the home page's cards need anyway.
+// fetchCultsCreationDetail) — a list item run through this just ends
+// up with empty description/images (tags still come through, needed
+// for isExcludedCultsItem), which is exactly what the home page's
+// cards need anyway.
 function normalizeCultsItem(item) {
   const images = (item.illustrations || [])
     .map(illustration => illustration.imageUrl)
@@ -506,12 +534,15 @@ async function fetchCultsKeyword(keyword, env) {
   const auth = btoa(`${env.CULTS_USERNAME}:${env.CULTS_API_KEY}`);
 
   // Lean on purpose — this feeds the home page's cards only, which
-  // never show description/tags/the full image gallery. Those live
+  // never show description/the full image gallery (those live
   // behind /api/external-model instead, fetched once per detail-page
   // view rather than bloating every home page load with hundreds of
-  // descriptions nobody's reading yet. BY_LIKES/DESC: these keywords
-  // are broad enough to return thousands of matches, sorting by
-  // likes keeps what actually gets fetched relevant.
+  // descriptions nobody's reading yet). `tags` is the exception: it's
+  // small, and isExcludedCultsItem() needs it to filter out fixed-
+  // wing/war-related results before anything gets cached or shown.
+  // BY_LIKES/DESC: these keywords are broad enough to return
+  // thousands of matches, sorting by likes keeps what actually gets
+  // fetched relevant.
   const query = `{
     creationsSearchBatch(
       query: ${JSON.stringify(keyword)}
@@ -525,6 +556,7 @@ async function fetchCultsKeyword(keyword, env) {
         name
         url
         illustrationImageUrl
+        tags
         likesCount
         downloadsCount
         publishedAt
@@ -575,6 +607,7 @@ async function handleExternalModels(env, ctx) {
 
     perKeyword.flat().forEach(item => {
       if (!item || !item.identifier || seen.has(item.identifier)) return;
+      if (isExcludedCultsItem(item)) return;
       seen.add(item.identifier);
 
       normalized.push(normalizeCultsItem(item));
@@ -643,7 +676,10 @@ async function handleExternalModelDetail(slug, env, ctx) {
   if (!slug) return jsonResponse(null, 400);
 
   const cache = caches.default;
-  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-${encodeURIComponent(slug)}`);
+  // v2: now filtered (see isExcludedCultsItem) — a slug cached under
+  // the old, unfiltered key before this change would otherwise keep
+  // serving for up to an hour.
+  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v2-${encodeURIComponent(slug)}`);
 
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
@@ -656,7 +692,10 @@ async function handleExternalModelDetail(slug, env, ctx) {
 
   try {
     const item = await fetchCultsCreationDetail(slug, env);
-    normalized = item ? normalizeCultsItem(item) : null;
+    // A direct/stale link to something the list filter would have
+    // excluded (see isExcludedCultsItem) — treated as "not found"
+    // rather than exposing it through a slug someone already had.
+    normalized = item && !isExcludedCultsItem(item) ? normalizeCultsItem(item) : null;
   } catch {
     normalized = null;
   }
