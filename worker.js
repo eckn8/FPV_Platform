@@ -545,10 +545,14 @@ const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
 // drain it, ok or not) — Cloudflare's own deadlock prevention starts
 // canceling OTHER in-flight requests once too many unread bodies
 // pile up, which is what was really emptying the catalog, not the
-// keyword count on its own. Bumping forces a fresh fetch instead of
-// continuing to serve the empty catalog v12 cached for up to an
-// hour. Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v13";
+// keyword count on its own. A second bug compounded it: a failed
+// attempt got cached the same as a real result, so the FIRST failure
+// on a fresh key kept replaying for the rest of the hour even after
+// deploying the real fix — handleExternalModels only caches now on
+// genuine success (see `succeeded`). Bumping once more clears out
+// whatever bad empty result is sitting under v13 from before that
+// second fix. Bump again any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v14";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -769,17 +773,21 @@ async function handleExternalModels(env, ctx) {
   }
 
   let normalized = [];
+  // Distinguishes "genuinely searched, found nothing" from "the
+  // whole attempt blew up" — only the former is worth caching for an
+  // hour. Caching a failure indiscriminately was its own real bug
+  // here: the very first attempt at a fresh cache key could fail for
+  // an unrelated reason (a transient Cults3D hiccup, the deadlock-
+  // prevention issue fixed above, anything), and every request for
+  // the next hour would then keep replaying that one bad empty
+  // result instead of ever getting another chance to succeed.
+  let succeeded = false;
 
   try {
-    // Batched, not one giant Promise.all over every keyword. The
-    // real fix for "Too many subrequests" (see CULTS_SEARCH_KEYWORDS
-    // above) was cutting the keyword list back under Cloudflare's
-    // actual per-invocation ceiling — that error message names it as
-    // a cumulative total, not a concurrency limit, and batching alone
-    // doesn't reduce a total. Kept anyway as a second line of
-    // defense (staggering requests can't hurt, and protects against
-    // this list growing again later without someone re-deriving the
-    // hard limit the hard way).
+    // Batched, not one giant Promise.all over every keyword — a
+    // second line of defense alongside always draining failed
+    // responses above (the actual fix for the cascading cancellation
+    // that was emptying this list); staggering requests can't hurt.
     const perKeyword = [];
 
     for (let i = 0; i < CULTS_SEARCH_KEYWORDS.length; i += CULTS_KEYWORD_BATCH_SIZE) {
@@ -801,14 +809,19 @@ async function handleExternalModels(env, ctx) {
 
       normalized.push(normalizeCultsItem(item));
     });
+
+    succeeded = true;
   } catch {
     normalized = [];
+    succeeded = false;
   }
 
   const response = jsonResponse(normalized, 200);
   response.headers.set("Cache-Control", `public, max-age=${EXTERNAL_MODELS_CACHE_SECONDS}`);
 
-  ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  if (succeeded) {
+    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  }
 
   return noBrowserCache(response);
 }
@@ -879,7 +892,7 @@ async function handleExternalModelDetail(slug, env, ctx) {
   // Cloudflare's concurrent-subrequest limit (see EXTERNAL_MODELS_
   // CACHE_KEY) — unrelated code, but real Cults3D items got cached
   // as "not found" during that window.
-  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v6-${encodeURIComponent(slug)}`);
+  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v7-${encodeURIComponent(slug)}`);
 
   const cached = await cache.match(cacheKey);
   if (cached) return noBrowserCache(cached);
@@ -889,6 +902,12 @@ async function handleExternalModelDetail(slug, env, ctx) {
   }
 
   let normalized = null;
+  // Same reasoning as handleExternalModels above: `normalized` being
+  // null is a legitimate, cacheable outcome (genuinely not found, or
+  // genuinely excluded by the filter) — only skip caching when the
+  // fetch itself blew up, not when it succeeded and simply found
+  // nothing.
+  let succeeded = false;
 
   try {
     const item = await fetchCultsCreationDetail(slug, env);
@@ -896,14 +915,18 @@ async function handleExternalModelDetail(slug, env, ctx) {
     // excluded (see isExcludedCultsItem) — treated as "not found"
     // rather than exposing it through a slug someone already had.
     normalized = item && !isExcludedCultsItem(item) ? normalizeCultsItem(item) : null;
+    succeeded = true;
   } catch {
     normalized = null;
+    succeeded = false;
   }
 
   const response = jsonResponse(normalized, 200);
   response.headers.set("Cache-Control", `public, max-age=${EXTERNAL_MODEL_DETAIL_CACHE_SECONDS}`);
 
-  ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  if (succeeded) {
+    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  }
 
   return noBrowserCache(response);
 }
@@ -980,13 +1003,17 @@ async function handleExternalSearch(rawQuery, env, ctx) {
 
   const cache = caches.default;
   const cacheKey = new Request(
-    `https://fpv-base.com/__cache/external-search-v3-${encodeURIComponent(searchTerm.toLowerCase())}`
+    `https://fpv-base.com/__cache/external-search-v4-${encodeURIComponent(searchTerm.toLowerCase())}`
   );
 
   const cached = await cache.match(cacheKey);
   if (cached) return noBrowserCache(cached);
 
   let normalized = [];
+  // Same reasoning as handleExternalModels above — a genuine "no
+  // matches for this term" is worth caching; the fetch itself
+  // throwing isn't.
+  let succeeded = false;
 
   try {
     const results = await fetchCultsSearchQuery(searchTerm, env);
@@ -994,14 +1021,19 @@ async function handleExternalSearch(rawQuery, env, ctx) {
     normalized = results
       .filter(item => item && item.identifier && !isExcludedCultsItem(item))
       .map(normalizeCultsItem);
+
+    succeeded = true;
   } catch {
     normalized = [];
+    succeeded = false;
   }
 
   const response = jsonResponse(normalized, 200);
   response.headers.set("Cache-Control", `public, max-age=${EXTERNAL_SEARCH_CACHE_SECONDS}`);
 
-  ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  if (succeeded) {
+    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  }
 
   return noBrowserCache(response);
 }
