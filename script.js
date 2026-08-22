@@ -412,17 +412,12 @@ async function fetchExternalModels() {
 async function init() {
   await authReady;
 
-  // Loaded in parallel: the stats query and the external-models
-  // fetch are both independent of the native models grid, no
-  // reason to make any of them wait on each other.
-  const [loadedModels, stats, loadedExternalModels] = await Promise.all([
+  const [loadedModels, stats] = await Promise.all([
     getAllModels(),
-    getPlatformStats(),
-    fetchExternalModels()
+    getPlatformStats()
   ]);
 
   models = loadedModels;
-  externalModels = loadedExternalModels;
 
   await Promise.all([
     primeModelDownloads(models.map(model => model.id)),
@@ -431,9 +426,28 @@ async function init() {
   ]);
 
   updateSortButtons();
+  // externalModels is still [] here — native cards render right
+  // away, Cults3D picks merge in below once they arrive.
   displayModels(models, { externalList: externalModels });
 
   renderStats(stats);
+
+  // Deliberately NOT in the Promise.all above anymore: a Cults3D
+  // cache-miss now fetches its ~46 keywords one at a time (see
+  // worker.js — Cults3D rate-limits bursts) and can take 20-40s to
+  // settle, or longer if Cults3D itself is temporarily rate-limiting
+  // us. That used to stall the ENTIRE home page — even the native
+  // grid — for the full duration, since it was awaited alongside the
+  // native fetches. It now loads on its own and just re-renders
+  // (merging in) whenever it's actually ready; the native grid never
+  // waits on it.
+  fetchExternalModels().then(loadedExternalModels => {
+    externalModels = loadedExternalModels;
+
+    if (!searchActive) {
+      displayModels(currentDisplayedModels, { externalList: externalModels });
+    }
+  });
 }
 
 function renderStats(stats) {
