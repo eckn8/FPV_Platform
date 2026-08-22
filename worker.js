@@ -496,7 +496,7 @@ const CULTS_SEARCH_KEYWORDS = [
   "Flywoo",
   "Axisflying",
   "HGLRC",
-  "T-Motor",
+  "BrotherHobby",
   "Holybro",
   "SpeedyBee",
   "Foxeer",
@@ -521,11 +521,12 @@ const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v7): keyword list expanded (parts + brands, see
-// CULTS_SEARCH_KEYWORDS) — bumping forces a fresh fetch instead of
-// serving the smaller old result set for up to an hour. Bump again
-// any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v7";
+// Versioned (v8): dropped "T-Motor" (see CULTS_KEYWORD_MAX_TOTAL —
+// it matched 55,893 unrelated results) for "BrotherHobby", and added
+// that same sanity-threshold guardrail — bumping forces a fresh
+// fetch instead of serving the polluted old result set for up to an
+// hour. Bump again any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v8";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -621,6 +622,20 @@ function normalizeCultsItem(item) {
   };
 }
 
+// Real example hit during testing: the exact keyword "T-Motor" (a
+// genuine FPV motor brand) came back with a `total` of 55,893 and
+// its top BY_LIKES hit was a viral flexi-print toy with nothing to
+// do with FPV — Cults3D's search apparently tokenizes the hyphen
+// into something close to a wildcard match rather than the brand
+// name. None of our real, deliberately broad keywords ("fpv drone")
+// come anywhere near this — the biggest legitimate one sits at
+// ~4,700. Above this threshold, a keyword isn't narrowing the
+// catalog down at all and its "top liked" results are really just
+// Cults3D's sitewide most-liked designs — discarded outright rather
+// than trusted, so one bad keyword (now or added later) can't quietly
+// flood the discovery feed with unrelated viral content.
+const CULTS_KEYWORD_MAX_TOTAL = 8000;
+
 async function fetchCultsKeyword(keyword, env) {
   const auth = btoa(`${env.CULTS_USERNAME}:${env.CULTS_API_KEY}`);
 
@@ -642,6 +657,7 @@ async function fetchCultsKeyword(keyword, env) {
       sort: BY_LIKES
       direction: DESC
     ) {
+      total
       results {
         identifier
         name
@@ -669,9 +685,16 @@ async function fetchCultsKeyword(keyword, env) {
   if (!response.ok) return [];
 
   const body = await response.json();
-  const results = body.data && body.data.creationsSearchBatch && body.data.creationsSearchBatch.results;
+  const batch = body.data && body.data.creationsSearchBatch;
 
-  return results || [];
+  if (!batch) return [];
+
+  if (batch.total > CULTS_KEYWORD_MAX_TOTAL) {
+    console.error(`Discarding Cults3D keyword "${keyword}" — total ${batch.total} exceeds the sanity threshold, its results aren't actually specific to it.`);
+    return [];
+  }
+
+  return batch.results || [];
 }
 
 // Cloudflare's own zone-level "Browser Cache TTL" setting rewrites
