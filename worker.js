@@ -562,15 +562,23 @@ const CULTS_SEARCH_KEYWORDS = [
 // 300 near-copies.
 const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 
+// How many keywords' worth of Cults3D requests run at once — see the
+// batching loop in handleExternalModels(). Kept comfortably under
+// whatever the real concurrent-subrequest ceiling turns out to be,
+// rather than the keyword count itself.
+const CULTS_KEYWORD_BATCH_SIZE = 10;
+
 // Cached at the edge for an hour (Cache-Control below, read back via
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v10): filter extended (esp32/zerobot/boats/tabletop —
-// see EXCLUDED_TERMS_REGEX) — bumping forces a fresh, re-filtered
-// fetch instead of serving the old result set for up to an hour.
-// Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v10";
+// Versioned (v11): fetches are now batched (CULTS_KEYWORD_BATCH_SIZE)
+// instead of one giant Promise.all — the unbatched version briefly
+// blew through Cloudflare's concurrent-subrequest limit and cached
+// an EMPTY catalog for up to an hour. Bumping forces a fresh,
+// correctly-batched fetch instead of continuing to serve that empty
+// result. Bump again any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v11";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -784,9 +792,24 @@ async function handleExternalModels(env, ctx) {
   let normalized = [];
 
   try {
-    const perKeyword = await Promise.all(
-      CULTS_SEARCH_KEYWORDS.map(keyword => fetchCultsKeyword(keyword, env).catch(() => []))
-    );
+    // Batched, not one giant Promise.all over every keyword: hit
+    // live during testing — "Too many subrequests," specifically a
+    // limit on CONCURRENT in-flight requests, not a lifetime total.
+    // Firing all ~70 keywords at once occasionally blew straight
+    // through it and came back with an empty catalog; a batch of 10
+    // at a time keeps well clear of that regardless of how many
+    // keywords this list ever grows to.
+    const perKeyword = [];
+
+    for (let i = 0; i < CULTS_SEARCH_KEYWORDS.length; i += CULTS_KEYWORD_BATCH_SIZE) {
+      const batch = CULTS_SEARCH_KEYWORDS.slice(i, i + CULTS_KEYWORD_BATCH_SIZE);
+
+      const batchResults = await Promise.all(
+        batch.map(keyword => fetchCultsKeyword(keyword, env).catch(() => []))
+      );
+
+      perKeyword.push(...batchResults);
+    }
 
     const seen = new Set();
 
@@ -865,7 +888,12 @@ async function handleExternalModelDetail(slug, env, ctx) {
   // v2: now filtered (see isExcludedCultsItem) — a slug cached under
   // the old, unfiltered key before this change would otherwise keep
   // serving for up to an hour.
-  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v4-${encodeURIComponent(slug)}`);
+  // v5: clears out a handful of bad cached nulls from while the
+  // catalog fetch above was intermittently blowing through
+  // Cloudflare's concurrent-subrequest limit (see EXTERNAL_MODELS_
+  // CACHE_KEY) — unrelated code, but real Cults3D items got cached
+  // as "not found" during that window.
+  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v5-${encodeURIComponent(slug)}`);
 
   const cached = await cache.match(cacheKey);
   if (cached) return noBrowserCache(cached);
