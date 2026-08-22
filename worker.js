@@ -453,46 +453,39 @@ async function handleDeleteAccount(request, env) {
 //   catches mounts/bumpers/spares made for one exact frame that a
 //   brand-only search's limit of 15 results might not surface.
 //
-// ~70 keywords total now (not the ~500 a full "50 brands × 10
-// products" list would need, or "30 frames" added on naively) —
-// each keyword is its own parallel request to Cults3D, and
-// Cloudflare Workers on the free tier cap a single invocation at 50
-// subrequests. Past that specific point, individual fetchCultsKeyword
-// calls start failing — but each one is already wrapped in its own
-// .catch(() => []) below, so those just silently contribute nothing
-// rather than breaking the whole feed; nothing here depends on every
-// keyword succeeding. A brand or frame name alone already surfaces
-// most of its own Cults3D content in one query, so this covers
-// materially more ground than a smaller list without a real
-// downside to reaching for more.
+// Capped at 46 total — NOT the ~500 a full "50 brands × 10 products"
+// list would need, and smaller than a first attempt at "add 30 frame
+// names on top" (74 total), which measured live turned out to
+// exceed Cloudflare's real subrequest ceiling per invocation and
+// intermittently emptied the entire catalog outright (confirmed via
+// `wrangler tail`: "Too many subrequests by single Worker
+// invocation" — a hard, cumulative-per-invocation limit, not
+// something batching the requests over time gets around). Every
+// keyword here earns its subrequest: the weakest general/by-part
+// terms and the lowest-yield frame names (a handful matched under 10
+// total Cults3D results each) were cut to make room for the 8
+// highest-yield frame names instead of naively keeping all of them.
 const CULTS_SEARCH_KEYWORDS = [
   // General
   "fpv drone",
   "fpv frame",
   "tinywhoop",
   "cinewhoop",
-  "quadcopter frame",
   "fpv freestyle",
   "long range fpv",
-  "micro fpv drone",
   "5 inch fpv frame",
   "3 inch fpv frame",
   // By part (Drone/Frame, Drone/Battery, Drone/Electronic, Camera,
   // Equipment — see supabase_root_lock_migration.sql)
   "fpv drone motor",
-  "fpv frame arm replacement",
   "fpv propeller guard",
   "fpv canopy",
   "fpv landing gear",
   "fpv battery strap mount",
   "fpv vtx antenna mount",
-  "fpv receiver rx mount",
-  "fpv flight controller stack mount",
   "fpv gps mount",
-  "fpv beeper buzzer mount",
   "fpv led mount",
   "action camera mount fpv drone",
-  "fpv goggles strap mount",
   "radio transmitter case",
   // By brand (frames, electronics, goggles/radio)
   "GEPRC",
@@ -515,44 +508,18 @@ const CULTS_SEARCH_KEYWORDS = [
   "ExpressLRS",
   "Fatshark",
   "BetaFPV",
-  // By specific frame model — each verified individually against the
-  // real API first (a `total` in the tens/low hundreds, top results
-  // actually relevant) after the "T-Motor" incident above. Two
-  // candidates that failed this check were dropped before ever
-  // reaching this list: "Skystars Star" (matched on the words "star"/
-  // "sky" generically — a planet map, a flying wing, nothing FPV),
-  // and "GEPRC Tinygo" (Cults3D silently ignored "Tinygo" and just
-  // searched "GEPRC" again — same total, same top results, already
-  // covered by the brand keyword above).
-  "iFlight Nazgul5",
-  "iFlight Chimera7",
-  "iFlight Titan",
-  "iFlight XL5",
-  "iFlight Protek35",
-  "GEPRC Mark4",
-  "GEPRC Mark5",
-  "GEPRC Cinelog",
-  "Armattan Chameleon",
-  "Armattan Chameleon Ti",
-  "Armattan Marmotte",
-  "Armattan Rooster",
+  // By specific frame model — the 8 highest-yield of the ones
+  // individually verified against the real API (see the note above);
+  // the rest matched too few real Cults3D results (several under 10
+  // total) to justify their own subrequest once the budget got tight.
   "TBS Source One",
   "TBS Source One V5",
-  "TBS Oblivion",
-  "Diatone Roma",
-  "Diatone Taycan",
-  "Flywoo Explorer LR",
-  "Flywoo Firefly",
-  "HGLRC Sector5",
-  "Lumenier QAV210",
   "ImpulseRC Apex",
-  "NewBeeDrone Beebrain",
-  "BetaFPV Pavo20",
-  "BetaFPV Meteor65",
-  "Axisflying Manta5",
-  "Rekon5 frame",
-  "Apex Evo frame",
-  "Nazgul Evoque"
+  "GEPRC Mark4",
+  "GEPRC Mark5",
+  "iFlight XL5",
+  "Diatone Roma",
+  "Armattan Chameleon"
 ];
 
 // Per keyword, not a global total — 20 keywords × 15 duplicates
@@ -572,13 +539,12 @@ const CULTS_KEYWORD_BATCH_SIZE = 10;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v11): fetches are now batched (CULTS_KEYWORD_BATCH_SIZE)
-// instead of one giant Promise.all — the unbatched version briefly
-// blew through Cloudflare's concurrent-subrequest limit and cached
-// an EMPTY catalog for up to an hour. Bumping forces a fresh,
-// correctly-batched fetch instead of continuing to serve that empty
-// result. Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v11";
+// Versioned (v12): keyword count actually cut back to 46 (see
+// CULTS_SEARCH_KEYWORDS) after v11's batching alone turned out not
+// to fix "Too many subrequests" — bumping forces a fresh fetch
+// instead of continuing to serve the empty catalog v11 cached for up
+// to an hour. Bump again any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v12";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -792,13 +758,15 @@ async function handleExternalModels(env, ctx) {
   let normalized = [];
 
   try {
-    // Batched, not one giant Promise.all over every keyword: hit
-    // live during testing — "Too many subrequests," specifically a
-    // limit on CONCURRENT in-flight requests, not a lifetime total.
-    // Firing all ~70 keywords at once occasionally blew straight
-    // through it and came back with an empty catalog; a batch of 10
-    // at a time keeps well clear of that regardless of how many
-    // keywords this list ever grows to.
+    // Batched, not one giant Promise.all over every keyword. The
+    // real fix for "Too many subrequests" (see CULTS_SEARCH_KEYWORDS
+    // above) was cutting the keyword list back under Cloudflare's
+    // actual per-invocation ceiling — that error message names it as
+    // a cumulative total, not a concurrency limit, and batching alone
+    // doesn't reduce a total. Kept anyway as a second line of
+    // defense (staggering requests can't hurt, and protects against
+    // this list growing again later without someone re-deriving the
+    // hard limit the hard way).
     const perKeyword = [];
 
     for (let i = 0; i < CULTS_SEARCH_KEYWORDS.length; i += CULTS_KEYWORD_BATCH_SIZE) {
