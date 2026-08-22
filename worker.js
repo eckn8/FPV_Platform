@@ -29,6 +29,10 @@ export default {
       return handleExternalModels(env, ctx);
     }
 
+    if (url.pathname === "/api/external-model" && request.method === "GET") {
+      return handleExternalModelDetail(url.searchParams.get("slug"), env, ctx);
+    }
+
     // Everything else: static files (safety net — in practice
     // Cloudflare already serves them before ever calling this
     // script when a file matches).
@@ -418,6 +422,11 @@ async function handleDeleteAccount(request, env) {
 // check above.
 // =======================================================
 
+// Broad terms ("fpv drone") return thousands of Cults3D results —
+// BY_LIKES sorting (see fetchCultsKeyword) keeps even those relevant
+// by surfacing well-regarded designs first, so covering more of the
+// FPV part space here (frame sizes, common accessories) is safe:
+// more real matches without a wall of low-quality noise.
 const CULTS_SEARCH_KEYWORDS = [
   "fpv drone",
   "fpv frame",
@@ -426,37 +435,96 @@ const CULTS_SEARCH_KEYWORDS = [
   "fpv gopro mount",
   "fpv antenna mount",
   "quadcopter frame",
-  "fpv canopy"
+  "fpv canopy",
+  "fpv racing drone",
+  "fpv freestyle",
+  "5 inch fpv frame",
+  "3 inch fpv frame",
+  "fpv prop guard",
+  "vtx mount",
+  "flight controller mount",
+  "fpv camera mount",
+  "fpv goggles mount",
+  "long range fpv",
+  "micro fpv drone",
+  "fpv drone arm"
 ];
+
+// Per keyword, not a global total — 20 keywords × 15 duplicates
+// heavily (the same popular frame shows up for several searches),
+// which is exactly why normalizing by `identifier` into a Set
+// below matters: the deduped result lands in the low hundreds, not
+// 300 near-copies.
+const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 
 // Cached at the edge for an hour (Cache-Control below, read back via
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v3): the response shape changed (createdAt added) —
-// bumping this forces a fresh entry instead of serving the old shape
-// to newly-deployed client code for up to an hour. Bump again any
-// time the shape changes.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v3";
+// Versioned (v4): fewer fields per item now (description/tags/full
+// image list moved to the on-demand detail endpoint below) — bumping
+// forces a fresh, leaner entry instead of serving the old shape.
+// Bump again any time the shape changes.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v4";
+
+// Cults3D mixes the occasional video into "illustrations" (hosted on
+// a different subdomain, e.g. videos.cults3d.com) — filtered out
+// here since <img> can't render one and the detail page's gallery
+// expects only images.
+const IMAGE_URL_REGEX = /\.(png|jpe?g|gif|webp)$/i;
+
+// Shared by the list (lean fields only, see fetchCultsKeyword) and
+// the single-item detail fetch (full fields, see
+// fetchCultsCreationDetail) — a list item run through this just
+// ends up with empty description/tags/images, which is exactly what
+// the home page's cards need anyway.
+function normalizeCultsItem(item) {
+  const images = (item.illustrations || [])
+    .map(illustration => illustration.imageUrl)
+    .filter(url => url && IMAGE_URL_REGEX.test(url));
+
+  return {
+    id: `cults-${item.identifier}`,
+    title: item.name,
+    image: item.illustrationImageUrl || images[0] || null,
+    images: images.length > 0 ? images : (item.illustrationImageUrl ? [item.illustrationImageUrl] : []),
+    description: item.description || "",
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    url: item.url,
+    creator: item.creator ? item.creator.nick : "Cults3D creator",
+    downloads: item.downloadsCount || 0,
+    likes: item.likesCount || 0,
+    // Same field name as a native model's own createdAt — lets
+    // script.js sort native + external entries with one comparator
+    // instead of two (see entryCreatedAtMs()).
+    createdAt: item.publishedAt || null,
+    source: "cults3d"
+  };
+}
 
 async function fetchCultsKeyword(keyword, env) {
   const auth = btoa(`${env.CULTS_USERNAME}:${env.CULTS_API_KEY}`);
 
-  // description/tags/illustrations: not needed for the home page's
-  // cards (see script.js), but ARE needed for the detail page a
-  // card links to (model.js, "cults-" ids) — fetched once here and
-  // cached alongside everything else rather than adding a second
-  // round trip per detail-page view.
+  // Lean on purpose — this feeds the home page's cards only, which
+  // never show description/tags/the full image gallery. Those live
+  // behind /api/external-model instead, fetched once per detail-page
+  // view rather than bloating every home page load with hundreds of
+  // descriptions nobody's reading yet. BY_LIKES/DESC: these keywords
+  // are broad enough to return thousands of matches, sorting by
+  // likes keeps what actually gets fetched relevant.
   const query = `{
-    creationsSearchBatch(query: ${JSON.stringify(keyword)}, onlySafe: true, limit: 4) {
+    creationsSearchBatch(
+      query: ${JSON.stringify(keyword)}
+      onlySafe: true
+      limit: ${CULTS_SEARCH_LIMIT_PER_KEYWORD}
+      sort: BY_LIKES
+      direction: DESC
+    ) {
       results {
         identifier
         name
         url
         illustrationImageUrl
-        description
-        tags
-        illustrations { imageUrl }
         likesCount
         downloadsCount
         publishedAt
@@ -509,31 +577,7 @@ async function handleExternalModels(env, ctx) {
       if (!item || !item.identifier || seen.has(item.identifier)) return;
       seen.add(item.identifier);
 
-      // Cults3D mixes the occasional video into "illustrations"
-      // (hosted on a different subdomain, e.g. videos.cults3d.com) —
-      // filtered out here since <img> can't render one and the
-      // gallery on the detail page expects only images.
-      const images = (item.illustrations || [])
-        .map(illustration => illustration.imageUrl)
-        .filter(url => url && /\.(png|jpe?g|gif|webp)$/i.test(url));
-
-      normalized.push({
-        id: `cults-${item.identifier}`,
-        title: item.name,
-        image: item.illustrationImageUrl || images[0] || null,
-        images: images.length > 0 ? images : (item.illustrationImageUrl ? [item.illustrationImageUrl] : []),
-        description: item.description || "",
-        tags: Array.isArray(item.tags) ? item.tags : [],
-        url: item.url,
-        creator: item.creator ? item.creator.nick : "Cults3D creator",
-        downloads: item.downloadsCount || 0,
-        likes: item.likesCount || 0,
-        // Same field name as a native model's own createdAt — lets
-        // script.js sort native + external entries with one
-        // comparator instead of two (see entryCreatedAtMs()).
-        createdAt: item.publishedAt || null,
-        source: "cults3d"
-      });
+      normalized.push(normalizeCultsItem(item));
     });
   } catch {
     normalized = [];
@@ -541,6 +585,84 @@ async function handleExternalModels(env, ctx) {
 
   const response = jsonResponse(normalized, 200);
   response.headers.set("Cache-Control", `public, max-age=${EXTERNAL_MODELS_CACHE_SECONDS}`);
+
+  ctx.waitUntil(cache.put(cacheKey, response.clone()));
+
+  return response;
+}
+
+// =======================================================
+// 🔎 EXTERNAL MODEL DETAIL (single Cults3D item, on demand)
+// The list above is intentionally lean (see fetchCultsKeyword) — a
+// Cults3D detail page (model.js, "cults-" ids) calls this instead to
+// get the full description/tags/image gallery for the ONE item
+// being viewed, rather than every visitor's home page paying for
+// hundreds of descriptions at once. `slug` is just the last segment
+// of the item's own Cults3D url (e.g. "fpv-drone-frame-kit") — that's
+// literally what Cults3D's own `creation(slug:)` query expects,
+// confirmed by testing against the real API.
+// =======================================================
+
+const EXTERNAL_MODEL_DETAIL_CACHE_SECONDS = 60 * 60;
+
+async function fetchCultsCreationDetail(slug, env) {
+  const auth = btoa(`${env.CULTS_USERNAME}:${env.CULTS_API_KEY}`);
+
+  const query = `{
+    creation(slug: ${JSON.stringify(slug)}) {
+      identifier
+      name
+      url
+      illustrationImageUrl
+      description
+      tags
+      illustrations { imageUrl }
+      likesCount
+      downloadsCount
+      publishedAt
+      creator { nick }
+    }
+  }`;
+
+  const response = await fetch("https://cults3d.com/graphql", {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${auth}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ query })
+  });
+
+  if (!response.ok) return null;
+
+  const body = await response.json();
+  return (body.data && body.data.creation) || null;
+}
+
+async function handleExternalModelDetail(slug, env, ctx) {
+  if (!slug) return jsonResponse(null, 400);
+
+  const cache = caches.default;
+  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-${encodeURIComponent(slug)}`);
+
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  if (!env.CULTS_USERNAME || !env.CULTS_API_KEY) {
+    return jsonResponse(null, 200);
+  }
+
+  let normalized = null;
+
+  try {
+    const item = await fetchCultsCreationDetail(slug, env);
+    normalized = item ? normalizeCultsItem(item) : null;
+  } catch {
+    normalized = null;
+  }
+
+  const response = jsonResponse(normalized, 200);
+  response.headers.set("Cache-Control", `public, max-age=${EXTERNAL_MODEL_DETAIL_CACHE_SECONDS}`);
 
   ctx.waitUntil(cache.put(cacheKey, response.clone()));
 

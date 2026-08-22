@@ -59,24 +59,26 @@ async function init() {
 // =======================
 
 async function renderExternalModelPage(externalId) {
-  // No dedicated single-item endpoint — the home page's already-
-  // cached discovery list (see /api/external-models in worker.js)
-  // is small enough that re-fetching it and finding this one entry
-  // is simpler than adding a second Worker route.
-  let model = null;
+  // The home page's discovery list (see /api/external-models in
+  // worker.js) is deliberately lean — no description/tags/full image
+  // gallery, those would bloat every home page load for a handful of
+  // detail-page views. Re-fetching it here just to find this one
+  // entry's summary (title/thumbnail/url) is still simple enough not
+  // to need its own endpoint.
+  let summary = null;
 
   try {
     const response = await fetch("/api/external-models");
 
     if (response.ok) {
       const list = await response.json();
-      model = list.find(item => item.id === externalId) || null;
+      summary = list.find(item => item.id === externalId) || null;
     }
   } catch {
-    model = null;
+    summary = null;
   }
 
-  if (!model) {
+  if (!summary) {
     document.body.innerHTML = `
       <main style="padding:40px;">
         <h1>Model not found</h1>
@@ -88,6 +90,27 @@ async function renderExternalModelPage(externalId) {
     `;
     return;
   }
+
+  // Full details (description/tags/gallery) fetched on demand from
+  // Cults3D's own `creation(slug:)` query, keyed by the last segment
+  // of the item's Cults3D url — that's genuinely what Cults3D expects
+  // there (confirmed against the real API), no separate id mapping
+  // needed. A failure here still leaves a usable (if sparser) page,
+  // rather than the whole detail page failing over one field.
+  let detail = null;
+
+  try {
+    const slug = summary.url.split("/").filter(Boolean).pop();
+    const response = await fetch(`/api/external-model?slug=${encodeURIComponent(slug)}`);
+
+    if (response.ok) {
+      detail = await response.json();
+    }
+  } catch {
+    detail = null;
+  }
+
+  const model = { ...summary, ...(detail || {}) };
 
   // ---- Images ---------------------------------------------------
 
