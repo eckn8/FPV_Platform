@@ -87,52 +87,27 @@ async function showRequestSuggestion(searchValue, resultsCount) {
 // 🎨 MODEL DISPLAY
 // =======================
 
-// Fills the grid out with Cults3D picks (see externalModels/init()),
-// interleaved at a regular interval rather than dumped at the end —
-// genuinely "mixed in," not just appended. Shows every fetched
-// result (no artificial cap) — the point of this feature is making
-// the home page look populated, so capping it well below what's
-// actually available worked against that. Returns { model,
-// external }[] either way.
-function mixInExternalModels(nativeList) {
-  const entries = nativeList.map(model => ({ model, external: false }));
-
-  const chosen = externalModels;
-
-  if (chosen.length === 0) return entries;
-
-  const interval = Math.max(1, Math.round((entries.length + 1) / (chosen.length + 1)));
-
-  const merged = [];
-  let chosenIndex = 0;
-
-  entries.forEach((entry, i) => {
-    merged.push(entry);
-
-    if ((i + 1) % interval === 0 && chosenIndex < chosen.length) {
-      merged.push({ model: chosen[chosenIndex], external: true });
-      chosenIndex++;
-    }
-  });
-
-  while (chosenIndex < chosen.length) {
-    merged.push({ model: chosen[chosenIndex], external: true });
-    chosenIndex++;
-  }
-
-  return merged;
-}
-
 // mixExternal: only the default (unsearched) home view mixes in
 // Cults3D picks — search results stay native-only, since "search"
-// reads as "search FPVBase's own catalog," not the wider web.
+// reads as "search FPVBase's own catalog," not the wider web. Native
+// and external entries are merged into ONE list before sorting (see
+// sortEntries() below) rather than sorted separately and interleaved
+// afterward — that older approach placed external cards at a fixed
+// position regardless of the chosen sort, so "Most Downloaded" could
+// show a 900-download Cults3D pick near the bottom. Sorting the
+// merged list means every card, native or external, competes on the
+// same real numbers.
 function displayModels(list, { mixExternal = false } = {}) {
   currentDisplayedModels = list;
 
   grid.innerHTML = "";
 
-  const sorted = sortModels(list);
-  const entries = mixExternal ? mixInExternalModels(sorted) : sorted.map(model => ({ model, external: false }));
+  const merged = [
+    ...list.map(model => ({ model, external: false })),
+    ...(mixExternal ? externalModels.map(model => ({ model, external: true })) : [])
+  ];
+
+  const entries = sortEntries(merged);
 
   if (entries.length === 0) {
     grid.innerHTML = "<p>No models yet.</p>";
@@ -233,37 +208,57 @@ sortButtons.all.addEventListener("click", () => setSort("all"));
 sortButtons.popular.addEventListener("click", () => setSort("popular"));
 sortButtons.recent.addEventListener("click", () => setSort("recent"));
 
-function sortModels(list) {
-  if (list.length === 0) return list;
+// A native model's download count lives in the primed cache
+// (getDownloadCount); an external one already carries its own
+// Cults3D download count directly on the object — no priming needed
+// for that half.
+function entryDownloadCount(entry) {
+  return entry.external ? (entry.model.downloads || 0) : getDownloadCount(entry.model.id);
+}
+
+// Native models always have createdAt; external ones only do if
+// Cults3D's publishedAt came through (see worker.js) — null when
+// unknown, handled below rather than sorting on an "Invalid Date".
+function entryCreatedAtMs(entry) {
+  return entry.model.createdAt ? new Date(entry.model.createdAt).getTime() : null;
+}
+
+function sortEntries(entries) {
+  if (entries.length === 0) return entries;
 
   if (currentSort === "popular") {
-    return [...list].sort(
-      (a, b) => getDownloadCount(b.id) - getDownloadCount(a.id)
+    return [...entries].sort(
+      (a, b) => entryDownloadCount(b) - entryDownloadCount(a)
     );
   }
 
   if (currentSort === "recent") {
-    return [...list].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    // Unknown dates sort last rather than crashing the comparison.
+    return [...entries].sort(
+      (a, b) => (entryCreatedAtMs(b) ?? -Infinity) - (entryCreatedAtMs(a) ?? -Infinity)
     );
   }
 
   // "all" (Trending) — a simple blended score, not a full "hotness"
   // curve with time decay: this catalog is small enough that a
   // plain sum of two normalized signals is plenty.
-  const maxDownloads = Math.max(1, ...list.map(model => getDownloadCount(model.id)));
+  const maxDownloads = Math.max(1, ...entries.map(entryDownloadCount));
 
-  const times = list.map(model => new Date(model.createdAt).getTime());
-  const oldest = Math.min(...times);
-  const span = Math.max(1, Math.max(...times) - oldest);
+  const knownTimes = entries.map(entryCreatedAtMs).filter(ms => ms !== null);
+  const oldest = knownTimes.length > 0 ? Math.min(...knownTimes) : 0;
+  const span = Math.max(1, (knownTimes.length > 0 ? Math.max(...knownTimes) : 0) - oldest);
 
-  function score(model) {
-    const popularity = getDownloadCount(model.id) / maxDownloads;
-    const recency = (new Date(model.createdAt).getTime() - oldest) / span;
+  function score(entry) {
+    const popularity = entryDownloadCount(entry) / maxDownloads;
+    const createdAtMs = entryCreatedAtMs(entry);
+    // No known date (external item Cults3D didn't give a
+    // publishedAt for): treated as recency-neutral rather than
+    // dropped to the bottom purely for a missing field.
+    const recency = createdAtMs === null ? 0.5 : (createdAtMs - oldest) / span;
     return popularity + recency;
   }
 
-  return [...list].sort((a, b) => score(b) - score(a));
+  return [...entries].sort((a, b) => score(b) - score(a));
 }
 
 // =======================

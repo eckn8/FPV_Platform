@@ -1275,6 +1275,72 @@ async function deleteComment(commentId) {
 }
 
 // =======================
+// 💬 EXTERNAL COMMENTS (Cults3D detail pages)
+// A parallel, deliberately simpler table to COMMENTS above: no
+// comment_likes/reports here (both are foreign-keyed to
+// comments.id, which an external comment never has a row in) — just
+// post, read, and delete your own, with the same ban/restriction
+// rule as native comments. See supabase_external_comments.sql.
+// =======================
+
+async function getExternalModelComments(externalId) {
+  const { data, error } = await supabaseClient
+    .from("external_comments")
+    .select("*")
+    .eq("external_id", externalId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error loading external comments:", error.message);
+    return [];
+  }
+
+  return data.map(row => ({
+    id: row.id,
+    user: row.username,
+    userId: row.user_id,
+    text: row.text,
+    createdAt: row.created_at
+  }));
+}
+
+async function createExternalComment(externalId, text) {
+  const userId = getCurrentUserId();
+  const username = getCurrentUsername();
+
+  if (!userId) throw new Error("You must be logged in.");
+
+  const { data, error } = await supabaseClient
+    .from("external_comments")
+    .insert({ external_id: externalId, user_id: userId, username, text })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return {
+    id: data.id,
+    user: data.username,
+    userId: data.user_id,
+    text: data.text,
+    createdAt: data.created_at
+  };
+}
+
+// The caller must have already checked that the current user is
+// really the author (see isOwnComment in model.js) — the real
+// protection comes from the "delete" RLS policy (user_id =
+// auth.uid()), not this client-side check.
+async function deleteExternalComment(commentId) {
+  const { error } = await supabaseClient
+    .from("external_comments")
+    .delete()
+    .eq("id", commentId);
+
+  if (error) throw new Error(error.message);
+}
+
+// =======================
 // 🚩 REPORTS
 // Everyone can currently only see (and therefore only cancel) their
 // own reports client-side — moderators see everything, but through

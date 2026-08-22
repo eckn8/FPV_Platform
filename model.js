@@ -158,14 +158,119 @@ async function renderExternalModelPage(externalId) {
   downloadMainButton.target = "_blank";
   downloadMainButton.rel = "noopener noreferrer";
 
-  // ---- Hide everything specific to native FPVBase content ---------
+  // ---- Hide what's specific to native FPVBase content --------------
+  // Comments stay (see below) — everything else here only makes
+  // sense for something actually published on FPVBase: versions,
+  // technical info, moderator reporting.
 
   document.getElementById("reportModelButton").style.display = "none";
   document.getElementById("technicalInfoSection").style.display = "none";
   document.getElementById("versionsSection").style.display = "none";
-  document.getElementById("commentsSection").style.display = "none";
   // creatorActions/archivedWarning stay hidden by their own existing
   // defaults — isCreator() (native-only) is never true here.
+
+  // ---- Comments (own external_comments table — see data.js) --------
+  // Deliberately simpler than native comments: no likes, no
+  // reporting — both of those live in tables foreign-keyed to
+  // comments.id, which an external comment never has a row in. Just
+  // post, read, and delete your own, with the same restriction rule.
+
+  const commentsContainer = document.getElementById("comments");
+
+  attachCharCounter(
+    document.getElementById("commentInput"),
+    document.getElementById("commentInputCount")
+  );
+
+  let externalComments = await getExternalModelComments(model.id);
+
+  function displayExternalComments() {
+    commentsContainer.innerHTML = "";
+
+    if (externalComments.length === 0) {
+      commentsContainer.innerHTML = "<p>No comments yet.</p>";
+      return;
+    }
+
+    externalComments.forEach(comment => {
+      const bubble = document.createElement("div");
+      bubble.className = "comment-bubble";
+
+      const currentUser = getCurrentUser();
+      const isOwnComment = !!currentUser && comment.userId === currentUser.id;
+
+      bubble.innerHTML = `
+        <div class="comment-header">
+          <strong>${escapeHtml(comment.user || "Anonymous")}</strong>
+        </div>
+
+        <p class="comment-text">
+          ${escapeHtml(comment.text)}
+        </p>
+
+        <div class="comment-actions">
+          ${isOwnComment
+            ? '<button class="comment-delete-btn" title="Delete this comment">✕</button>'
+            : ""}
+        </div>
+      `;
+
+      if (isOwnComment) {
+        bubble
+          .querySelector(".comment-delete-btn")
+          .addEventListener("click", async () => {
+            if (!confirm("Delete this comment?")) return;
+
+            try {
+              await deleteExternalComment(comment.id);
+            } catch (error) {
+              alert(error.message || "Failed to delete. Please try again.");
+              return;
+            }
+
+            externalComments = externalComments.filter(item => item.id !== comment.id);
+            displayExternalComments();
+          });
+      }
+
+      commentsContainer.appendChild(bubble);
+    });
+  }
+
+  window.addComment = async function addExternalCommentHandler() {
+    const user = requireAuth();
+    if (!user) return;
+
+    if (user.isRestricted) {
+      alert(
+        `Your account is currently restricted from commenting` +
+        (user.restrictedUntil ? ` until ${user.restrictedUntil.toLocaleString("en-US")}.` : ".")
+      );
+      return;
+    }
+
+    const input = document.getElementById("commentInput");
+
+    if (input.value.trim() === "") return;
+
+    let newComment;
+
+    try {
+      newComment = await createExternalComment(model.id, input.value.trim());
+    } catch (error) {
+      alert(error.message || "Failed to post the comment. Please try again.");
+      return;
+    }
+
+    externalComments.push(newComment);
+
+    input.value = "";
+    document.getElementById("commentInputCount").textContent = `0 / ${input.maxLength}`;
+
+    displayExternalComments();
+  };
+
+  displayExternalComments();
 }
 
 async function renderModelPage(model) {
