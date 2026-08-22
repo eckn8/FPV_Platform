@@ -6,6 +6,7 @@
 
 let models = [];
 let currentDisplayedModels = [];
+let externalModels = [];
 
 // =======================
 // 📦 HTML ELEMENTS
@@ -86,19 +87,112 @@ async function showRequestSuggestion(searchValue, resultsCount) {
 // 🎨 MODEL DISPLAY
 // =======================
 
-function displayModels(list) {
+// Fills the grid out with Cults3D picks (see externalModels/init())
+// only when the native catalog is still small, interleaved at a
+// regular interval rather than dumped at the end — genuinely
+// "mixed in," not just appended. Caps at MAX_EXTERNAL regardless of
+// how sparse the native catalog is, so the grid is never ALL
+// external. Returns { model, external }[] either way.
+const HOME_GRID_TARGET_SIZE = 12;
+const MAX_EXTERNAL_CARDS = 8;
+
+function mixInExternalModels(nativeList) {
+  const entries = nativeList.map(model => ({ model, external: false }));
+
+  const externalCount = Math.min(
+    MAX_EXTERNAL_CARDS,
+    Math.max(0, HOME_GRID_TARGET_SIZE - nativeList.length),
+    externalModels.length
+  );
+
+  if (externalCount === 0) return entries;
+
+  const chosen = externalModels.slice(0, externalCount);
+  const interval = Math.max(1, Math.round((entries.length + 1) / (chosen.length + 1)));
+
+  const merged = [];
+  let chosenIndex = 0;
+
+  entries.forEach((entry, i) => {
+    merged.push(entry);
+
+    if ((i + 1) % interval === 0 && chosenIndex < chosen.length) {
+      merged.push({ model: chosen[chosenIndex], external: true });
+      chosenIndex++;
+    }
+  });
+
+  while (chosenIndex < chosen.length) {
+    merged.push({ model: chosen[chosenIndex], external: true });
+    chosenIndex++;
+  }
+
+  return merged;
+}
+
+// Same meta-row look as cardMetaMarkup() (data.js), but pulling the
+// creator/download numbers straight off the Cults3D result itself
+// instead of FPVBase's own primed caches, which obviously don't
+// know anything about a design that was never uploaded here.
+function externalCardMetaMarkup(model) {
+  const { digits, suffix } = formatCompactValue(model.downloads);
+
+  return `
+    <div class="card-meta">
+      <span class="card-creator">${escapeHtml(model.creator)}</span>
+      <span class="card-downloads" title="${model.downloads} downloads on Cults3D">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3v12m0 0l-5-5m5 5l5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 20h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+        ${digits}${suffix}
+      </span>
+    </div>
+  `;
+}
+
+// mixExternal: only the default (unsearched) home view mixes in
+// Cults3D picks — search results stay native-only, since "search"
+// reads as "search FPVBase's own catalog," not the wider web.
+function displayModels(list, { mixExternal = false } = {}) {
   currentDisplayedModels = list;
 
   grid.innerHTML = "";
 
   const sorted = sortModels(list);
+  const entries = mixExternal ? mixInExternalModels(sorted) : sorted.map(model => ({ model, external: false }));
 
-  if (sorted.length === 0) {
+  if (entries.length === 0) {
     grid.innerHTML = "<p>No models yet.</p>";
     return;
   }
 
-  sorted.forEach(model => {
+  entries.forEach(({ model, external }) => {
+    if (external) {
+      const card = document.createElement("a");
+
+      card.className = "model-card external";
+      card.href = model.url;
+      card.target = "_blank";
+      card.rel = "noopener noreferrer";
+
+      card.innerHTML = `
+        <span class="external-badge">via Cults3D</span>
+        ${
+          model.image
+            ? `<img class="model-img" src="${model.image}" alt="${escapeHtml(model.title)}">`
+            : `<div class="model-image">${droneIconMarkup()}</div>`
+        }
+        <div class="model-content">
+          <h3>${escapeHtml(model.title)}</h3>
+          ${externalCardMetaMarkup(model)}
+        </div>
+      `;
+
+      grid.appendChild(card);
+      return;
+    }
+
     const card = document.createElement("div");
 
     card.className = "model-card";
@@ -133,7 +227,7 @@ function displayModels(list) {
       </div>
     `;
 
-    attachSaveButton(card, model.id, () => displayModels(currentDisplayedModels));
+    attachSaveButton(card, model.id, () => displayModels(currentDisplayedModels, { mixExternal }));
 
     grid.appendChild(card);
   });
@@ -178,7 +272,7 @@ function updateSortButtons() {
 function setSort(sort) {
   currentSort = sort;
   updateSortButtons();
-  displayModels(currentDisplayedModels);
+  displayModels(currentDisplayedModels, { mixExternal: !searchActive });
 }
 
 sortButtons.all.addEventListener("click", () => setSort("all"));
@@ -258,12 +352,18 @@ window.addEventListener("resize", () => {
   }
 });
 
+// Tracked so setSort() (further up) knows whether to keep mixing in
+// Cults3D picks — "search" means "search FPVBase's own catalog,"
+// external cards have no business showing up in search results.
+let searchActive = false;
+
 searchInput.addEventListener("input", async () => {
   const value = searchInput.value.trim();
+  searchActive = value.length > 0;
 
   const results = advancedSearch(value, models);
 
-  displayModels(results);
+  displayModels(results, { mixExternal: !searchActive });
   hidePopularModelsHeaderWhileTyping();
 
   await showRequestSuggestion(value, results.length);
@@ -280,17 +380,34 @@ searchInput.addEventListener("input", async () => {
 
 init();
 
+// Cults3D picks for the home page only (see mixInExternalModels
+// above) — a slow or unavailable external API must never block or
+// break the page, so any failure here just means no external cards
+// this load, same as before this feature existed.
+async function fetchExternalModels() {
+  try {
+    const response = await fetch("/api/external-models");
+    if (!response.ok) return [];
+    return await response.json();
+  } catch {
+    return [];
+  }
+}
+
 async function init() {
   await authReady;
 
-  // Loaded in parallel: the stats query is independent of the
-  // models grid, no reason to make one wait on the other.
-  const [loadedModels, stats] = await Promise.all([
+  // Loaded in parallel: the stats query and the external-models
+  // fetch are both independent of the native models grid, no
+  // reason to make any of them wait on each other.
+  const [loadedModels, stats, loadedExternalModels] = await Promise.all([
     getAllModels(),
-    getPlatformStats()
+    getPlatformStats(),
+    fetchExternalModels()
   ]);
 
   models = loadedModels;
+  externalModels = loadedExternalModels;
 
   await Promise.all([
     primeModelDownloads(models.map(model => model.id)),
@@ -298,7 +415,7 @@ async function init() {
   ]);
 
   updateSortButtons();
-  displayModels(models);
+  displayModels(models, { mixExternal: true });
 
   renderStats(stats);
 }

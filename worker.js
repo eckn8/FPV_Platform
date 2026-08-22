@@ -6,8 +6,8 @@
 // this single file. By default (see [assets] in wrangler.toml),
 // Cloudflare serves static files (HTML/CSS/JS) directly when they
 // match the request, and only invokes this script for what doesn't
-// match any file — so in practice, only /api/upload and
-// /api/delete-account.
+// match any file — so in practice, only /api/upload,
+// /api/delete-account and /api/external-models.
 // =======================================================
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;   // 8 MB
@@ -23,6 +23,10 @@ export default {
 
     if (url.pathname === "/api/delete-account" && request.method === "POST") {
       return handleDeleteAccount(request, env);
+    }
+
+    if (url.pathname === "/api/external-models" && request.method === "GET") {
+      return handleExternalModels(env, ctx);
     }
 
     // Everything else: static files (safety net — in practice
@@ -392,4 +396,125 @@ async function handleDeleteAccount(request, env) {
   }
 
   return jsonResponse({ ok: true }, 200);
+}
+
+// =======================================================
+// 🔍 EXTERNAL MODELS (Cults3D discovery feed — home page only)
+// Fills out the "Popular models" grid with FPV-relevant designs
+// from Cults3D when the native catalog is still small — see
+// script.js for how these get mixed in and badged. Deliberately
+// NOT Thingiverse: their Developer Agreement bars using the API
+// "in any manner that is competitive to Thingiverse," which a
+// site that also hosts/shares 3D files plausibly is. Cults3D's own
+// API page explicitly invites this exact use case ("Do you have a
+// website [...] about 3D printing? [...] visitors will only have
+// to click to be redirected to [Cults] to download") — no files
+// are ever fetched or hosted here, only metadata, and every card
+// links straight back to Cults3D for the actual download.
+//
+// CULTS_USERNAME/CULTS_API_KEY are Worker secrets (`wrangler secret
+// put`), never written to wrangler.toml or exposed to the browser —
+// this whole thing runs server-side, same as the image safety
+// check above.
+// =======================================================
+
+const CULTS_SEARCH_KEYWORDS = [
+  "fpv drone",
+  "fpv frame",
+  "tinywhoop",
+  "cinewhoop",
+  "fpv gopro mount",
+  "fpv antenna mount",
+  "quadcopter frame",
+  "fpv canopy"
+];
+
+// Cached at the edge for an hour (Cache-Control below, read back via
+// the Cache API) so a page load never waits on — or spams — Cults3D's
+// API directly; results are near-identical run to run anyway.
+const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d";
+
+async function fetchCultsKeyword(keyword, env) {
+  const auth = btoa(`${env.CULTS_USERNAME}:${env.CULTS_API_KEY}`);
+
+  const query = `{
+    creationsSearchBatch(query: ${JSON.stringify(keyword)}, onlySafe: true, limit: 4) {
+      results {
+        identifier
+        name
+        url
+        illustrationImageUrl
+        likesCount
+        downloadsCount
+        creator { nick }
+      }
+    }
+  }`;
+
+  const response = await fetch("https://cults3d.com/graphql", {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${auth}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ query })
+  });
+
+  if (!response.ok) return [];
+
+  const body = await response.json();
+  const results = body.data && body.data.creationsSearchBatch && body.data.creationsSearchBatch.results;
+
+  return results || [];
+}
+
+async function handleExternalModels(env, ctx) {
+  const cache = caches.default;
+  const cacheKey = new Request(EXTERNAL_MODELS_CACHE_KEY);
+
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  // No credentials configured: fail open with an empty list rather
+  // than an error — the home page just shows native models only,
+  // same as before this feature existed.
+  if (!env.CULTS_USERNAME || !env.CULTS_API_KEY) {
+    return jsonResponse([], 200);
+  }
+
+  let normalized = [];
+
+  try {
+    const perKeyword = await Promise.all(
+      CULTS_SEARCH_KEYWORDS.map(keyword => fetchCultsKeyword(keyword, env).catch(() => []))
+    );
+
+    const seen = new Set();
+
+    perKeyword.flat().forEach(item => {
+      if (!item || !item.identifier || seen.has(item.identifier)) return;
+      seen.add(item.identifier);
+
+      normalized.push({
+        id: `cults-${item.identifier}`,
+        title: item.name,
+        image: item.illustrationImageUrl || null,
+        url: item.url,
+        creator: item.creator ? item.creator.nick : "Cults3D creator",
+        downloads: item.downloadsCount || 0,
+        likes: item.likesCount || 0,
+        source: "cults3d"
+      });
+    });
+  } catch {
+    normalized = [];
+  }
+
+  const response = jsonResponse(normalized, 200);
+  response.headers.set("Cache-Control", `public, max-age=${EXTERNAL_MODELS_CACHE_SECONDS}`);
+
+  ctx.waitUntil(cache.put(cacheKey, response.clone()));
+
+  return response;
 }
