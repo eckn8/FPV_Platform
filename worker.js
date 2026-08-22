@@ -465,10 +465,11 @@ const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v5): now filtered (see isExcludedCultsItem) — bumping
-// forces a fresh, filtered entry instead of serving an unfiltered
-// one for up to an hour. Bump again any time the filter changes.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v5";
+// Versioned (v6): filter strengthened (subcategory exclusion +
+// more terms, see isExcludedCultsItem) — bumping forces a fresh,
+// re-filtered entry instead of serving the old one for up to an
+// hour. Bump again any time the filter changes.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v6";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -478,30 +479,60 @@ const IMAGE_URL_REGEX = /\.(png|jpe?g|gif|webp)$/i;
 
 // FPVBase is a hobby FPV multirotor platform — broad keywords like
 // "fpv drone" also pull in fixed-wing RC planes/gliders (a different
-// hobby entirely) and, since "FPV" is now widely used for
-// war-context loitering munitions, the occasional combat-drone
-// design (real example hit during testing: an otherwise-normal-
-// looking frame tagged "kamikaze"). Checked against title + tags +
-// (when available, on the detail endpoint) description — keeps the
-// discovery feed to what it's actually for: hobby FPV drone parts,
-// unrelated to any conflict.
+// hobby entirely), other RC vehicles entirely (boats, cars, tank
+// rovers — Cults3D's own search is loose enough that a jetski or a
+// paddle-board thruster shows up for "fpv drone"), and, since "FPV"
+// is now widely used for war-context loitering munitions, the
+// occasional combat-drone or replica-weapon design (real examples
+// hit during testing: a frame tagged "kamikaze," a Su-75 fighter jet
+// model, a G36 rifle turret). Keyword matching alone misses proper
+// nouns (a jet named "Checkmate" doesn't say "military" anywhere) —
+// combined with Cults3D's own subcategory tags below, which catch
+// exactly those cases structurally instead of by vocabulary.
 const EXCLUDED_TERMS_REGEX = new RegExp(
   [
     // Fixed-wing / RC plane — not a multirotor FPV drone.
     "flying wing", "fixed[- ]wing", "delta wing", "r\\/?c plane",
     "r\\/?c airplane", "glider", "warbird", "biplane", "sailplane",
-    "foam(?:board)? plane", "airplane", "aeroplane",
+    "foam(?:board)? plane", "airplane", "aeroplane", "\\baircraft",
+    "fighter jet", "jet fighter",
+    // Not a flying FPV drone at all — a different RC hobby entirely.
+    "\\bairsoft", "\\bturret", "\\brifle",
     // War/military — keep this strictly a hobby platform.
     "ukrain", "russia", "military", "\\bwar\\b", "kamikaze", "combat",
     "grenade", "munition", "\\bweapon", "warhead", "\\bbomb\\b",
-    "explosive", "\\bied\\b", "artillery"
+    "explosive", "\\bied\\b", "artillery",
+    // Real weaponized/war-drone names — generic terms above wouldn't
+    // catch a proper noun like "Bayraktar" or "Shahed".
+    "bayraktar", "switchblade", "\\bshahed", "su-?75", "su-?57",
+    "\\bmig-?\\d", "\\bf-?16\\b", "\\bf-?22\\b", "\\bf-?35\\b",
+    "predator drone", "reaper drone"
   ].join("|"),
   "i"
 );
 
+// Structural signal alongside the keyword list above: Cults3D lets
+// creators tag a design with its own subcategories, and in practice
+// "RC Vehicles"/"Auto & Moto" (cars, boats, tanks) and "Aircraft &
+// Space" (planes, jets) reliably mark something that isn't a
+// multirotor FPV drone — confirmed against real offenders (a jetski,
+// a tank rover, the Su-75) during testing. Not used as a positive
+// "must be tagged Drones" requirement instead, because plenty of
+// legitimate FPV drones/accessories on Cults3D aren't tagged
+// "Drones" at all (creator-chosen tags, not curated) — that would
+// have thrown out real results, not just junk.
+const EXCLUDED_SUBCATEGORY_SLUGS = new Set([
+  "rc-vehicles", "auto-moto", "aircraft-space", "airsoft"
+]);
+
 function isExcludedCultsItem(item) {
   const haystack = `${item.name || ""} ${(item.tags || []).join(" ")} ${item.description || ""}`;
-  return EXCLUDED_TERMS_REGEX.test(haystack);
+
+  if (EXCLUDED_TERMS_REGEX.test(haystack)) return true;
+
+  const subCategorySlugs = (item.subCategories || []).map(sub => sub && sub.slug);
+
+  return subCategorySlugs.some(slug => EXCLUDED_SUBCATEGORY_SLUGS.has(slug));
 }
 
 // Shared by the list (lean fields only, see fetchCultsKeyword) and
@@ -561,6 +592,7 @@ async function fetchCultsKeyword(keyword, env) {
         url
         illustrationImageUrl
         tags
+        subCategories { slug }
         likesCount
         downloadsCount
         publishedAt
@@ -653,6 +685,7 @@ async function fetchCultsCreationDetail(slug, env) {
       illustrationImageUrl
       description
       tags
+      subCategories { slug }
       illustrations { imageUrl }
       likesCount
       downloadsCount
@@ -683,7 +716,7 @@ async function handleExternalModelDetail(slug, env, ctx) {
   // v2: now filtered (see isExcludedCultsItem) — a slug cached under
   // the old, unfiltered key before this change would otherwise keep
   // serving for up to an hour.
-  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v2-${encodeURIComponent(slug)}`);
+  const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v3-${encodeURIComponent(slug)}`);
 
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
@@ -740,6 +773,7 @@ async function fetchCultsSearchQuery(searchTerm, env) {
         url
         illustrationImageUrl
         tags
+        subCategories { slug }
         likesCount
         downloadsCount
         publishedAt
@@ -778,7 +812,7 @@ async function handleExternalSearch(rawQuery, env, ctx) {
 
   const cache = caches.default;
   const cacheKey = new Request(
-    `https://fpv-base.com/__cache/external-search-v1-${encodeURIComponent(searchTerm.toLowerCase())}`
+    `https://fpv-base.com/__cache/external-search-v2-${encodeURIComponent(searchTerm.toLowerCase())}`
   );
 
   const cached = await cache.match(cacheKey);
