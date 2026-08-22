@@ -8,6 +8,13 @@ let models = [];
 let currentDisplayedModels = [];
 let externalModels = [];
 
+// Live, per-search-term Cults3D results (see scheduleExternalSearch)
+// — distinct from externalModels above (the curated ~20-keyword
+// discovery feed used while just browsing). Kept separate so a
+// search never mixes in generic browse picks unrelated to what was
+// typed.
+let searchExternalModels = [];
+
 // =======================
 // 📦 HTML ELEMENTS
 // =======================
@@ -87,24 +94,28 @@ async function showRequestSuggestion(searchValue, resultsCount) {
 // 🎨 MODEL DISPLAY
 // =======================
 
-// mixExternal: only the default (unsearched) home view mixes in
-// Cults3D picks — search results stay native-only, since "search"
-// reads as "search FPVBase's own catalog," not the wider web. Native
-// and external entries are merged into ONE list before sorting (see
-// sortEntries() below) rather than sorted separately and interleaved
-// afterward — that older approach placed external cards at a fixed
-// position regardless of the chosen sort, so "Most Downloaded" could
-// show a 900-download Cults3D pick near the bottom. Sorting the
-// merged list means every card, native or external, competes on the
-// same real numbers.
-function displayModels(list, { mixExternal = false } = {}) {
+// externalList: which Cults3D picks (if any) to merge in alongside
+// `list` — the curated discovery feed (externalModels) while just
+// browsing, a live per-term Cults3D search (searchExternalModels)
+// while actively searching, so a specific part search ("TBS Source
+// One V5") can surface something Cults3D has even if it never
+// showed up in the ~20-keyword discovery feed (see
+// scheduleExternalSearch() further down). Native and external
+// entries are merged into ONE list before sorting (see sortEntries()
+// below) rather than sorted separately and interleaved afterward —
+// that older approach placed external cards at a fixed position
+// regardless of the chosen sort, so "Most Downloaded" could show a
+// 900-download Cults3D pick near the bottom. Sorting the merged list
+// means every card, native or external, competes on the same real
+// numbers.
+function displayModels(list, { externalList = [] } = {}) {
   currentDisplayedModels = list;
 
   grid.innerHTML = "";
 
   const merged = [
     ...list.map(model => ({ model, external: false })),
-    ...(mixExternal ? externalModels.map(model => ({ model, external: true })) : [])
+    ...externalList.map(model => ({ model, external: true }))
   ];
 
   const entries = sortEntries(merged);
@@ -117,7 +128,7 @@ function displayModels(list, { mixExternal = false } = {}) {
   entries.forEach(({ model, external }) => {
     if (external) {
       grid.appendChild(
-        createExternalModelCard(model, () => displayModels(currentDisplayedModels, { mixExternal }))
+        createExternalModelCard(model, () => displayModels(currentDisplayedModels, { externalList }))
       );
       return;
     }
@@ -156,7 +167,7 @@ function displayModels(list, { mixExternal = false } = {}) {
       </div>
     `;
 
-    attachSaveButton(card, model.id, () => displayModels(currentDisplayedModels, { mixExternal }));
+    attachSaveButton(card, model.id, () => displayModels(currentDisplayedModels, { externalList }));
 
     grid.appendChild(card);
   });
@@ -201,7 +212,7 @@ function updateSortButtons() {
 function setSort(sort) {
   currentSort = sort;
   updateSortButtons();
-  displayModels(currentDisplayedModels, { mixExternal: !searchActive });
+  displayModels(currentDisplayedModels, { externalList: searchActive ? searchExternalModels : externalModels });
 }
 
 sortButtons.all.addEventListener("click", () => setSort("all"));
@@ -301,10 +312,52 @@ window.addEventListener("resize", () => {
   }
 });
 
-// Tracked so setSort() (further up) knows whether to keep mixing in
-// Cults3D picks — "search" means "search FPVBase's own catalog,"
-// external cards have no business showing up in search results.
+// Tracked so setSort() (further up) knows which external list to
+// keep showing alongside a sort change.
 let searchActive = false;
+
+// A specific part (e.g. "TBS Source One V5") can exist on Cults3D
+// without ever surfacing in the curated ~20-keyword discovery feed
+// (externalModels) — this runs the actual typed term against
+// Cults3D live instead. Debounced (not fired on every keystroke):
+// a network request per keystroke would be wasteful and laggy, so
+// native results update instantly while external results "catch up"
+// a beat after typing pauses. `searchToken` guards against a slow
+// response for an earlier keystroke overwriting a newer one.
+const EXTERNAL_SEARCH_DEBOUNCE_MS = 400;
+let externalSearchDebounceTimer = null;
+let externalSearchToken = 0;
+
+async function fetchExternalSearch(query) {
+  try {
+    const response = await fetch(`/api/external-search?q=${encodeURIComponent(query)}`);
+    if (!response.ok) return [];
+    return await response.json();
+  } catch {
+    return [];
+  }
+}
+
+function scheduleExternalSearch(query) {
+  clearTimeout(externalSearchDebounceTimer);
+
+  const token = ++externalSearchToken;
+
+  externalSearchDebounceTimer = setTimeout(async () => {
+    const results = await fetchExternalSearch(query);
+
+    // A newer keystroke already started a fresher search since this
+    // one was scheduled — stale, discard rather than clobbering.
+    if (token !== externalSearchToken) return;
+
+    searchExternalModels = results;
+
+    const nativeResults = advancedSearch(query, models);
+    displayModels(nativeResults, { externalList: searchExternalModels });
+
+    await showRequestSuggestion(query, nativeResults.length + searchExternalModels.length);
+  }, EXTERNAL_SEARCH_DEBOUNCE_MS);
+}
 
 searchInput.addEventListener("input", async () => {
   const value = searchInput.value.trim();
@@ -312,7 +365,20 @@ searchInput.addEventListener("input", async () => {
 
   const results = advancedSearch(value, models);
 
-  displayModels(results, { mixExternal: !searchActive });
+  if (!searchActive) {
+    clearTimeout(externalSearchDebounceTimer);
+    externalSearchToken++; // invalidates any in-flight external search
+    searchExternalModels = [];
+    displayModels(results, { externalList: externalModels });
+  } else {
+    // Clear stale external results from a previous term immediately
+    // (avoids briefly showing a mismatched Cults3D card while typing)
+    // — scheduleExternalSearch() backfills matching ones shortly after.
+    searchExternalModels = [];
+    displayModels(results, { externalList: searchExternalModels });
+    scheduleExternalSearch(value);
+  }
+
   hidePopularModelsHeaderWhileTyping();
 
   await showRequestSuggestion(value, results.length);
@@ -365,7 +431,7 @@ async function init() {
   ]);
 
   updateSortButtons();
-  displayModels(models, { mixExternal: true });
+  displayModels(models, { externalList: externalModels });
 
   renderStats(stats);
 }

@@ -33,6 +33,10 @@ export default {
       return handleExternalModelDetail(url.searchParams.get("slug"), env, ctx);
     }
 
+    if (url.pathname === "/api/external-search" && request.method === "GET") {
+      return handleExternalSearch(url.searchParams.get("q"), env, ctx);
+    }
+
     // Everything else: static files (safety net — in practice
     // Cloudflare already serves them before ever calling this
     // script when a file matches).
@@ -702,6 +706,98 @@ async function handleExternalModelDetail(slug, env, ctx) {
 
   const response = jsonResponse(normalized, 200);
   response.headers.set("Cache-Control", `public, max-age=${EXTERNAL_MODEL_DETAIL_CACHE_SECONDS}`);
+
+  ctx.waitUntil(cache.put(cacheKey, response.clone()));
+
+  return response;
+}
+
+// =======================================================
+// 🔎 EXTERNAL SEARCH (live Cults3D lookup — home page search only)
+// The discovery feed above (handleExternalModels) only ever covers
+// ~20 broad category keywords — searching a specific part by name
+// (e.g. "TBS Source One V5") can legitimately exist on Cults3D
+// without ever surfacing in that curated feed. This runs the
+// visitor's own search term against Cults3D directly instead of the
+// pre-fetched list, same filtering (isExcludedCultsItem) applied.
+// =======================================================
+
+const EXTERNAL_SEARCH_LIMIT = 20;
+const EXTERNAL_SEARCH_CACHE_SECONDS = 60 * 60;
+const EXTERNAL_SEARCH_MIN_LENGTH = 2;
+
+async function fetchCultsSearchQuery(searchTerm, env) {
+  const auth = btoa(`${env.CULTS_USERNAME}:${env.CULTS_API_KEY}`);
+
+  // No explicit sort — Cults3D's own relevance ranking (its default)
+  // is what you want for "does this specific part exist," unlike the
+  // BY_LIKES override used for the broad category keywords above.
+  const query = `{
+    creationsSearchBatch(query: ${JSON.stringify(searchTerm)}, onlySafe: true, limit: ${EXTERNAL_SEARCH_LIMIT}) {
+      results {
+        identifier
+        name
+        url
+        illustrationImageUrl
+        tags
+        likesCount
+        downloadsCount
+        publishedAt
+        creator { nick }
+      }
+    }
+  }`;
+
+  const response = await fetch("https://cults3d.com/graphql", {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${auth}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ query })
+  });
+
+  if (!response.ok) return [];
+
+  const body = await response.json();
+  const results = body.data && body.data.creationsSearchBatch && body.data.creationsSearchBatch.results;
+
+  return results || [];
+}
+
+async function handleExternalSearch(rawQuery, env, ctx) {
+  const searchTerm = (rawQuery || "").trim();
+
+  if (searchTerm.length < EXTERNAL_SEARCH_MIN_LENGTH) {
+    return jsonResponse([], 200);
+  }
+
+  if (!env.CULTS_USERNAME || !env.CULTS_API_KEY) {
+    return jsonResponse([], 200);
+  }
+
+  const cache = caches.default;
+  const cacheKey = new Request(
+    `https://fpv-base.com/__cache/external-search-v1-${encodeURIComponent(searchTerm.toLowerCase())}`
+  );
+
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  let normalized = [];
+
+  try {
+    const results = await fetchCultsSearchQuery(searchTerm, env);
+
+    normalized = results
+      .filter(item => item && item.identifier && !isExcludedCultsItem(item))
+      .map(normalizeCultsItem);
+  } catch {
+    normalized = [];
+  }
+
+  const response = jsonResponse(normalized, 200);
+  response.headers.set("Cache-Control", `public, max-age=${EXTERNAL_SEARCH_CACHE_SECONDS}`);
 
   ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
