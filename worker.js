@@ -529,11 +529,21 @@ const CULTS_SEARCH_KEYWORDS = [
 // 300 near-copies.
 const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 
-// How many keywords' worth of Cults3D requests run at once — see the
-// batching loop in handleExternalModels(). Kept comfortably under
-// whatever the real concurrent-subrequest ceiling turns out to be,
-// rather than the keyword count itself.
-const CULTS_KEYWORD_BATCH_SIZE = 10;
+// How many keywords' worth of Cults3D requests run at once, and how
+// long to pause between batches — see the batching loop in
+// handleExternalModels(). Originally sized against Cloudflare's own
+// subrequest ceiling, but live testing (via `wrangler tail`) showed
+// Cults3D's OWN API rate-limits bursts (HTTP 429 "Retry later") well
+// below that: a lone request always succeeded, but a batch of 10
+// fired at once got rejected outright even when nothing else was
+// hitting the API. Small batches with a short gap between them stay
+// under whatever that real limit is instead of just guessing at it.
+const CULTS_KEYWORD_BATCH_SIZE = 3;
+const CULTS_KEYWORD_BATCH_DELAY_MS = 350;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // Cached at the edge for an hour (Cache-Control below, read back via
 // the Cache API) so a page load never waits on — or spams — Cults3D's
@@ -559,7 +569,7 @@ const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
 //    nothing" investigation should check for 429s before assuming
 //    the bug is here.
 // Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v16";
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v17";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -730,6 +740,14 @@ async function fetchCultsKeyword(keyword, env) {
   // which is what actually emptied the catalog, not the keyword
   // count itself) rather than just letting the request count grow.
   if (!response.ok) {
+    // Worth a log line specifically for 429s (not the generic case
+    // below) — an empty catalog caused by Cults3D's own rate limit
+    // looks identical to a real bug from the outside otherwise, and
+    // that distinction cost real time to track down once already.
+    if (response.status === 429) {
+      console.error(`Cults3D rate-limited keyword "${keyword}" (429) — will retry on the next cache refresh.`);
+    }
+
     await response.text().catch(() => {});
     return [];
   }
@@ -791,14 +809,15 @@ async function handleExternalModels(env, ctx) {
   let succeeded = false;
 
   try {
-    // Batched, not one giant Promise.all over every keyword — a
-    // second line of defense alongside always draining failed
-    // responses above (the actual fix for the cascading cancellation
-    // that was emptying this list); staggering requests can't hurt.
+    // Small batches with a pause between them — see
+    // CULTS_KEYWORD_BATCH_SIZE for why (Cults3D's own rate limit,
+    // not Cloudflare's subrequest ceiling as first suspected).
     const perKeyword = [];
 
     for (let i = 0; i < CULTS_SEARCH_KEYWORDS.length; i += CULTS_KEYWORD_BATCH_SIZE) {
       const batch = CULTS_SEARCH_KEYWORDS.slice(i, i + CULTS_KEYWORD_BATCH_SIZE);
+
+      if (i > 0) await sleep(CULTS_KEYWORD_BATCH_DELAY_MS);
 
       const batchResults = await Promise.all(
         batch.map(keyword => fetchCultsKeyword(keyword, env).catch(() => []))
