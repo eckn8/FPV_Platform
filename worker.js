@@ -539,20 +539,27 @@ const CULTS_KEYWORD_BATCH_SIZE = 10;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v13): the actual root cause behind "Too many
-// subrequests" turned out to be a non-ok Cults3D response never
-// having its body read (fetchCultsKeyword and friends now always
-// drain it, ok or not) — Cloudflare's own deadlock prevention starts
-// canceling OTHER in-flight requests once too many unread bodies
-// pile up, which is what was really emptying the catalog, not the
-// keyword count on its own. A second bug compounded it: a failed
-// attempt got cached the same as a real result, so the FIRST failure
-// on a fresh key kept replaying for the rest of the hour even after
-// deploying the real fix — handleExternalModels only caches now on
-// genuine success (see `succeeded`). Bumping once more clears out
-// whatever bad empty result is sitting under v13 from before that
-// second fix. Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v14";
+// Versioned (v16) — three real bugs got found and fixed chasing one
+// live "empty catalog" incident, each worth remembering on its own:
+// 1. A non-ok Cults3D response never had its body read
+//    (fetchCultsKeyword and friends now always drain it, ok or not)
+//    — Cloudflare's own deadlock prevention starts canceling OTHER
+//    in-flight requests once too many unread bodies pile up, which
+//    surfaced as "Too many subrequests" even though the keyword
+//    count itself wasn't actually the problem.
+// 2. A failed attempt got cached the same as a real result, so the
+//    first failure after any cache-key bump kept replaying for the
+//    rest of the hour even once the real fix was deployed —
+//    handleExternalModels only caches now on genuine success (see
+//    `succeeded`).
+// 3. The actual trigger that day was Cults3D's own rate limit (HTTP
+//    429) from unusually heavy manual testing, not a code defect at
+//    all — confirmed via `wrangler tail`, self-resolved once the
+//    limit reset. Left as a reminder that a "why is this returning
+//    nothing" investigation should check for 429s before assuming
+//    the bug is here.
+// Bump again any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v16";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
