@@ -433,7 +433,11 @@ const CULTS_SEARCH_KEYWORDS = [
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d";
+// Versioned (v2): the response shape changed (description/tags/
+// images added) — bumping this forces a fresh entry instead of
+// serving the old shape to newly-deployed client code for up to an
+// hour. Bump again any time the shape changes.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v2";
 
 async function fetchCultsKeyword(keyword, env) {
   const auth = btoa(`${env.CULTS_USERNAME}:${env.CULTS_API_KEY}`);
