@@ -618,12 +618,30 @@ async function fetchCultsKeyword(keyword, env) {
   return results || [];
 }
 
+// Cloudflare's own zone-level "Browser Cache TTL" setting rewrites
+// whatever max-age we set below into a much longer value for what
+// browsers actually receive (observed live: rewritten to 4h) —
+// completely independent of the versioned caches.default keys above,
+// and outside anything worker.js controls directly. Left alone, a
+// browser would keep serving its own stale copy of a filtered
+// list/search for hours after any change here, no matter how
+// aggressively the internal cache key gets bumped. Every response
+// actually handed back to a client goes through this first — only
+// OUR OWN edge cache (caches.default, still governed by the max-age
+// set before storing) gets to benefit from a long TTL; browsers
+// never get the chance to cache these themselves.
+function noBrowserCache(response) {
+  const copy = new Response(response.body, response);
+  copy.headers.set("Cache-Control", "no-store");
+  return copy;
+}
+
 async function handleExternalModels(env, ctx) {
   const cache = caches.default;
   const cacheKey = new Request(EXTERNAL_MODELS_CACHE_KEY);
 
   const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (cached) return noBrowserCache(cached);
 
   // No credentials configured: fail open with an empty list rather
   // than an error — the home page just shows native models only,
@@ -657,7 +675,7 @@ async function handleExternalModels(env, ctx) {
 
   ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
-  return response;
+  return noBrowserCache(response);
 }
 
 // =======================================================
@@ -719,7 +737,7 @@ async function handleExternalModelDetail(slug, env, ctx) {
   const cacheKey = new Request(`https://fpv-base.com/__cache/external-model-detail-v3-${encodeURIComponent(slug)}`);
 
   const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (cached) return noBrowserCache(cached);
 
   if (!env.CULTS_USERNAME || !env.CULTS_API_KEY) {
     return jsonResponse(null, 200);
@@ -742,7 +760,7 @@ async function handleExternalModelDetail(slug, env, ctx) {
 
   ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
-  return response;
+  return noBrowserCache(response);
 }
 
 // =======================================================
@@ -816,7 +834,7 @@ async function handleExternalSearch(rawQuery, env, ctx) {
   );
 
   const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (cached) return noBrowserCache(cached);
 
   let normalized = [];
 
@@ -835,5 +853,5 @@ async function handleExternalSearch(rawQuery, env, ctx) {
 
   ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
-  return response;
+  return noBrowserCache(response);
 }
