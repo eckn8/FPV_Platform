@@ -534,12 +534,15 @@ const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 // handleExternalModels(). Originally sized against Cloudflare's own
 // subrequest ceiling, but live testing (via `wrangler tail`) showed
 // Cults3D's OWN API rate-limits bursts (HTTP 429 "Retry later") well
-// below that: a lone request always succeeded, but a batch of 10
-// fired at once got rejected outright even when nothing else was
-// hitting the API. Small batches with a short gap between them stay
-// under whatever that real limit is instead of just guessing at it.
-const CULTS_KEYWORD_BATCH_SIZE = 3;
-const CULTS_KEYWORD_BATCH_DELAY_MS = 350;
+// below that: a lone request always succeeded, but even a batch of 3
+// with a 350ms gap between batches still got rejected outright. Gone
+// fully sequential (one request at a time, real pause between each)
+// as the gentlest pattern possible against an API whose actual
+// tolerance isn't published — makes a cold cache-miss slower (all 46
+// keywords, one after another) but that only ever happens once an
+// hour per edge, and a slow real result beats a fast empty one.
+const CULTS_KEYWORD_BATCH_SIZE = 1;
+const CULTS_KEYWORD_BATCH_DELAY_MS = 400;
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -569,7 +572,7 @@ const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
 //    nothing" investigation should check for 429s before assuming
 //    the bug is here.
 // Bump again any time the keywords or filter change.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v17";
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v18";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
