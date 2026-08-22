@@ -998,7 +998,17 @@ function createExternalModelCard(model, onToggled) {
   const card = document.createElement("a");
 
   card.className = "model-card external";
-  card.href = `model.html?id=${model.id}`;
+
+  // The slug (Cults3D's own url's last segment) travels in the link
+  // itself now, not just the id — the detail page used to re-look-up
+  // the id in the CURRENT discovery feed to find it, which fails for
+  // a card that was visible a moment ago but has since rotated out
+  // (the feed re-ranks/refreshes regularly) even though the design
+  // itself is still live on Cults3D. Carrying the slug means the
+  // detail page can go straight to Cults3D for it instead of
+  // depending on a list that may have moved on.
+  const slug = model.url ? model.url.split("/").filter(Boolean).pop() : "";
+  card.href = `model.html?id=${model.id}&slug=${encodeURIComponent(slug)}`;
 
   const { digits, suffix } = formatCompactValue(model.downloads);
 

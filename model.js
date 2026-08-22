@@ -59,48 +59,57 @@ async function init() {
 // =======================
 
 async function renderExternalModelPage(externalId) {
-  // The home page's discovery list (see /api/fpv-catalog in
-  // worker.js) is deliberately lean — no description/tags/full image
-  // gallery, those would bloat every home page load for a handful of
-  // detail-page views. Re-fetching it here just to find this one
-  // entry's summary (title/thumbnail/url) is still simple enough not
-  // to need its own endpoint.
+  // The card that links here now carries the Cults3D slug directly
+  // (see createExternalModelCard in data.js) — going straight to
+  // Cults3D with it means this still works even if the exact id has
+  // since rotated out of the discovery feed (which re-ranks/
+  // refreshes regularly) between when a card was shown and when it's
+  // actually clicked — a card that WAS on the home page a moment ago
+  // otherwise landed on "Model not found," even though the design
+  // was still perfectly live on Cults3D. Only a link from before this
+  // fix (no slug param — an old bookmark, say) falls back to the
+  // previous "look the id up in the current feed" behavior.
+  const slugParam = params.get("slug");
+
   let summary = null;
 
-  try {
-    const response = await fetch("/api/fpv-catalog");
+  if (!slugParam) {
+    try {
+      const response = await fetch("/api/fpv-catalog");
 
-    if (response.ok) {
-      const list = await response.json();
-      summary = list.find(item => item.id === externalId) || null;
+      if (response.ok) {
+        const list = await response.json();
+        summary = list.find(item => item.id === externalId) || null;
+      }
+    } catch {
+      summary = null;
     }
-  } catch {
-    summary = null;
-  }
 
-  if (!summary) {
-    document.body.innerHTML = `
-      <main style="padding:40px;">
-        <h1>Model not found</h1>
-        <p>This design isn't in FPVBase's current picks anymore — it may still be on Cults3D directly.</p>
-        <button onclick="window.location.href='index.html'">
-          Back to home
-        </button>
-      </main>
-    `;
-    return;
+    if (!summary) {
+      document.body.innerHTML = `
+        <main style="padding:40px;">
+          <h1>Model not found</h1>
+          <p>This design isn't in FPVBase's current picks anymore — it may still be on Cults3D directly.</p>
+          <button onclick="window.location.href='index.html'">
+            Back to home
+          </button>
+        </main>
+      `;
+      return;
+    }
   }
 
   // Full details (description/tags/gallery) fetched on demand from
-  // Cults3D's own `creation(slug:)` query, keyed by the last segment
-  // of the item's Cults3D url — that's genuinely what Cults3D expects
-  // there (confirmed against the real API), no separate id mapping
-  // needed. A failure here still leaves a usable (if sparser) page,
-  // rather than the whole detail page failing over one field.
+  // Cults3D's own `creation(slug:)` query — that's genuinely what
+  // Cults3D expects there (confirmed against the real API). A
+  // failure here still leaves a usable (if sparser) page whenever a
+  // summary is available, rather than the whole detail page failing
+  // over one field.
+  const slug = slugParam || summary.url.split("/").filter(Boolean).pop();
+
   let detail = null;
 
   try {
-    const slug = summary.url.split("/").filter(Boolean).pop();
     const response = await fetch(`/api/fpv-item?slug=${encodeURIComponent(slug)}`);
 
     if (response.ok) {
@@ -110,7 +119,20 @@ async function renderExternalModelPage(externalId) {
     detail = null;
   }
 
-  const model = { ...summary, ...(detail || {}) };
+  if (!detail && !summary) {
+    document.body.innerHTML = `
+      <main style="padding:40px;">
+        <h1>Model not found</h1>
+        <p>This design isn't available on Cults3D anymore.</p>
+        <button onclick="window.location.href='index.html'">
+          Back to home
+        </button>
+      </main>
+    `;
+    return;
+  }
+
+  const model = { ...(summary || {}), ...(detail || {}) };
 
   // ---- Images ---------------------------------------------------
 
