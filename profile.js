@@ -17,11 +17,12 @@ let currentIsOwner = false;
 let activeTab = "publications";
 let userModels = [];
 let savedModels = [];
+let savedExternalModels = [];
 
-function displayModels(list) {
+function displayModels(list, { externalExtras = [] } = {}) {
   grid.innerHTML = "";
 
-  if (list.length === 0) {
+  if (list.length === 0 && externalExtras.length === 0) {
     grid.innerHTML = activeTab === "saved"
       ? "<p>You haven't saved any models yet.</p>"
       : "<p>No models published by this user yet.</p>";
@@ -55,10 +56,21 @@ function displayModels(list) {
 
     grid.appendChild(card);
   });
+
+  // Saved Cults3D picks — only ever passed in for the Saved tab (see
+  // renderActiveTab()); un-saving removes the card immediately, same
+  // as native ones above.
+  externalExtras.forEach(model => {
+    grid.appendChild(createExternalModelCard(model, () => renderActiveTab()));
+  });
 }
 
 function renderActiveTab() {
-  displayModels(activeTab === "saved" ? savedModels : userModels);
+  if (activeTab === "saved") {
+    displayModels(savedModels, { externalExtras: savedExternalModels });
+  } else {
+    displayModels(userModels);
+  }
 }
 
 function setTab(tab) {
@@ -315,6 +327,9 @@ async function init() {
   if (currentIsOwner) {
     const savedIds = getSavedModelIds().map(String);
     savedModels = models.filter(model => savedIds.includes(String(model.id)));
+
+    await primeExternalFavorites();
+    savedExternalModels = await getSavedExternalModels();
   }
 
   const relevantIds = [...new Set([

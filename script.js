@@ -87,27 +87,20 @@ async function showRequestSuggestion(searchValue, resultsCount) {
 // 🎨 MODEL DISPLAY
 // =======================
 
-// Fills the grid out with Cults3D picks (see externalModels/init())
-// only when the native catalog is still small, interleaved at a
-// regular interval rather than dumped at the end — genuinely
-// "mixed in," not just appended. Caps at MAX_EXTERNAL regardless of
-// how sparse the native catalog is, so the grid is never ALL
-// external. Returns { model, external }[] either way.
-const HOME_GRID_TARGET_SIZE = 12;
-const MAX_EXTERNAL_CARDS = 8;
-
+// Fills the grid out with Cults3D picks (see externalModels/init()),
+// interleaved at a regular interval rather than dumped at the end —
+// genuinely "mixed in," not just appended. Shows every fetched
+// result (no artificial cap) — the point of this feature is making
+// the home page look populated, so capping it well below what's
+// actually available worked against that. Returns { model,
+// external }[] either way.
 function mixInExternalModels(nativeList) {
   const entries = nativeList.map(model => ({ model, external: false }));
 
-  const externalCount = Math.min(
-    MAX_EXTERNAL_CARDS,
-    Math.max(0, HOME_GRID_TARGET_SIZE - nativeList.length),
-    externalModels.length
-  );
+  const chosen = externalModels;
 
-  if (externalCount === 0) return entries;
+  if (chosen.length === 0) return entries;
 
-  const chosen = externalModels.slice(0, externalCount);
   const interval = Math.max(1, Math.round((entries.length + 1) / (chosen.length + 1)));
 
   const merged = [];
@@ -130,27 +123,6 @@ function mixInExternalModels(nativeList) {
   return merged;
 }
 
-// Same meta-row look as cardMetaMarkup() (data.js), but pulling the
-// creator/download numbers straight off the Cults3D result itself
-// instead of FPVBase's own primed caches, which obviously don't
-// know anything about a design that was never uploaded here.
-function externalCardMetaMarkup(model) {
-  const { digits, suffix } = formatCompactValue(model.downloads);
-
-  return `
-    <div class="card-meta">
-      <span class="card-creator">${escapeHtml(model.creator)}</span>
-      <span class="card-downloads" title="${model.downloads} downloads on Cults3D">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 3v12m0 0l-5-5m5 5l5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4 20h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-        </svg>
-        ${digits}${suffix}
-      </span>
-    </div>
-  `;
-}
-
 // mixExternal: only the default (unsearched) home view mixes in
 // Cults3D picks — search results stay native-only, since "search"
 // reads as "search FPVBase's own catalog," not the wider web.
@@ -169,27 +141,9 @@ function displayModels(list, { mixExternal = false } = {}) {
 
   entries.forEach(({ model, external }) => {
     if (external) {
-      const card = document.createElement("a");
-
-      card.className = "model-card external";
-      card.href = model.url;
-      card.target = "_blank";
-      card.rel = "noopener noreferrer";
-
-      card.innerHTML = `
-        <span class="external-badge">via Cults3D</span>
-        ${
-          model.image
-            ? `<img class="model-img" src="${model.image}" alt="${escapeHtml(model.title)}">`
-            : `<div class="model-image">${droneIconMarkup()}</div>`
-        }
-        <div class="model-content">
-          <h3>${escapeHtml(model.title)}</h3>
-          ${externalCardMetaMarkup(model)}
-        </div>
-      `;
-
-      grid.appendChild(card);
+      grid.appendChild(
+        createExternalModelCard(model, () => displayModels(currentDisplayedModels, { mixExternal }))
+      );
       return;
     }
 
@@ -411,7 +365,8 @@ async function init() {
 
   await Promise.all([
     primeModelDownloads(models.map(model => model.id)),
-    primeFavorites()
+    primeFavorites(),
+    primeExternalFavorites()
   ]);
 
   updateSortButtons();

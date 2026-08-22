@@ -38,13 +38,6 @@
      background" text color and DOES flip. */
   --on-dark: #ffffff;
 
-  /* Cults3D's own brand color, used only on the external-model
-     badge/border on the home page (see .model-card.external) —
-     doesn't flip with the theme, same reasoning as --scarlet/--blue:
-     it identifies a specific outside source, not a piece of FPVBase's
-     own UI. */
-  --cults-purple: #a78bfa;
-
   /* Ghost (unlit) seven-segment digit background — a low-opacity
      tint of the *opposite* of the current surface color, so an
      unlit segment stays faintly visible against whichever panel
@@ -626,39 +619,18 @@ nav a:hover {
   color: var(--scarlet);
 }
 
-/* External discovery card (home page only — see script.js) — a
-   design pulled in from Cults3D's API to fill out the grid while
-   the native catalog is still small. The whole card is a real
-   <a target="_blank"> straight to the Cults3D page (no file is ever
-   fetched or hosted here); the purple border + badge are the
-   required "visually separated, clearly attributed" treatment,
-   not just a style choice. */
+/* External discovery card (home page + saved — see
+   createExternalModelCard() in data.js) — a design pulled in from
+   Cults3D's API to fill out the grid while the native catalog is
+   still small. Same look as a native card (no special border): the
+   whole card is a real <a> to FPVBase's own model page, and the
+   "via Cults3D" line sitting where a native card's folder path goes
+   (.model-content .folder-path, styled below) is the attribution —
+   plain text was enough, it didn't need a badge/border on top. */
 .model-card.external {
-  border-color: var(--cults-purple);
   text-decoration: none;
   color: inherit;
   display: block;
-}
-
-.model-card.external:hover {
-  border-color: var(--cults-purple);
-  background: rgba(167, 139, 250, 0.08);
-}
-
-.external-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 1;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 4px 8px;
-  border: 1px solid var(--cults-purple);
-  background: rgba(15, 17, 12, 0.85);
-  color: var(--cults-purple);
 }
 
 .model-image {

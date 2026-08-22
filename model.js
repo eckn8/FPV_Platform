@@ -19,6 +19,14 @@ async function init() {
   // call.
   await authReady;
 
+  // Cults3D picks (see script.js/worker.js) are tagged with a
+  // "cults-" id prefix — no row in Supabase to look up, they route
+  // to a separate, much lighter render path below instead.
+  if (id && id.startsWith("cults-")) {
+    await renderExternalModelPage(id);
+    return;
+  }
+
   const model = await findModelById(id);
 
   if (!model) {
@@ -35,6 +43,129 @@ async function init() {
   }
 
   await renderModelPage(model);
+}
+
+// =======================
+// 🔗 CULTS3D DETAIL PAGE
+// A Cults3D card links here FIRST (never straight to Cults3D) so
+// clicking it feels exactly like opening a native model — same
+// layout, images, description, creator, tags. Everything that only
+// makes sense for something actually published here (versions,
+// comments, edit/archive tools, reporting) is hidden rather than
+// adapted: this is borrowed metadata, not FPVBase content. The
+// download button is the one deliberate difference — it always
+// says "Download via Cults3D" and leads back there, since the real
+// files are never fetched or hosted on FPVBase (see worker.js).
+// =======================
+
+async function renderExternalModelPage(externalId) {
+  // No dedicated single-item endpoint — the home page's already-
+  // cached discovery list (see /api/external-models in worker.js)
+  // is small enough that re-fetching it and finding this one entry
+  // is simpler than adding a second Worker route.
+  let model = null;
+
+  try {
+    const response = await fetch("/api/external-models");
+
+    if (response.ok) {
+      const list = await response.json();
+      model = list.find(item => item.id === externalId) || null;
+    }
+  } catch {
+    model = null;
+  }
+
+  if (!model) {
+    document.body.innerHTML = `
+      <main style="padding:40px;">
+        <h1>Model not found</h1>
+        <p>This design isn't in FPVBase's current picks anymore — it may still be on Cults3D directly.</p>
+        <button onclick="window.location.href='index.html'">
+          Back to home
+        </button>
+      </main>
+    `;
+    return;
+  }
+
+  // ---- Images ---------------------------------------------------
+
+  const images = model.images && model.images.length > 0
+    ? model.images
+    : model.image
+      ? [model.image]
+      : [];
+
+  renderGallery(document.getElementById("modelImageContainer"), images, model.title);
+
+  // ---- Main content -----------------------------------------------
+
+  document.getElementById("title").textContent = model.title;
+  document.getElementById("description").textContent =
+    model.description || "No description provided.";
+
+  // Doubles as the folder path on a native card — here it's the
+  // attribution line instead, same spot, same style.
+  document.getElementById("modelPath").textContent = "via Cults3D";
+
+  const creatorLink = document.getElementById("creator");
+  creatorLink.textContent = model.creator || "Cults3D creator";
+  creatorLink.href = model.url;
+  creatorLink.target = "_blank";
+  creatorLink.rel = "noopener noreferrer";
+
+  const tagsContainer = document.getElementById("tags");
+  tagsContainer.innerHTML = "";
+
+  (model.tags || []).forEach(tag => {
+    const span = document.createElement("span");
+    span.className = "tag";
+    span.textContent = tag;
+    tagsContainer.appendChild(span);
+  });
+
+  // ---- Save (own external_favorites table — see data.js) ---------
+
+  await primeExternalFavorites();
+
+  const saveButton = document.getElementById("saveButton");
+
+  function updateSaveButton() {
+    const saved = isExternalModelSaved(model.id);
+    saveButton.textContent = saved ? "Remove from favorites" : "Save";
+    saveButton.classList.toggle("saved", saved);
+  }
+
+  saveButton.addEventListener("click", async () => {
+    if (!requireAuth()) return;
+
+    await toggleExternalSavedModel(model);
+    updateSaveButton();
+  });
+
+  updateSaveButton();
+
+  // No public "N saves" counter for external picks (see data.js) —
+  // hide the readout rather than show a stale/misleading zero.
+  document.querySelector(".save-readout").style.display = "none";
+
+  // ---- Download — always leads back to Cults3D --------------------
+
+  const downloadMainButton = document.getElementById("downloadMainButton");
+  downloadMainButton.textContent = "Download via Cults3D";
+  downloadMainButton.href = model.url;
+  downloadMainButton.target = "_blank";
+  downloadMainButton.rel = "noopener noreferrer";
+
+  // ---- Hide everything specific to native FPVBase content ---------
+
+  document.getElementById("reportModelButton").style.display = "none";
+  document.getElementById("technicalInfoSection").style.display = "none";
+  document.getElementById("versionsSection").style.display = "none";
+  document.getElementById("commentsSection").style.display = "none";
+  // creatorActions/archivedWarning stay hidden by their own existing
+  // defaults — isCreator() (native-only) is never true here.
 }
 
 async function renderModelPage(model) {

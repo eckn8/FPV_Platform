@@ -821,7 +821,17 @@ function getSaveCount(modelId) {
 // DocumentFragment). `onToggled`, if given, runs after a
 // successful toggle — used by favorites.html to drop the card
 // once it's been un-saved.
-function attachSaveButton(card, modelId, onToggled) {
+//
+// `model` is either a plain model id (native models — the original,
+// still-used shape) or a full external model object (Cults3D picks,
+// tagged `external: true` by createExternalModelCard() below) — an
+// external "model" has no row in `models`, so it can't be saved
+// through the model_id foreign key favorites uses; see
+// EXTERNAL FAVORITES further down for its own table.
+function attachSaveButton(card, model, onToggled) {
+  const isExternal = !!(model && typeof model === "object");
+  const modelId = isExternal ? model.id : model;
+
   const button = document.createElement("button");
   button.type = "button";
 
@@ -835,7 +845,7 @@ function attachSaveButton(card, modelId, onToggled) {
   `;
 
   function updateState() {
-    const saved = isModelSaved(modelId);
+    const saved = isExternal ? isExternalModelSaved(modelId) : isModelSaved(modelId);
     button.className = `card-save-btn${saved ? " saved" : ""}`;
     button.title = saved ? "Remove from favorites" : "Save";
   }
@@ -844,15 +854,181 @@ function attachSaveButton(card, modelId, onToggled) {
 
   button.addEventListener("click", async event => {
     event.stopPropagation();
+    // The card itself is a real <a> for external models (see
+    // createExternalModelCard) — without this, clicking the save
+    // button would also follow the link underneath it.
+    event.preventDefault();
     if (!requireAuth()) return;
 
-    await toggleSavedModel(modelId);
+    if (isExternal) {
+      await toggleExternalSavedModel(model);
+    } else {
+      await toggleSavedModel(modelId);
+    }
+
     updateState();
 
     if (onToggled) onToggled();
   });
 
   card.appendChild(button);
+}
+
+// =======================
+// 🔗 EXTERNAL FAVORITES (saving a Cults3D discovery card)
+// A Cults3D pick has no row in `models`, so it can't use the
+// model_id foreign key favorites relies on — its own small table
+// instead, keyed by (user_id, external_id), storing just enough
+// (title/image/url/creator/downloads) to render it again later
+// without re-fetching Cults3D. Private — no public "N saves"
+// counter, Cults3D's own like/download counts already do that job
+// on the card. See supabase_external_favorites.sql.
+// =======================
+
+let _externalFavoriteIdsCache = null;
+
+// Call once before reading isExternalModelSaved() — same "prime
+// once per page load" pattern as primeFavorites().
+async function primeExternalFavorites() {
+  const userId = getCurrentUserId();
+
+  if (!userId) {
+    _externalFavoriteIdsCache = new Set();
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("external_favorites")
+    .select("external_id")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error loading external favorites:", error.message);
+    _externalFavoriteIdsCache = new Set();
+    return;
+  }
+
+  _externalFavoriteIdsCache = new Set(data.map(row => row.external_id));
+}
+
+function isExternalModelSaved(externalId) {
+  return _externalFavoriteIdsCache ? _externalFavoriteIdsCache.has(externalId) : false;
+}
+
+async function toggleExternalSavedModel(model) {
+  const userId = getCurrentUserId();
+  if (!userId) return false;
+
+  if (!_externalFavoriteIdsCache) {
+    await primeExternalFavorites();
+  }
+
+  if (_externalFavoriteIdsCache.has(model.id)) {
+    const { error } = await supabaseClient
+      .from("external_favorites")
+      .delete()
+      .eq("external_id", model.id)
+      .eq("user_id", userId);
+
+    if (error) return false;
+
+    _externalFavoriteIdsCache.delete(model.id);
+  } else {
+    const { error } = await supabaseClient
+      .from("external_favorites")
+      .insert({
+        external_id: model.id,
+        user_id: userId,
+        source: model.source || "cults3d",
+        title: model.title,
+        image: model.image,
+        url: model.url,
+        creator: model.creator,
+        downloads: model.downloads || 0
+      });
+
+    if (error && error.code !== "23505") return false;
+
+    _externalFavoriteIdsCache.add(model.id);
+  }
+
+  return true;
+}
+
+// Full saved rows (not just ids) — used by favorites.js/profile.js
+// to actually render the saved cards, since the summary data lives
+// nowhere else once a Cults3D item ages out of the home page's
+// cached discovery feed (see /api/external-models).
+async function getSavedExternalModels() {
+  const userId = getCurrentUserId();
+  if (!userId) return [];
+
+  const { data, error } = await supabaseClient
+    .from("external_favorites")
+    .select("external_id, source, title, image, url, creator, downloads")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading saved external models:", error.message);
+    return [];
+  }
+
+  return data.map(row => ({
+    id: row.external_id,
+    source: row.source,
+    title: row.title,
+    image: row.image,
+    url: row.url,
+    creator: row.creator,
+    downloads: row.downloads,
+    external: true
+  }));
+}
+
+// Shared external-model card — used on the home page (mixed into
+// the native grid) and wherever a saved Cults3D pick needs to show
+// up again (favorites.html, the profile Saved tab). Links to
+// FPVBase's OWN model.html first (model.js detects the "cults-" id
+// prefix and renders Cults3D's metadata there) — never straight to
+// Cults3D, so the click-through behavior matches a native card
+// exactly; the actual file download still only ever happens on
+// Cults3D itself.
+function createExternalModelCard(model, onToggled) {
+  const card = document.createElement("a");
+
+  card.className = "model-card external";
+  card.href = `model.html?id=${model.id}`;
+
+  const { digits, suffix } = formatCompactValue(model.downloads);
+
+  card.innerHTML = `
+    ${
+      model.image
+        ? `<img class="model-img" src="${model.image}" alt="${escapeHtml(model.title)}">`
+        : `<div class="model-image">${droneIconMarkup()}</div>`
+    }
+    <div class="model-content">
+      <h3>${escapeHtml(model.title)}</h3>
+
+      <p class="folder-path">via Cults3D</p>
+
+      <div class="card-meta">
+        <span class="card-creator">${escapeHtml(model.creator || "Cults3D creator")}</span>
+        <span class="card-downloads" title="${model.downloads || 0} downloads on Cults3D">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3v12m0 0l-5-5m5 5l5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 20h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+          ${digits}${suffix}
+        </span>
+      </div>
+    </div>
+  `;
+
+  attachSaveButton(card, model, onToggled);
+
+  return card;
 }
 
 // =======================

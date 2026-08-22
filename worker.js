@@ -438,6 +438,11 @@ const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-
 async function fetchCultsKeyword(keyword, env) {
   const auth = btoa(`${env.CULTS_USERNAME}:${env.CULTS_API_KEY}`);
 
+  // description/tags/illustrations: not needed for the home page's
+  // cards (see script.js), but ARE needed for the detail page a
+  // card links to (model.js, "cults-" ids) — fetched once here and
+  // cached alongside everything else rather than adding a second
+  // round trip per detail-page view.
   const query = `{
     creationsSearchBatch(query: ${JSON.stringify(keyword)}, onlySafe: true, limit: 4) {
       results {
@@ -445,6 +450,9 @@ async function fetchCultsKeyword(keyword, env) {
         name
         url
         illustrationImageUrl
+        description
+        tags
+        illustrations { imageUrl }
         likesCount
         downloadsCount
         creator { nick }
@@ -496,10 +504,21 @@ async function handleExternalModels(env, ctx) {
       if (!item || !item.identifier || seen.has(item.identifier)) return;
       seen.add(item.identifier);
 
+      // Cults3D mixes the occasional video into "illustrations"
+      // (hosted on a different subdomain, e.g. videos.cults3d.com) —
+      // filtered out here since <img> can't render one and the
+      // gallery on the detail page expects only images.
+      const images = (item.illustrations || [])
+        .map(illustration => illustration.imageUrl)
+        .filter(url => url && /\.(png|jpe?g|gif|webp)$/i.test(url));
+
       normalized.push({
         id: `cults-${item.identifier}`,
         title: item.name,
-        image: item.illustrationImageUrl || null,
+        image: item.illustrationImageUrl || images[0] || null,
+        images: images.length > 0 ? images : (item.illustrationImageUrl ? [item.illustrationImageUrl] : []),
+        description: item.description || "",
+        tags: Array.isArray(item.tags) ? item.tags : [],
         url: item.url,
         creator: item.creator ? item.creator.nick : "Cults3D creator",
         downloads: item.downloadsCount || 0,

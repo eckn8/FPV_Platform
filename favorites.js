@@ -25,8 +25,11 @@ async function displayFavorites() {
 
   const [allModels] = await Promise.all([
     getAllModels(),
-    primeFavorites()
+    primeFavorites(),
+    primeExternalFavorites()
   ]);
+
+  const savedExternalModels = await getSavedExternalModels();
 
   const userSavedIds = getSavedModelIds();
 
@@ -38,7 +41,7 @@ async function displayFavorites() {
 
   grid.innerHTML = "";
 
-  if (favoriteModels.length === 0) {
+  if (favoriteModels.length === 0 && savedExternalModels.length === 0) {
     grid.innerHTML = "<p>You haven't saved any models yet.</p>";
     return;
   }
@@ -69,6 +72,12 @@ async function displayFavorites() {
     attachSaveButton(card, model.id, displayFavorites);
 
     grid.appendChild(card);
+  });
+
+  // Saved Cults3D picks — same "un-saving removes it immediately"
+  // behavior as native cards above.
+  savedExternalModels.forEach(model => {
+    grid.appendChild(createExternalModelCard(model, displayFavorites));
   });
 }
 
