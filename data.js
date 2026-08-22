@@ -958,7 +958,7 @@ async function toggleExternalSavedModel(model) {
 // Full saved rows (not just ids) — used by favorites.js/profile.js
 // to actually render the saved cards, since the summary data lives
 // nowhere else once a Cults3D item ages out of the home page's
-// cached discovery feed (see /api/external-models).
+// cached discovery feed (see /api/fpv-catalog).
 async function getSavedExternalModels() {
   const userId = getCurrentUserId();
   if (!userId) return [];

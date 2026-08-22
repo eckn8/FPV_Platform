@@ -59,7 +59,7 @@ async function init() {
 // =======================
 
 async function renderExternalModelPage(externalId) {
-  // The home page's discovery list (see /api/external-models in
+  // The home page's discovery list (see /api/fpv-catalog in
   // worker.js) is deliberately lean — no description/tags/full image
   // gallery, those would bloat every home page load for a handful of
   // detail-page views. Re-fetching it here just to find this one
@@ -68,7 +68,7 @@ async function renderExternalModelPage(externalId) {
   let summary = null;
 
   try {
-    const response = await fetch("/api/external-models");
+    const response = await fetch("/api/fpv-catalog");
 
     if (response.ok) {
       const list = await response.json();
@@ -101,7 +101,7 @@ async function renderExternalModelPage(externalId) {
 
   try {
     const slug = summary.url.split("/").filter(Boolean).pop();
-    const response = await fetch(`/api/external-model?slug=${encodeURIComponent(slug)}`);
+    const response = await fetch(`/api/fpv-item?slug=${encodeURIComponent(slug)}`);
 
     if (response.ok) {
       detail = await response.json();

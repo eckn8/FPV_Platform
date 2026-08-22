@@ -330,7 +330,7 @@ let externalSearchToken = 0;
 
 async function fetchExternalSearch(query) {
   try {
-    const response = await fetch(`/api/external-search?q=${encodeURIComponent(query)}`);
+    const response = await fetch(`/api/fpv-find?q=${encodeURIComponent(query)}`);
     if (!response.ok) return [];
     return await response.json();
   } catch {
@@ -401,7 +401,7 @@ init();
 // this load, same as before this feature existed.
 async function fetchExternalModels() {
   try {
-    const response = await fetch("/api/external-models");
+    const response = await fetch("/api/fpv-catalog");
     if (!response.ok) return [];
     return await response.json();
   } catch {

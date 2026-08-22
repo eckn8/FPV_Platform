@@ -7,7 +7,7 @@
 // Cloudflare serves static files (HTML/CSS/JS) directly when they
 // match the request, and only invokes this script for what doesn't
 // match any file — so in practice, only /api/upload,
-// /api/delete-account and /api/external-models.
+// /api/delete-account and /api/fpv-catalog.
 // =======================================================
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;   // 8 MB
@@ -25,15 +25,21 @@ export default {
       return handleDeleteAccount(request, env);
     }
 
-    if (url.pathname === "/api/external-models" && request.method === "GET") {
+    // Renamed from /api/external-models: Cloudflare's own edge cache
+    // had a stale copy of that exact URL pinned from before a filter
+    // fix, and our cache-purge API scope isn't available on this
+    // token — a URL nobody's ever cached is the reliable way around
+    // that rather than depending on a purge that can't be issued.
+    // Rename again if this ever needs a hard cache-bust in the future.
+    if (url.pathname === "/api/fpv-catalog" && request.method === "GET") {
       return handleExternalModels(env, ctx);
     }
 
-    if (url.pathname === "/api/external-model" && request.method === "GET") {
+    if (url.pathname === "/api/fpv-item" && request.method === "GET") {
       return handleExternalModelDetail(url.searchParams.get("slug"), env, ctx);
     }
 
-    if (url.pathname === "/api/external-search" && request.method === "GET") {
+    if (url.pathname === "/api/fpv-find" && request.method === "GET") {
       return handleExternalSearch(url.searchParams.get("q"), env, ctx);
     }
 
@@ -431,27 +437,77 @@ async function handleDeleteAccount(request, env) {
 // by surfacing well-regarded designs first, so covering more of the
 // FPV part space here (frame sizes, common accessories) is safe:
 // more real matches without a wall of low-quality noise.
+//
+// Three groups, each targeting a different way someone actually
+// searches Cults3D for FPV parts:
+// - General: broad hobby terms/sizes.
+// - By part (from FPVBase's own folder taxonomy — see
+//   supabase_root_lock_migration.sql): the specific things a folder
+//   is for (motor, GPS, VTX...) rather than the folder name itself,
+//   since nobody actually searches Cults3D for the literal word
+//   "Electronic".
+// - By brand: real product names carry a LOT of Cults3D content
+//   (mounts/frames/cases made specifically to fit them) that a
+//   generic part search misses entirely.
+//
+// Capped at 42 total (not the ~500 a full "50 brands × 10 products"
+// list would need) — each keyword is its own parallel request to
+// Cults3D, and Cloudflare Workers on the free tier cap a single
+// request at 50 subrequests; going past that fails the WHOLE
+// request, not just the extra keywords. A brand name alone already
+// surfaces most of that brand's Cults3D content in one query, so
+// this covers materially more ground than the old 20-keyword list
+// without risking that failure.
 const CULTS_SEARCH_KEYWORDS = [
+  // General
   "fpv drone",
   "fpv frame",
   "tinywhoop",
   "cinewhoop",
-  "fpv gopro mount",
-  "fpv antenna mount",
   "quadcopter frame",
-  "fpv canopy",
-  "fpv racing drone",
   "fpv freestyle",
-  "5 inch fpv frame",
-  "3 inch fpv frame",
-  "fpv prop guard",
-  "vtx mount",
-  "flight controller mount",
-  "fpv camera mount",
-  "fpv goggles mount",
   "long range fpv",
   "micro fpv drone",
-  "fpv drone arm"
+  "5 inch fpv frame",
+  "3 inch fpv frame",
+  // By part (Drone/Frame, Drone/Battery, Drone/Electronic, Camera,
+  // Equipment — see supabase_root_lock_migration.sql)
+  "fpv drone motor",
+  "fpv frame arm replacement",
+  "fpv propeller guard",
+  "fpv canopy",
+  "fpv landing gear",
+  "fpv battery strap mount",
+  "fpv vtx antenna mount",
+  "fpv receiver rx mount",
+  "fpv flight controller stack mount",
+  "fpv gps mount",
+  "fpv beeper buzzer mount",
+  "fpv led mount",
+  "action camera mount fpv drone",
+  "fpv goggles strap mount",
+  "radio transmitter case",
+  // By brand (frames, electronics, goggles/radio)
+  "GEPRC",
+  "iFlight",
+  "TBS Team BlackSheep",
+  "Armattan",
+  "Diatone",
+  "Flywoo",
+  "Axisflying",
+  "HGLRC",
+  "T-Motor",
+  "Holybro",
+  "SpeedyBee",
+  "Foxeer",
+  "RunCam",
+  "Caddx",
+  "Walksnail",
+  "HDZero",
+  "Radiomaster",
+  "ExpressLRS",
+  "Fatshark",
+  "BetaFPV"
 ];
 
 // Per keyword, not a global total — 20 keywords × 15 duplicates
@@ -465,11 +521,11 @@ const CULTS_SEARCH_LIMIT_PER_KEYWORD = 15;
 // the Cache API) so a page load never waits on — or spams — Cults3D's
 // API directly; results are near-identical run to run anyway.
 const EXTERNAL_MODELS_CACHE_SECONDS = 60 * 60;
-// Versioned (v6): filter strengthened (subcategory exclusion +
-// more terms, see isExcludedCultsItem) — bumping forces a fresh,
-// re-filtered entry instead of serving the old one for up to an
-// hour. Bump again any time the filter changes.
-const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v6";
+// Versioned (v7): keyword list expanded (parts + brands, see
+// CULTS_SEARCH_KEYWORDS) — bumping forces a fresh fetch instead of
+// serving the smaller old result set for up to an hour. Bump again
+// any time the keywords or filter change.
+const EXTERNAL_MODELS_CACHE_KEY = "https://fpv-base.com/__cache/external-models-cults3d-v7";
 
 // Cults3D mixes the occasional video into "illustrations" (hosted on
 // a different subdomain, e.g. videos.cults3d.com) — filtered out
@@ -570,7 +626,7 @@ async function fetchCultsKeyword(keyword, env) {
 
   // Lean on purpose — this feeds the home page's cards only, which
   // never show description/the full image gallery (those live
-  // behind /api/external-model instead, fetched once per detail-page
+  // behind /api/fpv-item instead, fetched once per detail-page
   // view rather than bloating every home page load with hundreds of
   // descriptions nobody's reading yet). `tags` is the exception: it's
   // small, and isExcludedCultsItem() needs it to filter out fixed-
